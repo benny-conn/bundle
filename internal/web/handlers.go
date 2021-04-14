@@ -34,7 +34,7 @@ func HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 		r.ParseForm()
 
-		authUrl := "https://bundle.us.auth0.com/oauth/token"
+		authURL := "https://bundle.us.auth0.com/oauth/token"
 
 		secret := os.Getenv("CLIENT_SECRET")
 
@@ -45,7 +45,7 @@ func HandleSignup(w http.ResponseWriter, r *http.Request) {
 			"audience":      {"https://bundlemc.io/auth/users"},
 		}
 
-		authRes, err := http.PostForm(authUrl, values)
+		authRes, err := http.PostForm(authURL, values)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -66,9 +66,9 @@ func HandleSignup(w http.ResponseWriter, r *http.Request) {
 			r.FormValue("password"),
 		}
 
-		asJson, _ := json.Marshal(newUser)
+		asJSON, _ := json.Marshal(newUser)
 
-		br := bytes.NewReader(asJson)
+		br := bytes.NewReader(asJSON)
 
 		createUser, err := http.NewRequest(http.MethodPost, "http://localhost:8070/users", br)
 		if err != nil {

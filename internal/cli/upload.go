@@ -41,7 +41,7 @@ var uploadCmd = &cobra.Command{
 
 		user := credentialsPrompt()
 
-		userAsJson, err := json.Marshal(user)
+		userAsJSON, err := json.Marshal(user)
 
 		if err != nil {
 			log.Fatal(err)
@@ -70,7 +70,7 @@ var uploadCmd = &cobra.Command{
 		}
 		req.Header.Add("Project-Version", version)
 		req.Header.Add("Project-Name", finalName)
-		req.Header.Add("User", string(userAsJson))
+		req.Header.Add("User", string(userAsJSON))
 
 		resp, err := http.DefaultClient.Do(req)
 
@@ -78,12 +78,12 @@ var uploadCmd = &cobra.Command{
 			panic(err)
 		}
 		defer resp.Body.Close()
-		resp_body, err := io.ReadAll(resp.Body)
+		respBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println(string(resp.Status))
-		fmt.Println(string(resp_body))
+		fmt.Println(string(respBody))
 	},
 }
 

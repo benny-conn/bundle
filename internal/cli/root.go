@@ -11,12 +11,14 @@ import (
 	"gopkg.in/yaml.v2"
 
 	_ "embed"
+
+	bundle "github.com/bennycio/bundle/internal"
 )
 
 const (
-	FILE_NAME          string = "bundle.yml"
-	MAKE_FILE_NAME     string = "bundle-make.yml"
-	REQUIRED_FILE_TYPE string = "application/zip"
+	BundleFileName     = bundle.BundleFileName
+	BundleMakeFileName = bundle.BundleMakeFileName
+	RequiredFileType   = bundle.RequiredFileType
 )
 
 type BundleFile struct {
@@ -72,9 +74,9 @@ func initConfig() {
 func isBundleInitialized(make bool) bool {
 	var fn string
 	if make {
-		fn = MAKE_FILE_NAME
+		fn = BundleMakeFileName
 	} else {
-		fn = FILE_NAME
+		fn = BundleFileName
 	}
 	_, err := os.Stat(fn)
 	return err == nil
@@ -85,9 +87,9 @@ func getBundleFile(make bool) ([]byte, error) {
 	var fn string
 
 	if make {
-		fn = MAKE_FILE_NAME
+		fn = BundleMakeFileName
 	} else {
-		fn = FILE_NAME
+		fn = BundleFileName
 	}
 	if !isBundleInitialized(make) {
 		return nil, errors.New("bundle file does not exist at current directory")

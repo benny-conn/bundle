@@ -18,7 +18,7 @@ var makeCmd = &cobra.Command{
 			log.Fatal("There already exists a bundle-make.yml at this location")
 		}
 
-		file, err := os.Create(MAKE_FILE_NAME)
+		file, err := os.Create(BundleMakeFileName)
 		if err != nil {
 			panic(err)
 		}
@@ -26,7 +26,7 @@ var makeCmd = &cobra.Command{
 
 		wd, _ := os.Getwd()
 
-		fmt.Println("Created file at path " + wd + "/" + MAKE_FILE_NAME)
+		fmt.Println("Created file at path " + wd + "/" + BundleMakeFileName)
 	},
 }
 

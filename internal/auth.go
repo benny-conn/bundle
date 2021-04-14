@@ -11,11 +11,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Jwks struct {
-	Keys []JSONWebKeys `json:"keys"`
+type jsonWebKeys struct {
+	Keys []jsonWebKey `json:"keys"`
 }
 
-type JSONWebKeys struct {
+type jsonWebKey struct {
 	Kty string   `json:"kty"`
 	Kid string   `json:"kid"`
 	Use string   `json:"use"`
@@ -24,7 +24,7 @@ type JSONWebKeys struct {
 	X5c []string `json:"x5c"`
 }
 
-type ClaimsWithScope struct {
+type claimsWithScope struct {
 	Scope string `json:"scope"`
 	jwt.StandardClaims
 }
@@ -35,13 +35,13 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 		aud := "https://bundlemc.io/auth/users"
 		checkAud := token.Claims.(jwt.MapClaims).VerifyAudience(aud, false)
 		if !checkAud {
-			return token, errors.New("Invalid audience.")
+			return token, errors.New("invalid audience")
 		}
 		// Verify 'iss' claim
 		iss := "https://bundle.us.auth0.com/"
 		checkIss := token.Claims.(jwt.MapClaims).VerifyIssuer(iss, false)
 		if !checkIss {
-			return token, errors.New("Invalid issuer.")
+			return token, errors.New("invalid issuer")
 		}
 
 		cert, err := getPemCert(token)
@@ -74,12 +74,12 @@ func AuthUser(next http.Handler) http.Handler {
 					r.FormValue("email"),
 					r.FormValue("password"),
 				}
-				asJson, err := json.Marshal(user)
+				asJSON, err := json.Marshal(user)
 				if err != nil {
 					WriteResponse(w, err.Error(), http.StatusBadRequest)
 					return
 				}
-				userJSON = string(asJson)
+				userJSON = string(asJSON)
 			}
 
 			validatedUser, err := ValidateAndReturnUser(userJSON)
@@ -123,21 +123,21 @@ func getPemCert(token *jwt.Token) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	var jwks = Jwks{}
+	var jwks = jsonWebKeys{}
 	err = json.NewDecoder(resp.Body).Decode(&jwks)
 
 	if err != nil {
 		return cert, err
 	}
 
-	for k, _ := range jwks.Keys {
+	for k := range jwks.Keys {
 		if token.Header["kid"] == jwks.Keys[k].Kid {
 			cert = "-----BEGIN CERTIFICATE-----\n" + jwks.Keys[k].X5c[0] + "\n-----END CERTIFICATE-----"
 		}
 	}
 
 	if cert == "" {
-		err := errors.New("Unable to find appropriate key.")
+		err := errors.New("unable to find appropriate key")
 		return cert, err
 	}
 
@@ -146,7 +146,7 @@ func getPemCert(token *jwt.Token) (string, error) {
 
 func CheckScope(scope string, tokenString string) bool {
 
-	token, _ := jwt.ParseWithClaims(tokenString, &ClaimsWithScope{}, func(token *jwt.Token) (interface{}, error) {
+	token, _ := jwt.ParseWithClaims(tokenString, &claimsWithScope{}, func(token *jwt.Token) (interface{}, error) {
 		cert, err := getPemCert(token)
 		if err != nil {
 			return nil, err
@@ -155,7 +155,7 @@ func CheckScope(scope string, tokenString string) bool {
 		return result, nil
 	})
 
-	claims := token.Claims.(*ClaimsWithScope)
+	claims := token.Claims.(*claimsWithScope)
 
 	return strings.Contains(claims.Scope, scope)
 }

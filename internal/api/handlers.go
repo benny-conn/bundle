@@ -24,15 +24,15 @@ import (
 )
 
 const (
-	AWS_S3_REGION      = "us-east-1"
-	AWS_S3_BUCKET      = "bundle-repository"
-	REQUIRED_FILE_TYPE = "application/zip"
+	AwsS3Region = bundle.AwsS3Region
+	AwsS3Bucket = bundle.AwsS3Bucket
+	ReqFileType = bundle.RequiredFileType
 )
 
 func BundleHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 
-	sess, _ := session.NewSession(&aws.Config{Region: aws.String(AWS_S3_REGION)})
+	sess, _ := session.NewSession(&aws.Config{Region: aws.String(AwsS3Region)})
 
 	if req.Method == http.MethodGet {
 		fmt.Println("GET")
@@ -57,7 +57,7 @@ func BundleHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("FILENAME: " + fn)
 		downloader := s3manager.NewDownloader(sess)
 		_, err = downloader.Download(buf, &s3.GetObjectInput{
-			Bucket: aws.String(AWS_S3_BUCKET),
+			Bucket: aws.String(AwsS3Bucket),
 			Key:    aws.String(fn),
 		})
 		if err != nil {

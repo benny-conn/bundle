@@ -22,7 +22,7 @@ var initCmd = &cobra.Command{
 			log.Fatal("There is no plugin directory in your current directory")
 		}
 
-		file, err := os.Create(FILE_NAME)
+		file, err := os.Create(BundleFileName)
 		if err != nil {
 			panic(err)
 		}
@@ -30,7 +30,7 @@ var initCmd = &cobra.Command{
 
 		wd, _ := os.Getwd()
 
-		fmt.Println("Created file at path " + wd + "/" + FILE_NAME)
+		fmt.Println("Created file at path " + wd + "/" + BundleFileName)
 	},
 }
 
