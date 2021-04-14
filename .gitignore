@@ -3,3 +3,4 @@ build/
 *.jar
 plugins/
 bundle.yml
+.VSCodeCounter/
