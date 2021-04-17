@@ -14,7 +14,7 @@ var initCmd = &cobra.Command{
 	Short: "Setup structure for running a server with access to the official Bundle Repository",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if isBundleInitialized(false) {
+		if isBundleInitialized() {
 			log.Fatal("There already exists a bundle.yml at this location")
 		}
 

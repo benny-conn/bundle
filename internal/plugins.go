@@ -51,3 +51,7 @@ func GetPluginAuthor(pluginName string) (string, error) {
 	}
 	return decodedPluginResult.User, nil
 }
+
+func GetPluginVersion(pluginName string) (string, error) {
+	return "1.0.0", nil
+}

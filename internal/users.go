@@ -16,7 +16,7 @@ import (
 
 func ValidateAndReturnUser(user string) (*User, error) {
 
-	if user == "" || !isJSON(user) {
+	if user == "" || !IsJSON(user) {
 		return nil, errors.New("must be in JSON format")
 	}
 

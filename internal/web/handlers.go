@@ -156,18 +156,6 @@ func BundleHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	if req.Method == http.MethodPost {
 
-		// fileBytes, err := io.ReadAll(req.Body)
-
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// fileType := http.DetectContentType(fileBytes)
-
-		// if fileType != REQUIRED_FILE_TYPE {
-		// 	log.Fatal("File must be of " + REQUIRED_FILE_TYPE + " type")
-		// }
-
 		version := req.Header.Get("Project-Version")
 		userJSON := req.Header.Get("User")
 		name := req.Header.Get("Project-Name")
@@ -183,20 +171,6 @@ func BundleHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		dbUser, err := bundle.GetUserFromDatabase(validatedUser)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Error: " + err.Error()))
-			return
-		}
-
-		fp := filepath.Join(dbUser.Username, name, version, name+".jar")
-
-		uploader := s3manager.NewUploader(sess)
-		result, err := uploader.Upload(&s3manager.UploadInput{
-			Body:   req.Body,
-			Bucket: aws.String("bundle-repository"),
-			Key:    aws.String(fp),
-		})
-		if err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte("Error: " + err.Error()))
 			return
 		}
@@ -218,9 +192,9 @@ func BundleHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		collection := client.Database("users").Collection("plugins")
+		// TODO figure out first if it is their plugin, then if it is update the version, if not tell them bye bye
 
-		// Test this out for case sensitivity
+		collection := client.Database("users").Collection("plugins")
 
 		countPlugins, err := collection.CountDocuments(ctx, bson.D{{"$regex", primitive.Regex{"plugin", "i"}}})
 
@@ -235,10 +209,24 @@ func BundleHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		_, err = collection.InsertOne(ctx, bson.D{{"plugin", name}, {"user", dbUser.Username}})
+		_, err = collection.InsertOne(ctx, bson.D{{"plugin", name}, {"user", dbUser.Username}, {"version", version}})
 
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fp := filepath.Join(dbUser.Username, name, version, name+".jar")
+
+		uploader := s3manager.NewUploader(sess)
+		result, err := uploader.Upload(&s3manager.UploadInput{
+			Body:   req.Body,
+			Bucket: aws.String("bundle-repository"),
+			Key:    aws.String(fp),
+		})
+		if err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Error: " + err.Error()))
 			return
 		}
 

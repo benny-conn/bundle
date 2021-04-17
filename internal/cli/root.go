@@ -1,14 +1,9 @@
 package cli
 
 import (
-	"errors"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"regexp"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	_ "embed"
 
@@ -16,46 +11,19 @@ import (
 )
 
 const (
-	BundleFileName     = bundle.BundleFileName
-	BundleMakeFileName = bundle.BundleMakeFileName
-	RequiredFileType   = bundle.RequiredFileType
+	BundleFileName   = bundle.BundleFileName
+	RequiredFileType = bundle.RequiredFileType
 )
-
-type BundleFile struct {
-	Plugins map[string]string `yaml:"Plugins,omitempty"`
-}
-
-type BundleMakeFile struct {
-	Name         string   `yaml:"Name,omitempty"`
-	Version      string   `yaml:"Version,omitempty"`
-	JarPath      string   `yaml:"JarPath,omitempty"`
-	VersionNotes []string `yaml:"VersionNotes,omitempty"`
-}
-
-type User struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 //go:embed bundle.yml
 var BundleYml string
 
-//go:embed bundle-make.yml
-var BundleMakeYml string
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "bundle",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Base command for the Bundle CLI",
 }
 
 func Execute() {
@@ -69,81 +37,4 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	// TODO
-}
-
-func isBundleInitialized(make bool) bool {
-	var fn string
-	if make {
-		fn = BundleMakeFileName
-	} else {
-		fn = BundleFileName
-	}
-	_, err := os.Stat(fn)
-	return err == nil
-}
-
-func getBundleFile(make bool) ([]byte, error) {
-
-	var fn string
-
-	if make {
-		fn = BundleMakeFileName
-	} else {
-		fn = BundleFileName
-	}
-	if !isBundleInitialized(make) {
-		return nil, errors.New("bundle file does not exist at current directory")
-	}
-
-	bytes, err := ioutil.ReadFile(fn)
-	if err != nil {
-		panic(err)
-	}
-	return bytes, nil
-}
-
-func isPluginDirectory() bool {
-	if _, err := os.Stat("plugins/"); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-func credentialsPrompt() *User {
-
-	fmt.Println("Enter your username or email: ")
-	var userOrEmail string
-	fmt.Scanln(&userOrEmail)
-	fmt.Println("Enter your password: ")
-	var password string
-	fmt.Scanln(&password)
-
-	isEmail := emailRegex.MatchString(userOrEmail)
-
-	user := &User{}
-	user.Password = password
-	if isEmail {
-		user.Email = userOrEmail
-	} else {
-		user.Username = userOrEmail
-	}
-
-	return user
-}
-
-func getBundledPlugins() map[string]string {
-	fileBytes, err := getBundleFile(false)
-
-	if err != nil {
-		panic(err)
-	}
-	result := BundleFile{}
-
-	err = yaml.Unmarshal(fileBytes, &result)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return result.Plugins
 }

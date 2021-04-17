@@ -1,13 +1,18 @@
 package cli
 
 import (
+	"archive/zip"
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	bundle "github.com/bennycio/bundle/internal"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -19,23 +24,38 @@ var uploadCmd = &cobra.Command{
 	Long: `Will upload the jar specified under JarPath into the official Bundle Repository, allowing public access
 	to your plugin. Version must be unique per upload and name must be unique globally for the initial upload`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// if path == "" || !strings.HasSuffix(path, ".jar") {
-		// 	log.Fatal("Please specify a valid path to the jar with -p ")
-		// }
-		fb, err := getBundleFile(true)
 
-		if err != nil {
-			panic(err)
-		}
-		result := BundleMakeFile{}
-
-		err = yaml.Unmarshal(fb, &result)
-
-		if err != nil {
-			panic(err)
+		if !bundle.IsValidPath(args[0]) {
+			log.Fatal(errors.New("invalid path").Error())
 		}
 
-		path := result.JarPath
+		path := args[0]
+
+		reader, err := zip.OpenReader(path)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		result := &PluginYML{}
+
+		for _, file := range reader.File {
+			if strings.HasSuffix(file.Name, "plugin.yml") {
+				rc, err := file.Open()
+				if err != nil {
+					log.Fatal(err)
+				}
+				buf := bytes.Buffer{}
+				buf.ReadFrom(rc)
+				err = yaml.Unmarshal(buf.Bytes(), result)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+
+		reader.Close()
+
 		finalName := result.Name
 		version := result.Version
 
@@ -53,18 +73,8 @@ var uploadCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		// bytes, err := io.ReadAll(file)
-		// if err != nil {
-		// 	panic(err)
-		// }
 
-		// fileType := http.DetectContentType(bytes)
-
-		// if fileType != REQUIRED_FILE_TYPE {
-		// 	log.Fatal("File format does not meet requirements. Uploaded file must be the built Jar of your plugin")
-		// }
-
-		req, err := http.NewRequest(http.MethodPost, "http://localhost:8070/bundle", file)
+		req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/bundle", file)
 		if err != nil {
 			panic(err)
 		}
