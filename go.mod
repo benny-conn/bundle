@@ -7,9 +7,9 @@ require (
 	github.com/aws/aws-sdk-go v1.38.21
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible
 	github.com/mattn/go-runewidth v0.0.12 // indirect
-	github.com/schollz/progressbar/v3 v3.7.6 // indirect
+	github.com/schollz/progressbar/v3 v3.7.6
 	github.com/spf13/cobra v1.1.3
-	github.com/spf13/viper v1.7.1 // indirect
+	github.com/spf13/viper v1.7.1
 	go.mongodb.org/mongo-driver v1.5.1
 	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
 	golang.org/x/sys v0.0.0-20210415045647-66c3f260301c // indirect
