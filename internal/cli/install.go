@@ -25,7 +25,7 @@ var installCmd = &cobra.Command{
 		for k, v := range m {
 			fmt.Printf("Installing Jar %s with version %s\n", k, v)
 
-			u, err := url.Parse("http://localhost:8070/bundle")
+			u, err := url.Parse("http://localhost:8080/bundle")
 			if err != nil {
 				panic(err)
 			}

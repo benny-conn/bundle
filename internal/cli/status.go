@@ -3,10 +3,10 @@ package cli
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"strings"
 
-	bundle "github.com/bennycio/bundle/internal"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -25,12 +25,12 @@ var statusCmd = &cobra.Command{
 			if v != "latest" {
 				updatedVersion = v
 			} else {
-				result, err := bundle.GetPluginVersion(k)
+				plugin, err := getPlugin(k)
 				if err != nil {
 					panic(err)
 				}
 
-				updatedVersion = result
+				updatedVersion = plugin.Version
 			}
 
 			fp := filepath.Join("plugins", k+".jar")
@@ -58,6 +58,15 @@ var statusCmd = &cobra.Command{
 				}
 			}
 
+		}
+
+		if len(pluginsToUpdate) != 0 {
+			fmt.Println("Plugins To Update:")
+			for k, v := range pluginsToUpdate {
+				fmt.Println(k, " -> ", v)
+			}
+		} else {
+			fmt.Println("All plugins are up to date :)")
 		}
 
 	},

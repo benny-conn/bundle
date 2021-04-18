@@ -1,4 +1,4 @@
-package web
+package main
 
 import (
 	"fmt"
@@ -9,18 +9,17 @@ import (
 )
 
 func main() {
-	fmt.Println("Started server on port 8080")
 	mux := http.NewServeMux()
 
 	bundleHandler := http.HandlerFunc(web.BundleHandlerFunc)
 	userHandler := http.HandlerFunc(web.UserHandlerFunc)
-
-	fmt.Println("Started server on port 8070")
 	mux.Handle("/bundle", bundle.AuthUser(bundleHandler))
 	mux.Handle("/users", bundle.AuthClient(userHandler))
-	mux.HandleFunc("/", web.HandleRoot)
-	mux.HandleFunc("/signup", web.HandleSignup)
-	mux.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("../../assets/public"))))
+	mux.HandleFunc("/", web.RootHandlerFunc)
+	mux.HandleFunc("/signup", web.SignupHandlerFunc)
+	mux.HandleFunc("/plugins", web.PluginHandlerFunc)
+	mux.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("assets/public"))))
 
+	fmt.Println("Started server on port 8080")
 	http.ListenAndServe(":8080", mux)
 }

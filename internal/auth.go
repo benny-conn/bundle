@@ -3,7 +3,10 @@ package internal
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"os"
 	"strings"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
@@ -56,6 +59,35 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 	SigningMethod: jwt.SigningMethodRS256,
 })
 
+func GetAuthToken() (*Authorization, error) {
+	authURL := "https://bundle.us.auth0.com/oauth/token"
+
+	secret := os.Getenv("CLIENT_SECRET")
+
+	values := url.Values{
+		"grant_type":    {"client_credentials"},
+		"client_id":     {"22oXY4A0h9Rfbo3XEAn8Fbptx715dBe4"},
+		"client_secret": {secret},
+		"audience":      {"https://bundlemc.io/auth/users"},
+	}
+
+	authRes, err := http.PostForm(authURL, values)
+	if err != nil {
+		return nil, err
+	}
+
+	defer authRes.Body.Close()
+	body, _ := ioutil.ReadAll(authRes.Body)
+
+	auth := &Authorization{}
+
+	err = json.Unmarshal(body, auth)
+	if err != nil {
+		return nil, err
+	}
+	return auth, nil
+}
+
 func AuthUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
@@ -102,7 +134,7 @@ func AuthUser(next http.Handler) http.Handler {
 
 			if err != nil {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("Password does not match stored password"))
+				w.Write([]byte("password does not match stored password"))
 				return
 			}
 		}

@@ -74,15 +74,7 @@ var uploadCmd = &cobra.Command{
 			panic(err)
 		}
 
-		req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/bundle", file)
-		if err != nil {
-			panic(err)
-		}
-		req.Header.Add("Project-Version", version)
-		req.Header.Add("Project-Name", finalName)
-		req.Header.Add("User", string(userAsJSON))
-
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := uploadPlugin(file, version, finalName, string(userAsJSON))
 
 		if err != nil {
 			panic(err)
@@ -95,6 +87,19 @@ var uploadCmd = &cobra.Command{
 		fmt.Println(string(resp.Status))
 		fmt.Println(string(respBody))
 	},
+}
+
+func uploadPlugin(file io.Reader, version string, pluginName string, userJSON string) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/bundle", file)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Plugin-Version", version)
+	req.Header.Add("Plugin-Name", pluginName)
+	req.Header.Add("User", userJSON)
+
+	resp, err := http.DefaultClient.Do(req)
+	return resp, err
 }
 
 func init() {

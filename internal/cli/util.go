@@ -1,13 +1,37 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 
+	bundle "github.com/bennycio/bundle/internal"
 	"gopkg.in/yaml.v2"
 )
+
+func getPlugin(pluginName string) (*bundle.Plugin, error) {
+	resp, err := http.Get("http://localhost:8080/status?plugin=" + pluginName)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	bs, err := io.ReadAll(resp.Body)
+
+	result := &bundle.Plugin{}
+
+	err = json.Unmarshal(bs, result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+
+}
 
 func isBundleInitialized() bool {
 	fn := BundleFileName
@@ -36,7 +60,7 @@ func isPluginDirectory() bool {
 	return true
 }
 
-func credentialsPrompt() *User {
+func credentialsPrompt() *bundle.User {
 
 	fmt.Println("Enter your username or email: ")
 	var userOrEmail string
@@ -47,7 +71,7 @@ func credentialsPrompt() *User {
 
 	isEmail := emailRegex.MatchString(userOrEmail)
 
-	user := &User{}
+	user := &bundle.User{}
 	user.Password = password
 	if isEmail {
 		user.Email = userOrEmail

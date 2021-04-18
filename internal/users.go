@@ -1,28 +1,22 @@
 package internal
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"log"
 	"regexp"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func ValidateAndReturnUser(user string) (*User, error) {
+func ValidateAndReturnUser(userAsJSON string) (*User, error) {
 
-	if user == "" || !IsJSON(user) {
+	if userAsJSON == "" || !IsJSON(userAsJSON) {
 		return nil, errors.New("must be in JSON format")
 	}
 
 	u := &User{}
 
-	err := json.Unmarshal([]byte(user), u)
+	err := json.Unmarshal([]byte(userAsJSON), u)
 
 	if err != nil {
 		return nil, err
@@ -41,44 +35,26 @@ func ValidateAndReturnUser(user string) (*User, error) {
 }
 
 func GetUserFromDatabase(user *User) (*User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		"mongodb+srv://benny-bundle:thisismypassword1@bundle.mveuj.mongodb.net/users?retryWrites=true&w=majority",
-	))
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer cancel()
-	defer func() {
-		if err := client.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
-
-	collection := client.Database("users").Collection("users")
-
-	var dbUser *mongo.SingleResult
-
-	if user.Email == "" {
-		dbUser = collection.FindOne(ctx, bson.D{{"username", user.Username}})
-	} else if user.Username == "" {
-		dbUser = collection.FindOne(ctx, bson.D{{"email", user.Email}})
-	} else {
-		dbUser = collection.FindOne(ctx, bson.D{{"username", user.Username}, {"email", user.Email}})
-	}
-
-	if dbUser.Err() != nil {
-		return nil, dbUser.Err()
-	}
-
-	decodedUser := &User{}
-	err = dbUser.Decode(decodedUser)
+	session, err := GetMongoSession()
 	if err != nil {
 		return nil, err
 	}
+	defer session.Cancel()
+
+	collection := session.Client.Database("users").Collection("users")
+
+	decodedUser := &User{}
+
+	if user.Email == "" {
+		err = collection.FindOne(session.Ctx, bson.D{{"username", user.Username}}).Decode(decodedUser)
+	} else if user.Username == "" {
+		err = collection.FindOne(session.Ctx, bson.D{{"email", NewCaseInsensitiveRegex(user.Email)}}).Decode(decodedUser)
+	} else {
+		err = collection.FindOne(session.Ctx, bson.D{{"username", user.Username}, {"email", NewCaseInsensitiveRegex(user.Email)}}).Decode(decodedUser)
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	return decodedUser, nil
 }
