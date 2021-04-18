@@ -24,10 +24,11 @@ import (
 
 var tpl *template.Template
 
-const (
+const ReqFileType = bundle.RequiredFileType
+
+var (
 	AwsS3Region = bundle.AwsS3Region
 	AwsS3Bucket = bundle.AwsS3Bucket
-	ReqFileType = bundle.RequiredFileType
 	MongoURL    = bundle.MongoURL
 )
 

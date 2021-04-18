@@ -1,10 +1,15 @@
 package internal
 
+import "github.com/spf13/viper"
+
 const (
 	BundleFileName     = "bundle.yml"
 	BundleMakeFileName = "bundle-make.yml"
 	RequiredFileType   = "application/zip"
-	AwsS3Region        = "us-east-1"
-	AwsS3Bucket        = "bundle-repository"
-	MongoURL           = "mongodb+srv://benny-bundle:thisismypassword1@bundle.mveuj.mongodb.net/users?retryWrites=true&w=majority"
+)
+
+var (
+	AwsS3Region = viper.GetString("AWSRegion")
+	AwsS3Bucket = viper.GetString("AWSBucket")
+	MongoURL    = viper.GetString("MongoURL")
 )

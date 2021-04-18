@@ -6,7 +6,20 @@ import (
 
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/web"
+	"github.com/spf13/viper"
 )
+
+func init() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("/etc/bundle/")
+	viper.AddConfigPath("$HOME/.bundle")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error parsing config file: %s", err))
+	}
+}
 
 func main() {
 	mux := http.NewServeMux()

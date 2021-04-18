@@ -4,3 +4,4 @@ build/
 plugins/
 bundle.yml
 .VSCodeCounter/
+config.yaml
