@@ -5,7 +5,7 @@ type BundleFile struct {
 }
 
 type PluginYML struct {
-	Name        string `yml:"name"`
-	Version     string `yml:"version"`
-	Description string `yml:"description,omitempty`
+	Name        string `yaml:"name"`
+	Version     string `yaml:"version"`
+	Description string `yaml:"description,omitempty"`
 }

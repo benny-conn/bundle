@@ -1,40 +1,14 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 
 	bundle "github.com/bennycio/bundle/internal"
 	"gopkg.in/yaml.v2"
 )
-
-func getPlugin(pluginName string) (*bundle.Plugin, error) {
-	resp, err := http.Get("http://localhost:8080/plugins?plugin=" + pluginName)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	bs, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &bundle.Plugin{}
-
-	err = json.Unmarshal(bs, result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-
-}
 
 func isBundleInitialized() bool {
 	fn := BundleFileName
@@ -42,7 +16,7 @@ func isBundleInitialized() bool {
 	return err == nil
 }
 
-func getBundleFile() ([]byte, error) {
+func getBundleFileBytes() ([]byte, error) {
 
 	if !isBundleInitialized() {
 		return nil, errors.New("bundle file does not exist at current directory")
@@ -85,19 +59,50 @@ func credentialsPrompt() *bundle.User {
 	return user
 }
 
-func getBundledPlugins() map[string]string {
-	fileBytes, err := getBundleFile()
+func getBundleFilePlugins() (map[string]string, error) {
+
+	fileBytes, err := getBundleFileBytes()
+
+	if err != nil {
+		return nil, err
+	}
+	result := &BundleFile{}
+
+	err = yaml.Unmarshal(fileBytes, result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Plugins, nil
+}
+
+func getBundleFile() (*BundleFile, error) {
+
+	fileBytes, err := getBundleFileBytes()
+
+	if err != nil {
+		return nil, err
+	}
+	result := &BundleFile{}
+
+	err = yaml.Unmarshal(fileBytes, result)
 
 	if err != nil {
 		panic(err)
 	}
-	result := BundleFile{}
 
-	err = yaml.Unmarshal(fileBytes, &result)
+	return result, nil
+}
 
+func updateBundleVersion(pluginName string, version string) error {
+	file, err := getBundleFile()
 	if err != nil {
-		panic(err)
+		return err
 	}
+	file.Plugins[pluginName] = version
 
-	return result.Plugins
+	// TODO adjust the file itself
+
+	return nil
 }

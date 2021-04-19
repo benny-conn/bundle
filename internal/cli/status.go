@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bennycio/bundle/pkg"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -16,7 +17,10 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check which plugins have updates.",
 	Run: func(cmd *cobra.Command, args []string) {
-		m := getBundledPlugins()
+		m, err := getBundleFilePlugins()
+		if err != nil {
+			panic(err)
+		}
 
 		pluginsToUpdate := make(map[string]string)
 
@@ -28,7 +32,7 @@ var statusCmd = &cobra.Command{
 			go func(pluginName string, bundleVersion string) {
 				defer wg.Done()
 
-				plugin, err := getPlugin(pluginName)
+				plugin, err := pkg.GetPlugin(pluginName)
 				if err != nil {
 					panic(err)
 				}

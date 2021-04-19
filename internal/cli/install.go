@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/bennycio/bundle/pkg"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +25,10 @@ var installCmd = &cobra.Command{
 	download to your plugins folder`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var wg sync.WaitGroup
-		m := getBundledPlugins()
+		m, err := getBundleFilePlugins()
+		if err != nil {
+			panic(err)
+		}
 		length := len(m)
 		wg.Add(length)
 		totalProgressBar := progressbar.Default(int64(length))
@@ -39,7 +43,16 @@ var installCmd = &cobra.Command{
 				}
 				q := u.Query()
 				q.Set("name", key)
-				q.Set("version", value)
+
+				version := value
+				if Force {
+					plugin, err := pkg.GetPlugin(key)
+					if err != nil {
+						panic(err)
+					}
+					version = plugin.Version
+				}
+				q.Set("version", version)
 				u.RawQuery = q.Encode()
 
 				resp, err := http.Get(u.String())
@@ -52,7 +65,7 @@ var installCmd = &cobra.Command{
 
 				fp := filepath.Join("plugins", key+".jar")
 
-				file, err := os.OpenFile(fp, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				file, err := os.OpenFile(fp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 
 				if err != nil {
 					panic(err)

@@ -26,12 +26,15 @@ var rootCmd = &cobra.Command{
 	Short: "Base command for the Bundle CLI",
 }
 
+var Force bool
+
 func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	rootCmd.PersistentFlags().BoolVarP(&Force, "force", "f", false, "Force the command to run regardless of constraints")
 }
 
 // initConfig reads in config file and ENV variables if set.

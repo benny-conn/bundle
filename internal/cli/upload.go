@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	bundle "github.com/bennycio/bundle/internal"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -74,6 +75,7 @@ var uploadCmd = &cobra.Command{
 			panic(err)
 		}
 
+		pb := progressbar.Default(-1, "Uploading Plugin")
 		resp, err := uploadPlugin(file, version, finalName, string(userAsJSON))
 
 		if err != nil {
@@ -86,6 +88,7 @@ var uploadCmd = &cobra.Command{
 		}
 		fmt.Println(string(resp.Status))
 		fmt.Println(string(respBody))
+		pb.Finish()
 	},
 }
 
