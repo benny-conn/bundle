@@ -30,6 +30,7 @@ var installCmd = &cobra.Command{
 		totalProgressBar := progressbar.Default(int64(length))
 		for k, v := range m {
 			go func(key string, value string) {
+				defer wg.Done()
 				fmt.Printf("Installing Jar %s with version %s\n", key, value)
 
 				u, err := url.Parse("http://localhost:8080/bundle")
@@ -60,7 +61,6 @@ var installCmd = &cobra.Command{
 				io.Copy(file, resp.Body)
 				fmt.Printf("Successfully downloaded the plugin %s with version %s at file path: %s \n", key, value, file.Name())
 				totalProgressBar.Add(1)
-				wg.Done()
 			}(k, v)
 		}
 		wg.Wait()

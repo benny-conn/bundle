@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -19,47 +20,51 @@ var statusCmd = &cobra.Command{
 
 		pluginsToUpdate := make(map[string]string)
 
-		for k, v := range m {
-			var updatedVersion string
+		var wg sync.WaitGroup
 
-			if v != "latest" {
-				updatedVersion = v
-			} else {
-				plugin, err := getPlugin(k)
+		wg.Add(len(m))
+
+		for k, v := range m {
+			go func(pluginName string, currentVersion string) {
+				defer wg.Done()
+
+				fmt.Println(currentVersion)
+				plugin, err := getPlugin(pluginName)
 				if err != nil {
 					panic(err)
 				}
 
-				updatedVersion = plugin.Version
-			}
+				latestVersion := plugin.Version
 
-			fp := filepath.Join("plugins", k+".jar")
+				fmt.Println("Latest Version: " + latestVersion)
 
-			reader, err := zip.OpenReader(fp)
+				fp := filepath.Join("plugins", pluginName+".jar")
 
-			if err != nil {
-				panic(err)
-			}
+				reader, err := zip.OpenReader(fp)
 
-			for _, file := range reader.File {
-				if strings.HasSuffix(file.Name, "plugin.yml") {
-					yml := &PluginYML{}
-					rc, err := file.Open()
-					if err != nil {
-						panic(err)
-					}
-					buf := bytes.Buffer{}
-					buf.ReadFrom(rc)
-					yaml.Unmarshal(buf.Bytes(), yml)
+				if err != nil {
+					panic(err)
+				}
 
-					if yml.Version != updatedVersion {
-						pluginsToUpdate[k] = updatedVersion
+				for _, file := range reader.File {
+					if strings.HasSuffix(file.Name, "plugin.yml") {
+						yml := &PluginYML{}
+						rc, err := file.Open()
+						if err != nil {
+							panic(err)
+						}
+						buf := bytes.Buffer{}
+						buf.ReadFrom(rc)
+						yaml.Unmarshal(buf.Bytes(), yml)
+
+						if yml.Version != latestVersion {
+							pluginsToUpdate[pluginName] = latestVersion
+						}
 					}
 				}
-			}
-
+			}(k, v)
 		}
-
+		wg.Wait()
 		if len(pluginsToUpdate) != 0 {
 			fmt.Println("Plugins To Update:")
 			for k, v := range pluginsToUpdate {

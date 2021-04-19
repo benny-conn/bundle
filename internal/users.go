@@ -41,7 +41,7 @@ func GetUserFromDatabase(user *User) (*User, error) {
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("users").Collection("users")
+	collection := session.Client.Database("main").Collection("users")
 
 	decodedUser := &User{}
 

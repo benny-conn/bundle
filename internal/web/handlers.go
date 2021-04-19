@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	bundle "github.com/bennycio/bundle/internal"
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,12 +26,6 @@ import (
 var tpl *template.Template
 
 const ReqFileType = bundle.RequiredFileType
-
-var (
-	AwsS3Region = bundle.AwsS3Region
-	AwsS3Bucket = bundle.AwsS3Bucket
-	MongoURL    = bundle.MongoURL
-)
 
 func init() {
 	tpl = template.Must(template.ParseGlob("assets/templates/*.gohtml"))
@@ -95,7 +90,7 @@ func SignupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	sess, _ := session.NewSession(&aws.Config{Region: aws.String(AwsS3Region)})
+	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
 	if r.Method == http.MethodGet {
 
@@ -114,13 +109,17 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if version == "latest" {
+			version = plugin.Version
+		}
+
 		buf := aws.NewWriteAtBuffer([]byte{})
 
 		fn := filepath.Join(plugin.User, plugin.Plugin, version, plugin.Plugin+".jar")
 
 		downloader := s3manager.NewDownloader(sess)
 		_, err = downloader.Download(buf, &s3.GetObjectInput{
-			Bucket: aws.String(AwsS3Bucket),
+			Bucket: aws.String(viper.GetString("AWSBucket")),
 			Key:    aws.String(fn),
 		})
 		if err != nil {
@@ -160,7 +159,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
-		collection := session.Client.Database("users").Collection("plugins")
+		collection := session.Client.Database("main").Collection("plugins")
 		decodedPluginResult := &bundle.Plugin{}
 
 		err = collection.FindOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(pluginName)}}).Decode(decodedPluginResult)
@@ -169,7 +168,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			isUserPluginAuthor := strings.EqualFold(decodedPluginResult.User, validatedUser.Username)
 
 			if isUserPluginAuthor {
-				_, err = collection.UpdateOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(pluginName)}}, bson.D{{"plugin", decodedPluginResult}, {"user", dbUser.Username}, {"version", version}})
+				_, err = collection.UpdateOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(pluginName)}}, bson.D{{"$plugin", decodedPluginResult.Plugin}, {"$user", dbUser.Username}, {"$version", version}})
 				if err != nil {
 					bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 					return
@@ -181,6 +180,9 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			_, err = collection.InsertOne(session.Ctx, bson.D{{"plugin", pluginName}, {"user", dbUser.Username}, {"version", version}})
+			decodedPluginResult.Plugin = pluginName
+			decodedPluginResult.User = dbUser.Username
+			decodedPluginResult.Version = version
 		}
 
 		if err != nil {
@@ -188,7 +190,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fp := filepath.Join(dbUser.Username, decodedPluginResult.Plugin, version, decodedPluginResult.Plugin+".jar")
+		fp := filepath.Join(dbUser.Username, decodedPluginResult.Plugin, decodedPluginResult.Version, decodedPluginResult.Plugin+".jar")
 
 		uploader := s3manager.NewUploader(sess)
 		result, err := uploader.Upload(&s3manager.UploadInput{
@@ -249,7 +251,7 @@ func UserHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 		defer session.Cancel()
 
-		collection := session.Client.Database("users").Collection("users")
+		collection := session.Client.Database("main").Collection("users")
 
 		countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", bundle.NewCaseInsensitiveRegex(validatedUser.Username)}})
 

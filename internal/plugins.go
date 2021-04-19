@@ -12,7 +12,7 @@ func GetPluginByName(name string) (*Plugin, error) {
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("users").Collection("plugins")
+	collection := session.Client.Database("main").Collection("plugins")
 	decodedPluginResult := &Plugin{}
 
 	err = collection.FindOne(session.Ctx, bson.D{{"plugin", NewCaseInsensitiveRegex(name)}}).Decode(decodedPluginResult)

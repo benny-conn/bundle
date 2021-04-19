@@ -14,13 +14,16 @@ import (
 )
 
 func getPlugin(pluginName string) (*bundle.Plugin, error) {
-	resp, err := http.Get("http://localhost:8080/status?plugin=" + pluginName)
+	resp, err := http.Get("http://localhost:8080/plugins?plugin=" + pluginName)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	result := &bundle.Plugin{}
 

@@ -6,11 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/form3tech-oss/jwt-go"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -62,7 +62,7 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 func GetAuthToken() (*Authorization, error) {
 	authURL := "https://bundle.us.auth0.com/oauth/token"
 
-	secret := os.Getenv("CLIENT_SECRET")
+	secret := viper.GetString("Auth0Secret")
 
 	values := url.Values{
 		"grant_type":    {"client_credentials"},

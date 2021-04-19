@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,8 +23,8 @@ func NewCaseInsensitiveRegex(value string) primitive.Regex {
 func GetMongoSession() (*Mongo, error) {
 	mg := &Mongo{}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(MongoURL))
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("MongoURL")))
 	mg.Cancel = cancel
 	mg.Client = client
 	mg.Ctx = ctx
