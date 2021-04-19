@@ -25,18 +25,15 @@ var statusCmd = &cobra.Command{
 		wg.Add(len(m))
 
 		for k, v := range m {
-			go func(pluginName string, currentVersion string) {
+			go func(pluginName string, bundleVersion string) {
 				defer wg.Done()
 
-				fmt.Println(currentVersion)
 				plugin, err := getPlugin(pluginName)
 				if err != nil {
 					panic(err)
 				}
 
 				latestVersion := plugin.Version
-
-				fmt.Println("Latest Version: " + latestVersion)
 
 				fp := filepath.Join("plugins", pluginName+".jar")
 
