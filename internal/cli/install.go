@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var SpecifiedVersion string
+
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:     "install",
@@ -24,56 +26,30 @@ var installCmd = &cobra.Command{
 	will be interpreted as plugins to fetch from the Bundle Repository, add to your bundle.yml, and 
 	download to your plugins folder`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var wg sync.WaitGroup
-		m, err := getBundleFilePlugins()
+
+		bundlePlugins, err := getBundleFilePlugins()
 		if err != nil {
 			panic(err)
 		}
-		length := len(m)
+
+		if args[0] != "" {
+			err = installPlugin(args[0], SpecifiedVersion)
+			bundlePlugins[args[0]] = SpecifiedVersion
+			writePluginsToBundle(bundlePlugins)
+		}
+
+		var wg sync.WaitGroup
+		length := len(bundlePlugins)
 		wg.Add(length)
 		totalProgressBar := progressbar.Default(int64(length))
-		for k, v := range m {
-			go func(key string, value string) {
+		for k, v := range bundlePlugins {
+			go func(pluginName string, bundleVersion string) {
 				defer wg.Done()
-				fmt.Printf("Installing Jar %s with version %s\n", key, value)
-
-				u, err := url.Parse("http://localhost:8080/bundle")
+				defer totalProgressBar.Add(1)
+				err = installPlugin(pluginName, bundleVersion)
 				if err != nil {
 					panic(err)
 				}
-				q := u.Query()
-				q.Set("name", key)
-
-				version := value
-				if Force {
-					plugin, err := pkg.GetPlugin(key)
-					if err != nil {
-						panic(err)
-					}
-					version = plugin.Version
-				}
-				q.Set("version", version)
-				u.RawQuery = q.Encode()
-
-				resp, err := http.Get(u.String())
-
-				if err != nil {
-					panic(err)
-				}
-
-				defer resp.Body.Close()
-
-				fp := filepath.Join("plugins", key+".jar")
-
-				file, err := os.OpenFile(fp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-
-				if err != nil {
-					panic(err)
-				}
-
-				io.Copy(file, resp.Body)
-				fmt.Printf("Successfully downloaded the plugin %s with version %s at file path: %s \n", key, value, file.Name())
-				totalProgressBar.Add(1)
 			}(k, v)
 		}
 		wg.Wait()
@@ -82,4 +58,55 @@ var installCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(installCmd)
+	installCmd.PersistentFlags().StringVarP(&SpecifiedVersion, "version", "v", "latest", "Specify version for installing")
+}
+
+func installPlugin(pluginName string, bundleVersion string) error {
+
+	version := bundleVersion
+
+	if Force && version != "latest" {
+		plugin, err := pkg.GetPlugin(pluginName)
+		if err != nil {
+			return err
+		}
+		version = plugin.Version
+	}
+
+	fmt.Printf("Installing Jar %s with version %s\n", pluginName, version)
+
+	u, err := url.Parse("http://localhost:8080/bundle")
+	if err != nil {
+		return err
+	}
+
+	q := u.Query()
+	q.Set("name", pluginName)
+	q.Set("version", version)
+	u.RawQuery = q.Encode()
+
+	resp, err := http.Get(u.String())
+
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	fp := filepath.Join("plugins", pluginName+".jar")
+
+	file, err := os.OpenFile(fp, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+
+	err = file.Truncate(0)
+	if err != nil {
+		return err
+	}
+
+	io.Copy(file, resp.Body)
+
+	fmt.Printf("Successfully downloaded the plugin %s with version %s at file path: %s \n", pluginName, bundleVersion, file.Name())
+	return nil
 }

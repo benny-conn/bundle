@@ -71,6 +71,7 @@ var statusCmd = &cobra.Command{
 			for k, v := range pluginsToUpdate {
 				fmt.Println(k, " -> ", v)
 			}
+			fmt.Println(`Use "bundle install" to update :)`)
 		} else {
 			fmt.Println("All plugins are up to date :)")
 		}

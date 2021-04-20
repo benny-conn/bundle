@@ -61,23 +61,14 @@ func credentialsPrompt() *bundle.User {
 
 func getBundleFilePlugins() (map[string]string, error) {
 
-	fileBytes, err := getBundleFileBytes()
-
+	result, err := getBundle()
 	if err != nil {
 		return nil, err
 	}
-	result := &BundleFile{}
-
-	err = yaml.Unmarshal(fileBytes, result)
-
-	if err != nil {
-		return nil, err
-	}
-
 	return result.Plugins, nil
 }
 
-func getBundleFile() (*BundleFile, error) {
+func getBundle() (*BundleFile, error) {
 
 	fileBytes, err := getBundleFileBytes()
 
@@ -95,14 +86,25 @@ func getBundleFile() (*BundleFile, error) {
 	return result, nil
 }
 
-func updateBundleVersion(pluginName string, version string) error {
-	file, err := getBundleFile()
+func writePluginsToBundle(plugins map[string]string) error {
+	bundle, err := getBundle()
 	if err != nil {
 		return err
 	}
-	file.Plugins[pluginName] = version
+	bundle.Plugins = plugins
 
-	// TODO adjust the file itself
-
+	currentBundleFile, err := os.OpenFile(BundleFileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	currentBundleFile.Truncate(0)
+	newFileBytes, err := yaml.Marshal(bundle)
+	if err != nil {
+		return err
+	}
+	_, err = currentBundleFile.Write(newFileBytes)
+	if err != nil {
+		return err
+	}
 	return nil
 }
