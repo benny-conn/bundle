@@ -44,7 +44,8 @@ var statusCmd = &cobra.Command{
 				reader, err := zip.OpenReader(fp)
 
 				if err != nil {
-					panic(err)
+					fmt.Printf("File %v not found\n", pluginName)
+					return
 				}
 
 				for _, file := range reader.File {

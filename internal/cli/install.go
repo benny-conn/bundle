@@ -31,11 +31,18 @@ var installCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
+		if bundlePlugins == nil {
+			bundlePlugins = make(map[string]string)
+		}
 
 		if args[0] != "" {
-			err = installPlugin(args[0], SpecifiedVersion)
+			_, err = installPlugin(args[0], SpecifiedVersion)
+			if err != nil {
+				panic(err)
+			}
 			bundlePlugins[args[0]] = SpecifiedVersion
 			writePluginsToBundle(bundlePlugins)
+			return
 		}
 
 		var wg sync.WaitGroup
@@ -46,11 +53,18 @@ var installCmd = &cobra.Command{
 			go func(pluginName string, bundleVersion string) {
 				defer wg.Done()
 				defer totalProgressBar.Add(1)
-				err = installPlugin(pluginName, bundleVersion)
+				finalVersion, err := installPlugin(pluginName, bundleVersion)
+				if finalVersion != v && v != "latest" {
+					bundlePlugins[k] = finalVersion
+				}
 				if err != nil {
 					panic(err)
 				}
 			}(k, v)
+		}
+		err = writePluginsToBundle(bundlePlugins)
+		if err != nil {
+			panic(err)
 		}
 		wg.Wait()
 	},
@@ -61,14 +75,14 @@ func init() {
 	installCmd.PersistentFlags().StringVarP(&SpecifiedVersion, "version", "v", "latest", "Specify version for installing")
 }
 
-func installPlugin(pluginName string, bundleVersion string) error {
+func installPlugin(pluginName string, bundleVersion string) (string, error) {
 
 	version := bundleVersion
 
 	if Force && version != "latest" {
 		plugin, err := pkg.GetPlugin(pluginName)
 		if err != nil {
-			return err
+			return "", err
 		}
 		version = plugin.Version
 	}
@@ -77,7 +91,7 @@ func installPlugin(pluginName string, bundleVersion string) error {
 
 	u, err := url.Parse("http://localhost:8080/bundle")
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	q := u.Query()
@@ -88,7 +102,7 @@ func installPlugin(pluginName string, bundleVersion string) error {
 	resp, err := http.Get(u.String())
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	defer resp.Body.Close()
@@ -97,16 +111,16 @@ func installPlugin(pluginName string, bundleVersion string) error {
 
 	file, err := os.OpenFile(fp, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = file.Truncate(0)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	io.Copy(file, resp.Body)
 
 	fmt.Printf("Successfully downloaded the plugin %s with version %s at file path: %s \n", pluginName, bundleVersion, file.Name())
-	return nil
+	return version, nil
 }

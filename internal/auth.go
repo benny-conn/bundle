@@ -122,7 +122,7 @@ func AuthUser(next http.Handler) http.Handler {
 				return
 			}
 
-			dbUser, err := GetUserFromDatabase(validatedUser)
+			dbUser, err := GetUser(*validatedUser)
 
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)

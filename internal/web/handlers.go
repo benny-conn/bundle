@@ -1,26 +1,15 @@
 package web
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"text/template"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/spf13/viper"
-	"go.mongodb.org/mongo-driver/bson"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var tpl *template.Template
@@ -43,42 +32,6 @@ func RootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 func SignupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	if r.Method == http.MethodPost {
-
-		auth, err := bundle.GetAuthToken()
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusForbidden)
-			return
-		}
-
-		newUser := bundle.User{
-			r.FormValue("username"),
-			r.FormValue("email"),
-			r.FormValue("password"),
-		}
-
-		asJSON, _ := json.Marshal(newUser)
-
-		br := bytes.NewReader(asJSON)
-
-		createUser, err := http.NewRequest(http.MethodPost, "http://localhost:8080/users", br)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		createUser.Header.Set("authorization", "Bearer "+auth.Token)
-
-		createRes, err := http.DefaultClient.Do(createUser)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		defer createRes.Body.Close()
-		createResBody, _ := ioutil.ReadAll(createRes.Body)
-		fmt.Println(string(createResBody))
-
-	}
-
 	err := tpl.ExecuteTemplate(w, "signup.gohtml", nil)
 	if err != nil {
 		bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
@@ -89,9 +42,6 @@ func SignupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-
-	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
-
 	if r.Method == http.MethodGet {
 
 		err := r.ParseForm()
@@ -103,30 +53,22 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
 		version := r.FormValue("version")
 
-		plugin, err := bundle.GetPluginByName(name)
+		plugin, err := bundle.GetPlugin(name)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if version == "latest" {
-			version = plugin.Version
+		if version != "latest" {
+			plugin.Version = version
 		}
 
-		buf := aws.NewWriteAtBuffer([]byte{})
-
-		fn := filepath.Join(plugin.User, plugin.Plugin, version, plugin.Plugin+".jar")
-
-		downloader := s3manager.NewDownloader(sess)
-		_, err = downloader.Download(buf, &s3.GetObjectInput{
-			Bucket: aws.String(viper.GetString("AWSBucket")),
-			Key:    aws.String(fn),
-		})
+		bs, err := bundle.DownloadPlugin(*plugin)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusBadRequest)
+			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
-		bundle.WriteResponse(w, string(buf.Bytes()), http.StatusOK)
+		bundle.WriteResponse(w, string(bs), http.StatusOK)
 	}
 
 	if r.Method == http.MethodPost {
@@ -142,33 +84,25 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		dbUser, err := bundle.GetUserFromDatabase(validatedUser)
+		dbUser, err := bundle.GetUser(*validatedUser)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		session, err := bundle.GetMongoSession()
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer session.Cancel()
-
-		if err != nil {
-			panic(err)
+		reqPlugin := &bundle.Plugin{
+			Plugin:  pluginName,
+			User:    dbUser.Username,
+			Version: version,
 		}
 
-		collection := session.Client.Database("main").Collection("plugins")
-		decodedPluginResult := &bundle.Plugin{}
-
-		err = collection.FindOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(pluginName)}}).Decode(decodedPluginResult)
+		decodedPluginResult, err := bundle.GetPlugin(pluginName)
 
 		if err == nil {
 			isUserPluginAuthor := strings.EqualFold(decodedPluginResult.User, validatedUser.Username)
 
 			if isUserPluginAuthor {
-				_, err = collection.UpdateOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(pluginName)}}, bson.D{{"$plugin", decodedPluginResult.Plugin}, {"$user", dbUser.Username}, {"$version", version}})
+				err = bundle.UpdatePlugin(pluginName, *reqPlugin)
 				if err != nil {
 					bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 					return
@@ -179,32 +113,23 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			_, err = collection.InsertOne(session.Ctx, bson.D{{"plugin", pluginName}, {"user", dbUser.Username}, {"version", version}})
+			err = bundle.InsertPlugin(*reqPlugin)
+			if err != nil {
+				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			decodedPluginResult.Plugin = pluginName
 			decodedPluginResult.User = dbUser.Username
 			decodedPluginResult.Version = version
 		}
 
+		uploadLocation, err := bundle.UploadPlugin(*decodedPluginResult, r.Body)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 
-		fp := filepath.Join(dbUser.Username, decodedPluginResult.Plugin, decodedPluginResult.Version, decodedPluginResult.Plugin+".jar")
-
-		uploader := s3manager.NewUploader(sess)
-		result, err := uploader.Upload(&s3manager.UploadInput{
-			Body:   r.Body,
-			Bucket: aws.String("bundle-repository"),
-			Key:    aws.String(fp),
-		})
-		if err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte("Error: " + err.Error()))
-			return
-		}
-
-		fmt.Println("Successfully uploaded to", result.Location)
+		fmt.Println("Successfully uploaded to", uploadLocation)
 	}
 
 }
@@ -214,75 +139,15 @@ func UserHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 
-		authHeaderParts := strings.Split(r.Header.Get("Authorization"), " ")
-		token := authHeaderParts[1]
-
-		hasScope := bundle.CheckScope("create:bundleuser", token)
-
-		if !hasScope {
-			bundle.WriteResponse(w, "Insufficient Permission", http.StatusForbidden)
-			return
+		r.ParseForm()
+		newUser := bundle.User{
+			Username: r.FormValue("username"),
+			Email:    r.FormValue("email"),
+			Password: r.FormValue("password"),
 		}
-
-		bb, err := io.ReadAll(r.Body)
+		err := bundle.InsertUser(newUser)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		validatedUser, err := bundle.ValidateAndReturnUser(string(bb))
-
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		bcryptPass, err := bcrypt.GenerateFromPassword([]byte(validatedUser.Password), bcrypt.DefaultCost)
-
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		session, err := bundle.GetMongoSession()
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer session.Cancel()
-
-		collection := session.Client.Database("main").Collection("users")
-
-		countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", bundle.NewCaseInsensitiveRegex(validatedUser.Username)}})
-
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if countUserName > 0 {
-			err = errors.New("user already exists with given username")
-			bundle.WriteResponse(w, err.Error(), http.StatusConflict)
-			return
-		}
-
-		countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", bundle.NewCaseInsensitiveRegex(validatedUser.Email)}})
-
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if countEmail > 0 {
-			err = errors.New("user already exists with given email")
-			bundle.WriteResponse(w, err.Error(), http.StatusConflict)
-			return
-		}
-
-		_, err = collection.InsertOne(session.Ctx, bson.D{{"username", validatedUser.Username}, {"email", validatedUser.Email}, {"password", string(bcryptPass)}})
-
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+			bundle.WriteResponse(w, "error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -300,7 +165,7 @@ func PluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		pluginName := r.FormValue("plugin")
 
-		plugin, err := bundle.GetPluginByName(pluginName)
+		plugin, err := bundle.GetPlugin(pluginName)
 		if err != nil {
 			panic(err)
 		}
