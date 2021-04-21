@@ -11,6 +11,7 @@ import (
 
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
+	"github.com/bennycio/bundle/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -55,7 +56,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
 		version := r.FormValue("version")
 
-		plugin, err := bundle.GetPlugin(name)
+		plugin, err := storage.GetPlugin(name)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -65,7 +66,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			plugin.Version = version
 		}
 
-		bs, err := bundle.DownloadPlugin(*plugin)
+		bs, err := storage.DownloadPlugin(*plugin)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -86,7 +87,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		dbUser, err := bundle.GetUser(*validatedUser)
+		dbUser, err := storage.GetUser(*validatedUser)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusBadRequest)
 			return
@@ -98,13 +99,13 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Version: version,
 		}
 
-		decodedPluginResult, err := bundle.GetPlugin(pluginName)
+		decodedPluginResult, err := storage.GetPlugin(pluginName)
 
 		if err == nil {
 			isUserPluginAuthor := strings.EqualFold(decodedPluginResult.User, validatedUser.Username)
 
 			if isUserPluginAuthor {
-				err = bundle.UpdatePlugin(pluginName, *reqPlugin)
+				err = storage.UpdatePlugin(pluginName, *reqPlugin)
 				if err != nil {
 					bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 					return
@@ -115,7 +116,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			err = bundle.InsertPlugin(*reqPlugin)
+			err = storage.InsertPlugin(*reqPlugin)
 			if err != nil {
 				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -125,7 +126,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			decodedPluginResult.Version = version
 		}
 
-		uploadLocation, err := bundle.UploadPlugin(*decodedPluginResult, r.Body)
+		uploadLocation, err := storage.UploadPlugin(*decodedPluginResult, r.Body)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -136,24 +137,24 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func UserHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+func UserHandlerFunc(w http.ResponseWriter, req *http.Request) {
+	defer req.Body.Close()
 
-	if r.Method == http.MethodPost {
+	if req.Method == http.MethodPost {
 
-		r.ParseForm()
+		req.ParseForm()
 		newUser := bundle.User{
-			Username: r.FormValue("username"),
-			Email:    r.FormValue("email"),
-			Password: r.FormValue("password"),
+			Username: req.FormValue("username"),
+			Email:    req.FormValue("email"),
+			Password: req.FormValue("password"),
 		}
-		err := bundle.InsertUser(newUser)
+		err := storage.InsertUser(newUser)
 		if err != nil {
-			bundle.WriteResponse(w, "error: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		bundle.WriteResponse(w, "", http.StatusOK)
+		http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
 	}
 
 }
@@ -168,7 +169,7 @@ func PluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		pluginName := r.FormValue("plugin")
 
-		plugin, err := bundle.GetPlugin(pluginName)
+		plugin, err := storage.GetPlugin(pluginName)
 		if err != nil {
 			panic(err)
 		}
@@ -184,52 +185,70 @@ func PluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
+	defer req.Body.Close()
 
-	req.ParseForm()
-	user := bundle.User{
-		Username: req.FormValue("username"),
-		Email:    req.FormValue("email"),
-		Password: req.FormValue("password"),
+	if req.Method == http.MethodPost {
+
+		req.ParseForm()
+		user := bundle.User{
+			Username: req.FormValue("username"),
+			Email:    req.FormValue("email"),
+			Password: req.FormValue("password"),
+		}
+
+		asJSON, err := json.Marshal(user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		userJSON := string(asJSON)
+		validatedUser, err := bundle.ValidateAndReturnUser(userJSON)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		dbUser, err := storage.GetUser(*validatedUser)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(validatedUser.Password))
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		token, err := auth.NewAuthToken(dbUser)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		tokenCookie := auth.NewAccessCookie(token)
+		http.SetCookie(w, tokenCookie)
+		http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
 	}
 
-	asJSON, err := json.Marshal(user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	if req.Method == http.MethodGet {
+		err := tpl.ExecuteTemplate(w, "login.gohtml", nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-	userJSON := string(asJSON)
-	validatedUser, err := bundle.ValidateAndReturnUser(userJSON)
+}
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+func LogoutHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
-	dbUser, err := bundle.GetUser(*validatedUser)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	accessCookie, err := req.Cookie("access_token")
+	if err == nil {
+		accessCookie.MaxAge = -1
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(validatedUser.Password))
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	// TODO make this part of database interaction
-	role := "user"
-
-	token, err := auth.GetAuthToken(role)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-	c := &http.Cookie{
-		Name:  "token",
-		Value: token,
-	}
-	http.SetCookie(w, c)
+	http.SetCookie(w, accessCookie)
+	http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
 }

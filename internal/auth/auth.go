@@ -2,29 +2,31 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
-	"strings"
+	"time"
 
 	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/storage"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type CustomClaims struct {
-	Scope string `json:"scope"`
+	User *bundle.User `json:"user"`
 	jwt.StandardClaims
 }
 
-func GetAuthToken(scope ...string) (string, error) {
+func NewAuthToken(user *bundle.User) (string, error) {
 
 	secret := viper.GetString("ClientSecret")
 
-	scopes := strings.Join(scope, ",")
 	claims := CustomClaims{
-		Scope: scopes,
+		User: user,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: 43200,
+			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
 			Issuer:    "bundle",
 		},
 	}
@@ -36,8 +38,35 @@ func GetAuthToken(scope ...string) (string, error) {
 	return signedToken, nil
 }
 
-func checkRole(role string, tokenString string) bool {
+func CheckScope(tokenString string, scopes ...string) bool {
 
+	tokenUser, err := GetUserFromToken(tokenString)
+	if err != nil {
+		return false
+	}
+
+	isAuthorized := true
+	for _, scope := range scopes {
+		if !bundle.Contains(tokenUser.Scopes, scope) {
+			isAuthorized = false
+		}
+	}
+	return isAuthorized
+}
+
+func GetUserFromToken(tokenString string) (*bundle.User, error) {
+	fmt.Println("GETTIN USER FROM THE TOKEN")
+	claims, err := ValidateToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("GOT THAT USER HELL YEAH")
+	return claims.User, nil
+
+}
+
+func ValidateToken(tokenString string) (*CustomClaims, error) {
 	secret := viper.GetString("ClientSecret")
 
 	token, err := jwt.ParseWithClaims(
@@ -48,40 +77,56 @@ func checkRole(role string, tokenString string) bool {
 		},
 	)
 	if err != nil {
-		return false
+		fmt.Println("UH OH")
+		return nil, err
 	}
 
-	claims := token.Claims.(*CustomClaims)
+	claims, ok := token.Claims.(*CustomClaims)
+	if !ok {
+		err = errors.New("couldn't parse claims")
+		return nil, err
+	}
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		err = errors.New("expired token")
+		return nil, err
+	}
 
-	return role == claims.Scope
+	return claims, nil
+
 }
 
 func AuthWithScope(next http.Handler, scopes ...string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := r.Cookie("access_token")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Redirect(w, r, "/login", http.StatusUnauthorized)
 			return
 		}
 		tokenString := token.Value
 
-		canContinue := true
-		for _, scope := range scopes {
-			ok := checkRole(scope, tokenString)
-			if !ok {
-				canContinue = false
-			}
-		}
+		canContinue := CheckScope(tokenString, scopes...)
 
 		if !canContinue {
 			http.Error(w, "unautorized", http.StatusUnauthorized)
 			return
 		}
-		next.ServeHTTP(w, r)
+
+		RefreshToken(next).ServeHTTP(w, r)
 	})
 }
 
-func ImplicitLogin(next http.Handler) http.Handler {
+func AuthWithoutScope(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := r.Cookie("access_token")
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		RefreshToken(next).ServeHTTP(w, r)
+	})
+}
+
+func AuthUpload(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 
@@ -95,9 +140,9 @@ func ImplicitLogin(next http.Handler) http.Handler {
 					return
 				}
 				user := bundle.User{
-					r.FormValue("username"),
-					r.FormValue("email"),
-					r.FormValue("password"),
+					Username: r.FormValue("username"),
+					Email:    r.FormValue("email"),
+					Password: r.FormValue("password"),
 				}
 				asJSON, err := json.Marshal(user)
 				if err != nil {
@@ -115,7 +160,7 @@ func ImplicitLogin(next http.Handler) http.Handler {
 				return
 			}
 
-			dbUser, err := bundle.GetUser(*validatedUser)
+			dbUser, err := storage.GetUser(*validatedUser)
 
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
@@ -132,5 +177,45 @@ func ImplicitLogin(next http.Handler) http.Handler {
 			}
 		}
 		next.ServeHTTP(w, r)
+	})
+}
+
+func NewAccessCookie(token string) *http.Cookie {
+	return &http.Cookie{
+		Name:     "access_token",
+		Value:    token,
+		MaxAge:   600,
+		HttpOnly: true,
+	}
+}
+
+func RefreshToken(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		token, err := req.Cookie("access_token")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		tokenString := token.Value
+
+		tokenUser, err := GetUserFromToken(tokenString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		newToken, err := NewAuthToken(tokenUser)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		newCookie := NewAccessCookie(newToken)
+
+		http.SetCookie(w, newCookie)
+
+		fmt.Println("ABOUTA SERVE SOME SHIZ")
+
+		next.ServeHTTP(w, req)
 	})
 }

@@ -1,4 +1,4 @@
-package internal
+package storage
 
 import (
 	"io"
@@ -8,10 +8,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	bundle "github.com/bennycio/bundle/internal"
 	"github.com/spf13/viper"
 )
 
-func UploadPlugin(plugin Plugin, body io.Reader) (string, error) {
+func UploadPlugin(plugin bundle.Plugin, body io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 	fp := filepath.Join(plugin.User, plugin.Plugin, plugin.Version, plugin.Plugin+".jar")
 
@@ -27,7 +28,7 @@ func UploadPlugin(plugin Plugin, body io.Reader) (string, error) {
 	return result.Location, nil
 }
 
-func DownloadPlugin(plugin Plugin) ([]byte, error) {
+func DownloadPlugin(plugin bundle.Plugin) ([]byte, error) {
 
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 

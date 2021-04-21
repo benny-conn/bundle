@@ -7,9 +7,10 @@ import (
 )
 
 type User struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Username string   `json:"username"`
+	Email    string   `json:"email"`
+	Password string   `json:"password"`
+	Scopes   []string `json:"scopes"`
 }
 
 type Plugin struct {

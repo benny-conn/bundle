@@ -1,14 +1,9 @@
 package internal
 
 import (
-	"context"
 	"net/http"
-	"time"
 
-	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func WriteResponse(w http.ResponseWriter, message string, status int) {
@@ -20,16 +15,12 @@ func NewCaseInsensitiveRegex(value string) primitive.Regex {
 	return primitive.Regex{Pattern: value, Options: "i"}
 }
 
-func GetMongoSession() (*Mongo, error) {
-	mg := &Mongo{}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("MongoURL")))
-	mg.Cancel = cancel
-	mg.Client = client
-	mg.Ctx = ctx
-	if err != nil {
-		return mg, err
+func Contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
 	}
-	return mg, nil
+
+	return false
 }
