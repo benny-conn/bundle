@@ -14,7 +14,221 @@
     integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
     crossorigin="anonymous"
   />
-  <link rel="stylesheet" href="/public/styles.css" />
+  <link rel="stylesheet" href="public/css/styles.css" />
+
+  <style>
+    @import url("https://fonts.googleapis.com/css?family=Rubik:300");
+
+    .component-wrapper a,
+    .screen a {
+      text-decoration: none;
+      display: contents;
+    }
+
+    .full-width-a {
+      width: 100%;
+    }
+
+    .full-height-a {
+      height: 100%;
+    }
+
+    .screen textarea:focus,
+    .screen input:focus {
+      outline: none;
+    }
+
+    .screen *,
+    .component-wrapper * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .screen div {
+      -webkit-text-size-adjust: none;
+    }
+
+    .container-center-vertical,
+    .container-center-horizontal {
+      pointer-events: none;
+      display: flex;
+      flex-direction: row;
+      padding: 0;
+      margin: 0;
+    }
+
+    .container-center-vertical {
+      align-items: center;
+      height: 100%;
+    }
+
+    .container-center-horizontal {
+      justify-content: center;
+      width: 100%;
+    }
+
+    .container-center-vertical > *,
+    .container-center-horizontal > * {
+      pointer-events: auto;
+      flex-shrink: 0;
+    }
+
+    .component-wrapper,
+    .screen {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-all;
+      word-break: break-word;
+    }
+
+    .auto-animated div {
+      opacity: 0;
+      position: absolute;
+      --z-index: -1;
+    }
+
+    .auto-animated .container-center-vertical,
+    .auto-animated .container-center-horizontal {
+      opacity: 1;
+    }
+
+    .overlay {
+      position: absolute;
+      opacity: 0;
+      display: none;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+    }
+
+    .animate-appear {
+      opacity: 0;
+      display: block;
+      animation: reveal 0.3s ease-in-out 1 normal forwards;
+    }
+
+    .animate-disappear {
+      opacity: 1;
+      display: block;
+      animation: reveal 0.3s ease-in-out 1 reverse forwards;
+    }
+
+    .animate-nodelay {
+      animation-delay: 0s;
+    }
+
+    @keyframes reveal {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    .align-self-flex-start {
+      align-self: flex-start;
+    }
+    .align-self-flex-end {
+      align-self: flex-end;
+    }
+    .align-self-flex-center {
+      align-self: center;
+    }
+    .valign-text-middle {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .valign-text-bottom {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    input:focus {
+      outline: none;
+    }
+    .component-wrapper,
+    .component-wrapper * {
+      pointer-events: none;
+    }
+
+    .component-wrapper a *,
+    .component-wrapper a,
+    .component-wrapper input,
+    .component-wrapper video,
+    .component-wrapper iframe,
+    .listeners-active,
+    .listeners-active * {
+      pointer-events: auto;
+    }
+
+    .hidden,
+    .hidden * {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .smart-layers-pointers,
+    .smart-layers-pointers * {
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    .component-wrapper.not-ready,
+    .component-wrapper.not-ready * {
+      visibility: hidden !important;
+    }
+
+    .listeners-active-click,
+    .listeners-active-click * {
+      cursor: pointer;
+    }
+
+    @import url("https://fonts.googleapis.com/css?family=Rubik:300");
+    * {
+      box-sizing: border-box;
+    }
+    .rubik-light-black-23px {
+      color: var(--black);
+      font-family: var(--font-family-rubik);
+      font-size: var(--font-size-23px);
+      font-style: normal;
+      font-weight: 300;
+    }
+    .rubik-light-black-39-5px {
+      color: var(--black);
+      font-family: var(--font-family-rubik);
+      font-size: var(--font-size-39_5px);
+      font-style: normal;
+      font-weight: 300;
+    }
+    .rubik-light-fuscous-gray-41-5px {
+      color: var(--fuscous-gray);
+      font-family: var(--font-family-rubik);
+      font-size: var(--font-size-41_5px);
+      font-style: normal;
+      font-weight: 300;
+    }
+    :root {
+      --black: rgba(0, 0, 0, 1);
+      --font-family-rubik: "Rubik", Helvetica;
+      --font-size-23px: 23px;
+      --font-size-26px: 26px;
+      --font-size-28px: 28px;
+      --font-size-29_6px: 29.6px;
+      --font-size-36_9px: 36.9px;
+      --font-size-39_5px: 39.5px;
+      --font-size-41_5px: 41.5px;
+      --font-size-46_1px: 46.1px;
+      --font-size-55_3px: 55.3px;
+      --font-size-59_9px: 59.9px;
+      --font-size-61_5px: 61.5px;
+      --font-size-69_1px: 69.1px;
+      --fuscous-gray: rgba(82, 82, 82, 1);
+      --jagged-ice: rgba(194, 227, 232, 1);
+    }
+  </style>
 </head>
 {{ end }}
 
