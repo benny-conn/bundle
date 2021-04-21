@@ -10,6 +10,8 @@ import (
 	"text/template"
 
 	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/auth"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var tpl *template.Template
@@ -153,6 +155,7 @@ func UserHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		bundle.WriteResponse(w, "", http.StatusOK)
 	}
+
 }
 
 func PluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -178,4 +181,55 @@ func PluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		bundle.WriteResponse(w, string(asJSON), http.StatusOK)
 
 	}
+}
+
+func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
+
+	req.ParseForm()
+	user := bundle.User{
+		Username: req.FormValue("username"),
+		Email:    req.FormValue("email"),
+		Password: req.FormValue("password"),
+	}
+
+	asJSON, err := json.Marshal(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	userJSON := string(asJSON)
+	validatedUser, err := bundle.ValidateAndReturnUser(userJSON)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	dbUser, err := bundle.GetUser(*validatedUser)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(validatedUser.Password))
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// TODO make this part of database interaction
+	role := "user"
+
+	token, err := auth.GetAuthToken(role)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	c := &http.Cookie{
+		Name:  "token",
+		Value: token,
+	}
+	http.SetCookie(w, c)
 }

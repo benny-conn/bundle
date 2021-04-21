@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/auth"
 	"github.com/bennycio/bundle/internal/web"
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
@@ -27,7 +27,7 @@ func main() {
 
 	bundleHandler := http.HandlerFunc(web.BundleHandlerFunc)
 	userHandler := http.HandlerFunc(web.UserHandlerFunc)
-	mux.Handle("/bundle", bundle.AuthUser(bundleHandler))
+	mux.Handle("/bundle", auth.ImplicitLogin(bundleHandler))
 	mux.Handle("/users", userHandler)
 	mux.HandleFunc("/", web.RootHandlerFunc)
 	mux.HandleFunc("/signup", web.SignupHandlerFunc)
