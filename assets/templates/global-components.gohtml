@@ -1,291 +1,75 @@
 {{define "head"}}
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bundle MC</title>
-  <link
-    rel="shortcut icon"
-    href="/public/img/favicon.ico"
-    type="image/x-icon"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
-    crossorigin="anonymous"
-  />
+  <link rel="shortcut icon" href="/public/img/favicon.ico" type="image/x-icon" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+
   <link rel="stylesheet" href="public/css/styles.css" />
-
-  <style>
-    @import url("https://fonts.googleapis.com/css?family=Rubik:300");
-
-    .component-wrapper a,
-    .screen a {
-      text-decoration: none;
-      display: contents;
-    }
-
-    .full-width-a {
-      width: 100%;
-    }
-
-    .full-height-a {
-      height: 100%;
-    }
-
-    .screen textarea:focus,
-    .screen input:focus {
-      outline: none;
-    }
-
-    .screen *,
-    .component-wrapper * {
-      box-sizing: border-box;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .screen div {
-      -webkit-text-size-adjust: none;
-    }
-
-    .container-center-vertical,
-    .container-center-horizontal {
-      pointer-events: none;
-      display: flex;
-      flex-direction: row;
-      padding: 0;
-      margin: 0;
-    }
-
-    .container-center-vertical {
-      align-items: center;
-      height: 100%;
-    }
-
-    .container-center-horizontal {
-      justify-content: center;
-      width: 100%;
-    }
-
-    .container-center-vertical > *,
-    .container-center-horizontal > * {
-      pointer-events: auto;
-      flex-shrink: 0;
-    }
-
-    .component-wrapper,
-    .screen {
-      overflow-wrap: break-word;
-      word-wrap: break-word;
-      word-break: break-all;
-      word-break: break-word;
-    }
-
-    .auto-animated div {
-      opacity: 0;
-      position: absolute;
-      --z-index: -1;
-    }
-
-    .auto-animated .container-center-vertical,
-    .auto-animated .container-center-horizontal {
-      opacity: 1;
-    }
-
-    .overlay {
-      position: absolute;
-      opacity: 0;
-      display: none;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      position: fixed;
-    }
-
-    .animate-appear {
-      opacity: 0;
-      display: block;
-      animation: reveal 0.3s ease-in-out 1 normal forwards;
-    }
-
-    .animate-disappear {
-      opacity: 1;
-      display: block;
-      animation: reveal 0.3s ease-in-out 1 reverse forwards;
-    }
-
-    .animate-nodelay {
-      animation-delay: 0s;
-    }
-
-    @keyframes reveal {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-    .align-self-flex-start {
-      align-self: flex-start;
-    }
-    .align-self-flex-end {
-      align-self: flex-end;
-    }
-    .align-self-flex-center {
-      align-self: center;
-    }
-    .valign-text-middle {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    .valign-text-bottom {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
-    input:focus {
-      outline: none;
-    }
-    .component-wrapper,
-    .component-wrapper * {
-      pointer-events: none;
-    }
-
-    .component-wrapper a *,
-    .component-wrapper a,
-    .component-wrapper input,
-    .component-wrapper video,
-    .component-wrapper iframe,
-    .listeners-active,
-    .listeners-active * {
-      pointer-events: auto;
-    }
-
-    .hidden,
-    .hidden * {
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .smart-layers-pointers,
-    .smart-layers-pointers * {
-      pointer-events: auto;
-      visibility: visible;
-    }
-
-    .component-wrapper.not-ready,
-    .component-wrapper.not-ready * {
-      visibility: hidden !important;
-    }
-
-    .listeners-active-click,
-    .listeners-active-click * {
-      cursor: pointer;
-    }
-
-    @import url("https://fonts.googleapis.com/css?family=Rubik:300");
-    * {
-      box-sizing: border-box;
-    }
-    .rubik-light-black-23px {
-      color: var(--black);
-      font-family: var(--font-family-rubik);
-      font-size: var(--font-size-23px);
-      font-style: normal;
-      font-weight: 300;
-    }
-    .rubik-light-black-39-5px {
-      color: var(--black);
-      font-family: var(--font-family-rubik);
-      font-size: var(--font-size-39_5px);
-      font-style: normal;
-      font-weight: 300;
-    }
-    .rubik-light-fuscous-gray-41-5px {
-      color: var(--fuscous-gray);
-      font-family: var(--font-family-rubik);
-      font-size: var(--font-size-41_5px);
-      font-style: normal;
-      font-weight: 300;
-    }
-    :root {
-      --black: rgba(0, 0, 0, 1);
-      --font-family-rubik: "Rubik", Helvetica;
-      --font-size-23px: 23px;
-      --font-size-26px: 26px;
-      --font-size-28px: 28px;
-      --font-size-29_6px: 29.6px;
-      --font-size-36_9px: 36.9px;
-      --font-size-39_5px: 39.5px;
-      --font-size-41_5px: 41.5px;
-      --font-size-46_1px: 46.1px;
-      --font-size-55_3px: 55.3px;
-      --font-size-59_9px: 59.9px;
-      --font-size-61_5px: 61.5px;
-      --font-size-69_1px: 69.1px;
-      --fuscous-gray: rgba(82, 82, 82, 1);
-      --jagged-ice: rgba(194, 227, 232, 1);
-    }
-  </style>
+  <link rel="stylesheet" href="public/css/sass.css" />
 </head>
 {{ end }}
 
 {{define "header"}}
-<header class="p-3 bg-dark text-white">
-  <div class="container">
-    <div
-      class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start"
-    >
-      <a
-        href="/"
-        class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none"
-      >
-        <object
-          data="/public/img/bundle.svg"
-          type="image/svg+xml"
-          class="bi me-2"
-          alt="Example image"
-          width="40"
-          height="32"
-          loading="lazy"
-        ></object>
+<header class="p-2 bg-dark text-white">
+  <nav class="navbar navbar-expand-lg py-1 navbar-dark bg-dark shadow-sm">
+    <div class="container">
+      <a href="#" class="navbar-brand">
+        <!-- Logo Image -->
+        <img src="public/img/bundle.png" width="45" alt="" class="d-inline-block align-middle mr-2" />
+        <!-- Logo Text -->
+        <span class="text-uppercase font-weight-bold">Bundle</span>
       </a>
 
-      <ul
-        class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0"
-      >
-        <li><a href="#" class="nav-link px-2 text-secondary">Home</a></li>
-        <li><a href="#" class="nav-link px-2 text-white">Plugins</a></li>
-        <li><a href="#" class="nav-link px-2 text-white">Downloads</a></li>
-        <li><a href="#" class="nav-link px-2 text-white">About</a></li>
-        <li><a href="#" class="nav-link px-2 text-white">FAQs</a></li>
-      </ul>
+      <button type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"
+        class="navbar-toggler">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-      <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
-        <input
-          type="search"
-          class="form-control form-control-dark"
-          placeholder="Search..."
-        />
-      </form>
-
-      <div class="text-end">
-        <a class="btn btn-outline-light me-2" href="/login">Login</a>
-        <a class="btn btn-warning" href="/signup"> Sign-up </a>
+      <div id="navbarSupportedContent" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item active">
+            <a href="/" class="nav-link">Home</a>
+          </li>
+          <li class="nav-item"><a href="#" class="nav-link">Plugins</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">Downloads</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">About</a></li>
+          {{with .Profile.Username}}
+          <li class="nav-item">
+            <a class="btn btn-light mx-1" href="/profile"> Profile </a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-warning mx-1" href="/logout"> Logout</a>
+          </li>
+          {{else}}
+          <li class="nav-item">
+            <a class="btn btn-light mx-1" href="/login"> Login </a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-warning mx-1" href="/signup"> Sign Up </a>
+          </li>
+          {{end}}
+        </ul>
       </div>
     </div>
-  </div>
+  </nav>
 </header>
 {{ end }}
 
 {{define "footer"}}
 <footer>
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
-    crossorigin="anonymous"
-  ></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
+  </script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+  </script>
+  <script src="public/js/index.js"></script>
 </footer>
 {{ end }}

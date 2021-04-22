@@ -66,10 +66,10 @@ func InsertUser(user bundle.User) error {
 	return nil
 }
 
-func GetUser(user bundle.User) (*bundle.User, error) {
+func GetUser(user bundle.User) (bundle.User, error) {
 	session, err := getMongoSession()
 	if err != nil {
-		return nil, err
+		return bundle.User{}, err
 	}
 	defer session.Cancel()
 
@@ -85,10 +85,10 @@ func GetUser(user bundle.User) (*bundle.User, error) {
 		err = collection.FindOne(session.Ctx, bson.D{{"username", user.Username}, {"email", bundle.NewCaseInsensitiveRegex(user.Email)}}).Decode(decodedUser)
 	}
 	if err != nil {
-		return nil, err
+		return bundle.User{}, err
 	}
 
-	return decodedUser, nil
+	return *decodedUser, nil
 }
 
 func InsertPlugin(plugin bundle.Plugin) error {
@@ -131,11 +131,11 @@ func UpdatePlugin(name string, plugin bundle.Plugin) error {
 
 }
 
-func GetPlugin(name string) (*bundle.Plugin, error) {
+func GetPlugin(name string) (bundle.Plugin, error) {
 
 	session, err := getMongoSession()
 	if err != nil {
-		return nil, err
+		return bundle.Plugin{}, err
 	}
 	defer session.Cancel()
 
@@ -144,10 +144,10 @@ func GetPlugin(name string) (*bundle.Plugin, error) {
 
 	err = collection.FindOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(name)}}).Decode(decodedPluginResult)
 	if err != nil {
-		return nil, err
+		return bundle.Plugin{}, err
 	}
 
-	return decodedPluginResult, nil
+	return *decodedPluginResult, nil
 
 }
 

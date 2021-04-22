@@ -3,7 +3,6 @@ package auth
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -15,16 +14,16 @@ import (
 )
 
 type CustomClaims struct {
-	User *bundle.User `json:"user"`
+	Profile bundle.Profile `json:"profile"`
 	jwt.StandardClaims
 }
 
-func NewAuthToken(user *bundle.User) (string, error) {
+func NewAuthToken(profile bundle.Profile) (string, error) {
 
 	secret := viper.GetString("ClientSecret")
 
 	claims := CustomClaims{
-		User: user,
+		Profile: profile,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
 			Issuer:    "bundle",
@@ -40,7 +39,7 @@ func NewAuthToken(user *bundle.User) (string, error) {
 
 func CheckScope(tokenString string, scopes ...string) bool {
 
-	tokenUser, err := GetUserFromToken(tokenString)
+	tokenUser, err := GetProfileFromToken(tokenString)
 	if err != nil {
 		return false
 	}
@@ -54,15 +53,13 @@ func CheckScope(tokenString string, scopes ...string) bool {
 	return isAuthorized
 }
 
-func GetUserFromToken(tokenString string) (*bundle.User, error) {
-	fmt.Println("GETTIN USER FROM THE TOKEN")
+func GetProfileFromToken(tokenString string) (bundle.Profile, error) {
 	claims, err := ValidateToken(tokenString)
 	if err != nil {
-		return nil, err
+		return bundle.Profile{}, err
 	}
 
-	fmt.Println("GOT THAT USER HELL YEAH")
-	return claims.User, nil
+	return claims.Profile, nil
 
 }
 
@@ -77,7 +74,6 @@ func ValidateToken(tokenString string) (*CustomClaims, error) {
 		},
 	)
 	if err != nil {
-		fmt.Println("UH OH")
 		return nil, err
 	}
 
@@ -198,9 +194,9 @@ func RefreshToken(next http.Handler) http.Handler {
 		}
 		tokenString := token.Value
 
-		tokenUser, err := GetUserFromToken(tokenString)
+		tokenUser, err := GetProfileFromToken(tokenString)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Redirect(w, req, "/logout", http.StatusUnauthorized)
 			return
 		}
 
@@ -213,8 +209,6 @@ func RefreshToken(next http.Handler) http.Handler {
 		newCookie := NewAccessCookie(newToken)
 
 		http.SetCookie(w, newCookie)
-
-		fmt.Println("ABOUTA SERVE SOME SHIZ")
 
 		next.ServeHTTP(w, req)
 	})

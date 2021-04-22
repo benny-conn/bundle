@@ -12,9 +12,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-func UploadPlugin(plugin bundle.Plugin, body io.Reader) (string, error) {
+func UploadToRepo(plugin bundle.Plugin, body io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
-	fp := filepath.Join(plugin.User, plugin.Plugin, plugin.Version, plugin.Plugin+".jar")
+	var fp string
+	if plugin.Version == "README" {
+		fp = filepath.Join(plugin.User, plugin.Plugin, "README.md")
+	} else {
+		fp = filepath.Join(plugin.User, plugin.Plugin, plugin.Version, plugin.Plugin+".jar")
+	}
 
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.Upload(&s3manager.UploadInput{
@@ -28,14 +33,19 @@ func UploadPlugin(plugin bundle.Plugin, body io.Reader) (string, error) {
 	return result.Location, nil
 }
 
-func DownloadPlugin(plugin bundle.Plugin) ([]byte, error) {
+func DownloadFromRepo(plugin bundle.Plugin) ([]byte, error) {
 
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
 	buf := aws.NewWriteAtBuffer([]byte{})
 
-	fn := filepath.Join(plugin.User, plugin.Plugin, plugin.Version, plugin.Plugin+".jar")
+	var fn string
 
+	if plugin.Version == "README" {
+		fn = filepath.Join(plugin.User, plugin.Plugin, "README.md")
+	} else {
+		fn = filepath.Join(plugin.User, plugin.Plugin, plugin.Version, plugin.Plugin+".jar")
+	}
 	downloader := s3manager.NewDownloader(sess)
 	_, err := downloader.Download(buf, &s3.GetObjectInput{
 		Bucket: aws.String(viper.GetString("AWSBucket")),

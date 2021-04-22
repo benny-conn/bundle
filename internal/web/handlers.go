@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"text/template"
@@ -12,6 +11,7 @@ import (
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
 	"github.com/bennycio/bundle/internal/storage"
+	"github.com/russross/blackfriday/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -26,16 +26,22 @@ func init() {
 func RootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	err := tpl.ExecuteTemplate(w, "index.gohtml", nil)
+	profile, _ := getProfileFromCookie(r)
+	data := bundle.TemplateData{
+		Profile: profile,
+	}
+
+	err := tpl.ExecuteTemplate(w, "index", data)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 }
 func SignupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	err := tpl.ExecuteTemplate(w, "signup.gohtml", nil)
+	user, _ := getProfileFromCookie(r)
+	err := tpl.ExecuteTemplate(w, "register", user)
 	if err != nil {
 		bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -66,7 +72,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			plugin.Version = version
 		}
 
-		bs, err := storage.DownloadPlugin(*plugin)
+		bs, err := storage.DownloadFromRepo(plugin)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -79,6 +85,8 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		version := r.Header.Get("Plugin-Version")
 		userJSON := r.Header.Get("User")
 		pluginName := r.Header.Get("Plugin-Name")
+
+		isReadme := strings.Contains(version, "README")
 
 		validatedUser, err := bundle.ValidateAndReturnUser(userJSON)
 
@@ -93,22 +101,26 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		reqPlugin := &bundle.Plugin{
+		reqPlugin := bundle.Plugin{
 			Plugin:  pluginName,
 			User:    dbUser.Username,
 			Version: version,
 		}
 
-		decodedPluginResult, err := storage.GetPlugin(pluginName)
+		dbPlugin, err := storage.GetPlugin(pluginName)
 
 		if err == nil {
-			isUserPluginAuthor := strings.EqualFold(decodedPluginResult.User, validatedUser.Username)
+			isUserPluginAuthor := strings.EqualFold(dbPlugin.User, validatedUser.Username)
 
 			if isUserPluginAuthor {
-				err = storage.UpdatePlugin(pluginName, *reqPlugin)
-				if err != nil {
-					bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-					return
+				if isReadme {
+					dbPlugin.Version = version
+				} else {
+					err = storage.UpdatePlugin(pluginName, reqPlugin)
+					if err != nil {
+						bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
 				}
 			} else {
 				err = errors.New("you are not permitted to edit this plugin")
@@ -116,17 +128,20 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			err = storage.InsertPlugin(*reqPlugin)
+			if isReadme {
+				err = errors.New("no plugin to attach readme to")
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			err = storage.InsertPlugin(reqPlugin)
+			dbPlugin = reqPlugin
 			if err != nil {
 				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			decodedPluginResult.Plugin = pluginName
-			decodedPluginResult.User = dbUser.Username
-			decodedPluginResult.Version = version
 		}
 
-		uploadLocation, err := storage.UploadPlugin(*decodedPluginResult, r.Body)
+		uploadLocation, err := storage.UploadToRepo(dbPlugin, r.Body)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -159,7 +174,7 @@ func UserHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func PluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if r.Method == http.MethodGet {
 		err := r.ParseForm()
@@ -180,7 +195,6 @@ func PluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		bundle.WriteResponse(w, string(asJSON), http.StatusOK)
-
 	}
 }
 
@@ -192,7 +206,6 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		req.ParseForm()
 		user := bundle.User{
 			Username: req.FormValue("username"),
-			Email:    req.FormValue("email"),
 			Password: req.FormValue("password"),
 		}
 
@@ -223,7 +236,13 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		token, err := auth.NewAuthToken(dbUser)
+		profile := bundle.Profile{
+			Username: dbUser.Username,
+			Email:    dbUser.Email,
+			Scopes:   dbUser.Scopes,
+		}
+
+		token, err := auth.NewAuthToken(profile)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -234,7 +253,8 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if req.Method == http.MethodGet {
-		err := tpl.ExecuteTemplate(w, "login.gohtml", nil)
+		user, _ := getProfileFromCookie(req)
+		err := tpl.ExecuteTemplate(w, "login", user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -251,4 +271,49 @@ func LogoutHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	http.SetCookie(w, accessCookie)
 	http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
+}
+
+func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
+	defer req.Body.Close()
+
+	err := req.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	pluginName := req.FormValue("plugin")
+
+	plugin, err := storage.GetPlugin(pluginName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	pluginReadme := bundle.Plugin{
+		Plugin:  plugin.Plugin,
+		User:    plugin.User,
+		Version: "README",
+	}
+
+	md, err := storage.DownloadFromRepo(pluginReadme)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	output := blackfriday.Run(md)
+
+	user, _ := getProfileFromCookie(req)
+
+	data := bundle.TemplateData{
+		Profile:  user,
+		Plugin:   plugin,
+		Markdown: string(output),
+	}
+
+	err = tpl.ExecuteTemplate(w, "plugin", data)
+	if err != nil {
+		panic(err)
+	}
+
 }

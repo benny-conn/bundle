@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -32,40 +31,50 @@ var uploadCmd = &cobra.Command{
 
 		path := args[0]
 
-		reader, err := zip.OpenReader(path)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		result := &PluginYML{}
-
-		for _, file := range reader.File {
-			if strings.HasSuffix(file.Name, "plugin.yml") {
-				rc, err := file.Open()
-				if err != nil {
-					log.Fatal(err)
-				}
-				buf := bytes.Buffer{}
-				buf.ReadFrom(rc)
-				err = yaml.Unmarshal(buf.Bytes(), result)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-		}
-
-		reader.Close()
-
-		finalName := result.Name
-		version := result.Version
-
 		user := credentialsPrompt()
 
 		userAsJSON, err := json.Marshal(user)
 
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		pluginDetails := &bundle.Plugin{}
+
+		isReadme := strings.HasSuffix(path, "README.md")
+
+		if isReadme {
+
+			pluginDetails = pluginInfoPrompt()
+
+		} else {
+			reader, err := zip.OpenReader(path)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			result := &PluginYML{}
+
+			for _, file := range reader.File {
+				if strings.HasSuffix(file.Name, "plugin.yml") {
+					rc, err := file.Open()
+					if err != nil {
+						log.Fatal(err)
+					}
+					buf := bytes.Buffer{}
+					buf.ReadFrom(rc)
+					err = yaml.Unmarshal(buf.Bytes(), result)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+			}
+
+			reader.Close()
+
+			pluginDetails.Plugin = result.Name
+			pluginDetails.Version = result.Version
 		}
 
 		fmt.Printf("Uploading to Bundle Repository From: %s\n", path)
@@ -75,8 +84,7 @@ var uploadCmd = &cobra.Command{
 			panic(err)
 		}
 
-		pb := progressbar.Default(-1, "Uploading Plugin")
-		resp, err := uploadPlugin(file, version, finalName, string(userAsJSON))
+		resp, err := uploadToRepo(file, pluginDetails.Version, pluginDetails.Plugin, string(userAsJSON))
 
 		if err != nil {
 			panic(err)
@@ -88,11 +96,10 @@ var uploadCmd = &cobra.Command{
 		}
 		fmt.Println(string(resp.Status))
 		fmt.Println(string(respBody))
-		pb.Finish()
 	},
 }
 
-func uploadPlugin(file io.Reader, version string, pluginName string, userJSON string) (*http.Response, error) {
+func uploadToRepo(file io.Reader, version string, pluginName string, userJSON string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/bundle", file)
 	if err != nil {
 		return nil, err
@@ -107,4 +114,17 @@ func uploadPlugin(file io.Reader, version string, pluginName string, userJSON st
 
 func init() {
 	rootCmd.AddCommand(uploadCmd)
+}
+
+func pluginInfoPrompt() *bundle.Plugin {
+	fmt.Println("Enter plugin name: ")
+	var pluginName string
+	fmt.Scanln(&pluginName)
+
+	plugin := &bundle.Plugin{
+		Plugin:  pluginName,
+		Version: "README",
+	}
+
+	return plugin
 }

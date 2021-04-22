@@ -13,6 +13,19 @@ type User struct {
 	Scopes   []string `json:"scopes"`
 }
 
+type Profile struct {
+	Username string
+	Email    string
+	Tags     []string
+	Scopes   []string
+}
+
+type TemplateData struct {
+	Profile  Profile
+	Plugin   Plugin
+	Markdown string
+}
+
 type Plugin struct {
 	Plugin  string `json:"plugin"`
 	User    string `json:"user"`
