@@ -99,7 +99,7 @@ func InsertPlugin(plugin bundle.Plugin) error {
 	defer session.Cancel()
 
 	collection := session.Client.Database("main").Collection("plugins")
-	_, err = collection.InsertOne(session.Ctx, bson.D{{"plugin", plugin.Plugin}, {"user", plugin.User}, {"version", plugin.Version}})
+	_, err = collection.InsertOne(session.Ctx, bson.D{{"plugin", plugin.Plugin}, {"user", plugin.User}, {"version", plugin.Version}, {"lastUpdated", time.Now().Unix()}})
 
 	if err != nil {
 		return err
@@ -119,19 +119,21 @@ func UpdatePlugin(name string, plugin bundle.Plugin) error {
 	collection := session.Client.Database("main").Collection("plugins")
 	decodedPluginResult := &bundle.Plugin{}
 
-	err = collection.FindOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(name)}}).Decode(decodedPluginResult)
+	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(name)}}, bson.D{{"plugin", decodedPluginResult.Plugin}, {"user", plugin.User}, {"version", plugin.Version}, {"lastUpdated", time.Now().Unix()}})
 	if err != nil {
 		return err
 	}
-	_, err = collection.UpdateOne(session.Ctx, bson.D{{"plugin", bundle.NewCaseInsensitiveRegex(name)}}, bson.D{{"$plugin", decodedPluginResult.Plugin}, {"$user", plugin.User}, {"$version", plugin.Version}})
-	if err != nil {
-		return err
+	if updateResult.MatchedCount < 1 {
+		return errors.New("no plugin found")
 	}
 	return nil
 
 }
 
 func GetPlugin(name string) (bundle.Plugin, error) {
+	if name == "" {
+		return bundle.Plugin{}, errors.New("no plugin name provided")
+	}
 
 	session, err := getMongoSession()
 	if err != nil {

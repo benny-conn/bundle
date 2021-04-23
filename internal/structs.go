@@ -23,6 +23,7 @@ type Profile struct {
 type TemplateData struct {
 	Profile  Profile
 	Plugin   Plugin
+	Plugins  []Plugin
 	Markdown string
 }
 

@@ -284,6 +284,17 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	pluginName := req.FormValue("plugin")
 
+	if pluginName == "" {
+		data := bundle.TemplateData{}
+
+		err = tpl.ExecuteTemplate(w, "plugin", data)
+		if err != nil {
+			panic(err)
+		}
+		return
+
+	}
+
 	plugin, err := storage.GetPlugin(pluginName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -315,5 +326,4 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-
 }

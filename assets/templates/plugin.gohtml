@@ -4,15 +4,19 @@
 {{template "head" .}}
 {{template "header" .}}
 
+{{if and .Plugin.Plugin .Markdown}}
 <body>
   <div class="container">
-    {{if .}}
     {{.Markdown}}
-    {{ end }}
   </div>
 </body>
+{{else}}
+<body>
+    <div class="container">
+        <h2 class="text-center my-4">Plugins</h2>
+    </div>
+</body>
+{{end}}
 {{template "footer" .}}
-
 </html>
-
 {{ end }}
