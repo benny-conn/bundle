@@ -28,8 +28,8 @@ type TemplateData struct {
 }
 
 type Plugin struct {
-	Plugin  string `json:"plugin"`
-	User    string `json:"user"`
+	Name    string `json:"name"`
+	Author  string `json:"author"`
 	Version string `json:"version"`
 }
 

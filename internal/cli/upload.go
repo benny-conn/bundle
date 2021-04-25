@@ -73,7 +73,7 @@ var uploadCmd = &cobra.Command{
 
 			reader.Close()
 
-			pluginDetails.Plugin = result.Name
+			pluginDetails.Name = result.Name
 			pluginDetails.Version = result.Version
 		}
 
@@ -84,7 +84,7 @@ var uploadCmd = &cobra.Command{
 			panic(err)
 		}
 
-		resp, err := uploadToRepo(file, pluginDetails.Version, pluginDetails.Plugin, string(userAsJSON))
+		resp, err := uploadToRepo(file, pluginDetails.Version, pluginDetails.Name, string(userAsJSON))
 
 		if err != nil {
 			panic(err)
@@ -122,7 +122,7 @@ func pluginInfoPrompt() *bundle.Plugin {
 	fmt.Scanln(&pluginName)
 
 	plugin := &bundle.Plugin{
-		Plugin:  pluginName,
+		Name:    pluginName,
 		Version: "README",
 	}
 

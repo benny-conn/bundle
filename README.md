@@ -7,10 +7,7 @@ BundleMC is a modern solution to plugin management allowing users to spend less 
 ## Features
 
 - Update all plugins within seconds
-- Drag and drop images (requires your Dropbox account be linked)
-- Import and save files from GitHub, Dropbox, Google Drive and One Drive
-- Drag and drop markdown and HTML files into Dillinger
-- Export documents as Markdown, HTML and PDF
+- etc.
 
 ## Installation
 

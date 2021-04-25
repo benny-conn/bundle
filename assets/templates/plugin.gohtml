@@ -1,22 +1,61 @@
 {{define "plugin"}}
 <!DOCTYPE html>
 <html>
-{{template "head" .}}
-{{template "header" .}}
+  {{template "head" .}}
+  {{template "header" .}}
 
-{{if and .Plugin.Plugin .Markdown}}
+  {{if and .Plugin.Name }}
+  {{ template "plugin-page" .}}
+  {{else}}
+  {{template "plugins-home" .}}
+  {{
+    end
+  }}
+  {{template "footer" .}}
+</html>
+{{ end }}
+
+{{define "plugins-home"}}
 <body>
   <div class="container">
-    {{.Markdown}}
+    <h2 class="text-center my-4">Plugins</h2>
+    <div class="row gx-5">
+      <div class="col-sm-12 col-md-8 plugins-container">
+        <div class="card"></div>
+      </div>
+      <div class="col-sm-12 col-md-4 options-container">
+        <div class="card">
+          <ul class="categories">
+            <li>Premium</li>
+            <li>Chat</li>
+            <li>Tools</li>
+            <li>Economy</li>
+            <li>APIs</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 </body>
-{{else}}
+{{ end }}
+
+{{define "plugin-page"}}
 <body>
-    <div class="container">
-        <h2 class="text-center my-4">Plugins</h2>
+  <div class="container">
+    {{if .Markdown}}
+    <div class="my-4">
+      <h2>{{.Plugin.Name}}</h2>
+      <h4>{{.Plugin.Author}}</h4>
     </div>
+    <div class="card">
+      {{.Markdown}}
+    </div>
+    {{else}}
+    <div class="my-4">
+      <h2>{{.Plugin.Name}}</h2>
+      <h4>{{.Plugin.Author}}</h4>
+    </div>
+    {{ end }}
+  </div>
 </body>
-{{end}}
-{{template "footer" .}}
-</html>
 {{ end }}

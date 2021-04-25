@@ -102,15 +102,15 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		reqPlugin := bundle.Plugin{
-			Plugin:  pluginName,
-			User:    dbUser.Username,
+			Name:    pluginName,
+			Author:  dbUser.Username,
 			Version: version,
 		}
 
 		dbPlugin, err := storage.GetPlugin(pluginName)
 
 		if err == nil {
-			isUserPluginAuthor := strings.EqualFold(dbPlugin.User, validatedUser.Username)
+			isUserPluginAuthor := strings.EqualFold(dbPlugin.Author, validatedUser.Username)
 
 			if isUserPluginAuthor {
 				if isReadme {
@@ -302,8 +302,8 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	pluginReadme := bundle.Plugin{
-		Plugin:  plugin.Plugin,
-		User:    plugin.User,
+		Name:    plugin.Name,
+		Author:  plugin.Author,
 		Version: "README",
 	}
 
