@@ -3,14 +3,12 @@
 <html>
   {{template "head" .}}
   {{template "header" .}}
-
   {{if and .Plugin.Name }}
   {{ template "plugin-page" .}}
   {{else}}
   {{template "plugins-home" .}}
-  {{
-    end
-  }}
+  <!-- prettier-ignore -->
+  {{end}}
   {{template "footer" .}}
 </html>
 {{ end }}
@@ -18,19 +16,35 @@
 {{define "plugins-home"}}
 <body>
   <div class="container">
-    <h2 class="text-center my-4">Plugins</h2>
-    <div class="row gx-5">
+    <h1 class="my-4">Plugins</h1>
+    <div class="row gx-4 top-bar py-3">
+      <div class="col-sm-12 col-md-8"></div>
+      <div class="search col-sm-12 col-md-4">
+        <input type="text" class="input" placeholder="Search" />
+        <i class="fa fa-search"></i>
+      </div>
+    </div>
+    <div class="row gx-4">
       <div class="col-sm-12 col-md-8 plugins-container">
-        <div class="card"></div>
+        <div class="card">
+          <!-- prettier-ignore -->
+          {{ range .Plugins }}
+          <div class="plugin">
+            <h4>{{.Name}}</h4>
+            <p>{{.Author}}</p>
+          </div>
+          {{ end }}
+        </div>
       </div>
       <div class="col-sm-12 col-md-4 options-container">
         <div class="card">
+          <h4 class="category-header">Plugin Categories</h4>
           <ul class="categories">
-            <li>Premium</li>
-            <li>Chat</li>
-            <li>Tools</li>
-            <li>Economy</li>
-            <li>APIs</li>
+            <li><a href="#premium">Premium</a></li>
+            <li><a href="#premium">Tools</a></li>
+            <li><a href="#premium">Economy</a></li>
+            <li><a href="#premium">Mechanics</a></li>
+            <li><a href="#premium">Chat</a></li>
           </ul>
         </div>
       </div>

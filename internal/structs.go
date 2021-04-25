@@ -28,9 +28,10 @@ type TemplateData struct {
 }
 
 type Plugin struct {
-	Name    string `json:"name"`
-	Author  string `json:"author"`
-	Version string `json:"version"`
+	Name        string `json:"name"`
+	Author      string `json:"author"`
+	Version     string `json:"version"`
+	LastUpdated string `json:"lastUpdated"`
 }
 
 type Mongo struct {

@@ -99,6 +99,7 @@ func InsertPlugin(plugin bundle.Plugin) error {
 	defer session.Cancel()
 
 	collection := session.Client.Database("main").Collection("plugins")
+
 	_, err = collection.InsertOne(session.Ctx, bson.D{{"name", plugin.Name}, {"author", plugin.Author}, {"version", plugin.Version}, {"lastUpdated", time.Now().Unix()}})
 
 	if err != nil {
@@ -150,6 +151,42 @@ func GetPlugin(name string) (bundle.Plugin, error) {
 	}
 
 	return *decodedPluginResult, nil
+
+}
+
+func PaginatePlugins(page int) ([]bundle.Plugin, error) {
+	session, err := getMongoSession()
+	if err != nil {
+		return nil, err
+	}
+	defer session.Cancel()
+
+	findOptions := options.Find()
+	// Sort by `price` field descending
+	findOptions.SetSort(bson.D{{"lastUpdated", -1}})
+	if page > 1 {
+		findOptions.SetSkip(int64(page*10 - 10))
+	}
+	findOptions.SetLimit(10)
+
+	collection := session.Client.Database("main").Collection("plugins")
+
+	cur, err := collection.Find(session.Ctx, bson.D{}, findOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	results := []bundle.Plugin{}
+	defer cur.Close(session.Ctx)
+	for cur.Next(session.Ctx) {
+		plugin := bundle.Plugin{}
+		if err = cur.Decode(&plugin); err != nil {
+			return nil, err
+		}
+		results = append(results, plugin)
+	}
+
+	return results, nil
 
 }
 

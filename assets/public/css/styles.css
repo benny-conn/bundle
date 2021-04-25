@@ -348,6 +348,15 @@ template {
   display: none;
 }
 
+a {
+  text-decoration: none;
+}
+
+body {
+  font-family: Palatino, "Palatino Linotype", "Palatino LT STD", "Book Antiqua",
+    Georgia, serif;
+}
+
 .form-control-dark {
   color: #fff;
   background-color: var(--bs-dark);
@@ -478,7 +487,6 @@ template {
 }
 
 .card {
-  padding: 20px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   border-radius: 20px;
   background-color: white;
@@ -628,4 +636,48 @@ template {
   list-style: none;
   text-align: right;
   margin-right: 20px;
+}
+
+.categories li {
+  padding-bottom: 10px;
+}
+
+.categories li a {
+  color: hsl(0, 0%, 40%);
+}
+
+.categories li a:hover {
+  color: hsl(0, 0%, 20%);
+}
+
+.search {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid hsl(0, 0%, 29%);
+  outline: none;
+  transition: all 0.1s linear;
+}
+.search input:focus {
+  border: none;
+  border-bottom: 2px solid black;
+  outline: none;
+}
+
+.search i {
+  right: 0;
+}
+
+.category-header {
+  width: 100%;
+  background: hsl(22, 87%, 24%);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  text-align: right;
+  color: white;
+  padding: 10px;
 }

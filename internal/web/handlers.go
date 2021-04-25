@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -285,7 +286,27 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	pluginName := req.FormValue("plugin")
 
 	if pluginName == "" {
-		data := bundle.TemplateData{}
+		page := req.FormValue("page")
+
+		if page == "" {
+			page = "1"
+		}
+
+		pageNumber, err := strconv.Atoi(page)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		plugins, err := storage.PaginatePlugins(pageNumber)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		data := bundle.TemplateData{
+			Plugins: plugins,
+		}
 
 		err = tpl.ExecuteTemplate(w, "plugin", data)
 		if err != nil {
