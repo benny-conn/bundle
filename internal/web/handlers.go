@@ -287,13 +287,10 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	md, err := storage.DownloadFromRepo(pluginReadme)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
+	if err == nil {
+		output := blackfriday.Run(md)
+		plugin.Readme = string(output)
 	}
-	output := blackfriday.Run(md)
-
-	plugin.Readme = string(output)
 
 	data := bundle.TemplateData{
 		Profile: profile,

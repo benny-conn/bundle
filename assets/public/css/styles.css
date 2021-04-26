@@ -350,6 +350,7 @@ template {
 
 a {
   text-decoration: none;
+  color: inherit;
 }
 
 body {
@@ -686,7 +687,14 @@ body {
   margin: 10px;
   padding: 10px;
   border: 1px solid black;
+  color: black;
   border-radius: 20px;
+  background: white;
+  transition: all 0.3s ease-in-out;
+}
+
+.plugin:hover {
+  transform: scale(1.05);
 }
 
 .thumbnail {

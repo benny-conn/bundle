@@ -18,35 +18,37 @@
   <div class="container">
     <h1 class="mb-1 mt-4">Plugins</h1>
     <div class="row gx-4 top-bar pb-3 pt-1">
-      <div class="col-sm-12 col-md-8"></div>
-      <div class="search col-sm-12 col-md-4">
+      <div class="col-sm-12 col-md-9"></div>
+      <div class="search col-sm-12 col-md-3">
         <input type="text" class="input" placeholder="Search" />
         <i class="fa fa-search"></i>
       </div>
     </div>
     <div class="row gx-4">
-      <div class="col-sm-12 col-md-8 plugins-container">
+      <div class="col-sm-12 col-md-9 plugins-container">
         <div class="card">
           <!-- prettier-ignore -->
           {{ range .Plugins }}
-          <div class="plugin row">
-            <div class="col-sm-6 col-md-3">
-              <img
-                id="{{.Name}}-thumbnail"
-                class="thumbnail"
-                src="https://via.placeholder.com/100.png"
-              />
+          <a href="?plugin={{.Name}}">
+            <div class="plugin row">
+              <div class="col-sm-6 col-md-3">
+                <img
+                  id="{{.Name}}-thumbnail"
+                  class="thumbnail"
+                  src="https://via.placeholder.com/125.png"
+                />
+              </div>
+              <div class="col-sm-6 col-md-9">
+                <h4>{{.Name}}</h4>
+                <h6>Author: {{.Author}}</h6>
+                <p>{{.Description}}</p>
+              </div>
             </div>
-            <div class="col-sm-6 col-md-9">
-              <h4>{{.Name}}</h4>
-              <h6>Author: {{.Author}}</h6>
-              <p>{{.Description}}</p>
-            </div>
-          </div>
+          </a>
           {{ end }}
         </div>
       </div>
-      <div class="col-sm-12 col-md-4 options-container">
+      <div class="col-sm-12 col-md-3 options-container">
         <div class="card">
           <h4 class="category-header">Plugin Categories</h4>
           <ul class="categories">
@@ -62,11 +64,9 @@
   </div>
   <script>
     {{range .Plugins}}
-    /*jshint ignore:start*/
     {{if .Thumbnail}}
      var objectURL = URL.createObjectURL({{.Thumbnail}});
-     /*jshint ignore:end*/
-     $('{{.Name}}-thumbnail').attr('src') = objectURL
+     $('#{{.Name}}-thumbnail').attr('src', objectURL)
      {{end}}
      {{end}}
   </script>
