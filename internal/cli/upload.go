@@ -33,19 +33,13 @@ var uploadCmd = &cobra.Command{
 
 		user := credentialsPrompt()
 
-		userAsJSON, err := json.Marshal(user)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		pluginDetails := &bundle.Plugin{}
+		plugin := bundle.Plugin{}
 
 		isReadme := strings.HasSuffix(path, "README.md")
 
 		if isReadme {
 
-			pluginDetails = pluginInfoPrompt()
+			plugin = pluginInfoPrompt()
 
 		} else {
 			reader, err := zip.OpenReader(path)
@@ -54,7 +48,7 @@ var uploadCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			result := &PluginYML{}
+			result := &bundle.PluginYML{}
 
 			for _, file := range reader.File {
 				if strings.HasSuffix(file.Name, "plugin.yml") {
@@ -73,8 +67,10 @@ var uploadCmd = &cobra.Command{
 
 			reader.Close()
 
-			pluginDetails.Name = result.Name
-			pluginDetails.Version = result.Version
+			plugin.Name = result.Name
+			plugin.Version = result.Version
+			plugin.Description = result.Description
+			plugin.Author = user.Username
 		}
 
 		fmt.Printf("Uploading to Bundle Repository From: %s\n", path)
@@ -84,7 +80,7 @@ var uploadCmd = &cobra.Command{
 			panic(err)
 		}
 
-		resp, err := uploadToRepo(file, pluginDetails.Version, pluginDetails.Name, string(userAsJSON))
+		resp, err := uploadToRepo(file, plugin, user)
 
 		if err != nil {
 			panic(err)
@@ -99,14 +95,26 @@ var uploadCmd = &cobra.Command{
 	},
 }
 
-func uploadToRepo(file io.Reader, version string, pluginName string, userJSON string) (*http.Response, error) {
+func uploadToRepo(file io.Reader, plugin bundle.Plugin, user bundle.User) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/bundle", file)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Plugin-Version", version)
-	req.Header.Add("Plugin-Name", pluginName)
-	req.Header.Add("User", userJSON)
+
+	userJSON, err := json.Marshal(user)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pluginJSON, err := json.Marshal(plugin)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req.Header.Add("Plugin", string(pluginJSON))
+	req.Header.Add("User", string(userJSON))
 
 	resp, err := http.DefaultClient.Do(req)
 	return resp, err
@@ -116,12 +124,12 @@ func init() {
 	rootCmd.AddCommand(uploadCmd)
 }
 
-func pluginInfoPrompt() *bundle.Plugin {
+func pluginInfoPrompt() bundle.Plugin {
 	fmt.Println("Enter plugin name: ")
 	var pluginName string
 	fmt.Scanln(&pluginName)
 
-	plugin := &bundle.Plugin{
+	plugin := bundle.Plugin{
 		Name:    pluginName,
 		Version: "README",
 	}

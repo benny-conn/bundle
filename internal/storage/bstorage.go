@@ -43,6 +43,9 @@ func DownloadFromRepo(plugin bundle.Plugin) ([]byte, error) {
 
 	if plugin.Version == "README" {
 		fn = filepath.Join(plugin.Author, plugin.Name, "README.md")
+	} else if plugin.Version == "THUMBNAIL" {
+		fn = filepath.Join(plugin.Author, plugin.Name, "THUMBNAIL.png")
+
 	} else {
 		fn = filepath.Join(plugin.Author, plugin.Name, plugin.Version, plugin.Name+".jar")
 	}

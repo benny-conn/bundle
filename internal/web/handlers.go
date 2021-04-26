@@ -2,11 +2,9 @@ package web
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"text/template"
 
 	bundle "github.com/bennycio/bundle/internal"
@@ -83,66 +81,23 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 
-		version := r.Header.Get("Plugin-Version")
-		userJSON := r.Header.Get("User")
-		pluginName := r.Header.Get("Plugin-Name")
+		plugin := r.Header.Get("Plugin")
 
-		isReadme := strings.Contains(version, "README")
+		reqPlugin := &bundle.Plugin{}
 
-		validatedUser, err := bundle.ValidateAndReturnUser(userJSON)
-
+		err := json.Unmarshal([]byte(plugin), reqPlugin)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		dbUser, err := storage.GetUser(*validatedUser)
+		finalPlugin, err := validateAndReturnPlugin(*reqPlugin)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusBadRequest)
+			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		reqPlugin := bundle.Plugin{
-			Name:    pluginName,
-			Author:  dbUser.Username,
-			Version: version,
-		}
-
-		dbPlugin, err := storage.GetPlugin(pluginName)
-
-		if err == nil {
-			isUserPluginAuthor := strings.EqualFold(dbPlugin.Author, validatedUser.Username)
-
-			if isUserPluginAuthor {
-				if isReadme {
-					dbPlugin.Version = version
-				} else {
-					err = storage.UpdatePlugin(pluginName, reqPlugin)
-					if err != nil {
-						bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-				}
-			} else {
-				err = errors.New("you are not permitted to edit this plugin")
-				bundle.WriteResponse(w, err.Error(), http.StatusUnauthorized)
-				return
-			}
-		} else {
-			if isReadme {
-				err = errors.New("no plugin to attach readme to")
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			err = storage.InsertPlugin(reqPlugin)
-			dbPlugin = reqPlugin
-			if err != nil {
-				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
-		uploadLocation, err := storage.UploadToRepo(dbPlugin, r.Body)
+		uploadLocation, err := storage.UploadToRepo(finalPlugin, r.Body)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -283,6 +238,8 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	profile, _ := getProfileFromCookie(req)
+
 	pluginName := req.FormValue("plugin")
 
 	if pluginName == "" {
@@ -306,6 +263,7 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		data := bundle.TemplateData{
 			Plugins: plugins,
+			Profile: profile,
 		}
 
 		err = tpl.ExecuteTemplate(w, "plugin", data)
@@ -335,12 +293,11 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 	output := blackfriday.Run(md)
 
-	user, _ := getProfileFromCookie(req)
+	plugin.Readme = string(output)
 
 	data := bundle.TemplateData{
-		Profile:  user,
-		Plugin:   plugin,
-		Markdown: string(output),
+		Profile: profile,
+		Plugin:  plugin,
 	}
 
 	err = tpl.ExecuteTemplate(w, "plugin", data)

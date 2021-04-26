@@ -16,8 +16,8 @@
 {{define "plugins-home"}}
 <body>
   <div class="container">
-    <h1 class="my-4">Plugins</h1>
-    <div class="row gx-4 top-bar py-3">
+    <h1 class="mb-1 mt-4">Plugins</h1>
+    <div class="row gx-4 top-bar pb-3 pt-1">
       <div class="col-sm-12 col-md-8"></div>
       <div class="search col-sm-12 col-md-4">
         <input type="text" class="input" placeholder="Search" />
@@ -29,9 +29,19 @@
         <div class="card">
           <!-- prettier-ignore -->
           {{ range .Plugins }}
-          <div class="plugin">
-            <h4>{{.Name}}</h4>
-            <p>{{.Author}}</p>
+          <div class="plugin row">
+            <div class="col-sm-6 col-md-3">
+              <img
+                id="{{.Name}}-thumbnail"
+                class="thumbnail"
+                src="https://via.placeholder.com/100.png"
+              />
+            </div>
+            <div class="col-sm-6 col-md-9">
+              <h4>{{.Name}}</h4>
+              <h6>Author: {{.Author}}</h6>
+              <p>{{.Description}}</p>
+            </div>
           </div>
           {{ end }}
         </div>
@@ -50,19 +60,36 @@
       </div>
     </div>
   </div>
+  <script>
+    {{range .Plugins}}
+    /*jshint ignore:start*/
+    {{if .Thumbnail}}
+     var objectURL = URL.createObjectURL({{.Thumbnail}});
+     /*jshint ignore:end*/
+     $('{{.Name}}-thumbnail').attr('src') = objectURL
+     {{end}}
+     {{end}}
+  </script>
+  <script>
+    // prettier-ignore
+    {{range .Plugins}}
+    console.log("{{.Name}}");
+    // prettier-ignore
+    {{end}}
+  </script>
 </body>
 {{ end }}
 
 {{define "plugin-page"}}
 <body>
   <div class="container">
-    {{if .Markdown}}
+    {{if .Plugin.Readme}}
     <div class="my-4">
       <h2>{{.Plugin.Name}}</h2>
       <h4>{{.Plugin.Author}}</h4>
     </div>
     <div class="card">
-      {{.Markdown}}
+      {{.Plugin.Readme}}
     </div>
     {{else}}
     <div class="my-4">

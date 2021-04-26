@@ -21,21 +21,29 @@ type Profile struct {
 }
 
 type TemplateData struct {
-	Profile  Profile
-	Plugin   Plugin
-	Plugins  []Plugin
-	Markdown string
+	Profile Profile
+	Plugin  Plugin
+	Plugins []Plugin
 }
 
 type Plugin struct {
 	Name        string `json:"name"`
 	Author      string `json:"author"`
 	Version     string `json:"version"`
-	LastUpdated string `json:"lastUpdated"`
+	Description string `json:"description"`
+	Readme      string
+	Thumbnail   []byte
+	LastUpdated int64 `json:"lastUpdated"`
 }
 
 type Mongo struct {
 	Client *mongo.Client
 	Ctx    context.Context
 	Cancel context.CancelFunc
+}
+
+type PluginYML struct {
+	Name        string `yaml:"name"`
+	Version     string `yaml:"version"`
+	Description string `yaml:"description,omitempty"`
 }

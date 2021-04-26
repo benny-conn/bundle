@@ -120,7 +120,7 @@ func UpdatePlugin(name string, plugin bundle.Plugin) error {
 	collection := session.Client.Database("main").Collection("plugins")
 	decodedPluginResult := &bundle.Plugin{}
 
-	updateResult, err := collection.ReplaceOne(session.Ctx, bson.D{{"name", bundle.NewCaseInsensitiveRegex(name)}}, bson.D{{"name", decodedPluginResult.Name}, {"author", plugin.Author}, {"version", plugin.Version}, {"lastUpdated", time.Now().Unix()}})
+	updateResult, err := collection.ReplaceOne(session.Ctx, bson.D{{"name", bundle.NewCaseInsensitiveRegex(name)}}, bson.D{{"name", decodedPluginResult.Name}, {"author", plugin.Author}, {"version", plugin.Version}, {"description", plugin.Description}, {"lastUpdated", time.Now().Unix()}})
 	if err != nil {
 		return err
 	}

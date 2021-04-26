@@ -37,7 +37,7 @@ func isPluginDirectory() bool {
 	return true
 }
 
-func credentialsPrompt() *bundle.User {
+func credentialsPrompt() bundle.User {
 
 	fmt.Println("Enter your username or email: ")
 	var userOrEmail string
@@ -48,7 +48,7 @@ func credentialsPrompt() *bundle.User {
 
 	isEmail := emailRegex.MatchString(userOrEmail)
 
-	user := &bundle.User{}
+	user := bundle.User{}
 	user.Password = password
 	if isEmail {
 		user.Email = userOrEmail

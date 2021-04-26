@@ -681,3 +681,14 @@ body {
   color: white;
   padding: 10px;
 }
+
+.plugin {
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid black;
+  border-radius: 20px;
+}
+
+.thumbnail {
+  border-radius: 20px;
+}
