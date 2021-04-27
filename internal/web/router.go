@@ -19,15 +19,17 @@ func NewBundleMux() http.Handler {
 	loginHandler := http.HandlerFunc(LoginHandlerFunc)
 	logoutHandler := http.HandlerFunc(LogoutHandlerFunc)
 	pluginHandler := http.HandlerFunc(PluginHandlerFunc)
+	profileHandler := http.HandlerFunc(ProfileHandlerFunc)
 
 	mux.Handle("/bundle", auth.AuthUpload(bundleHandler))
-	mux.Handle("/users", auth.AuthWithoutScope(userHandler))
-	mux.Handle("/", auth.AuthWithoutScope(rootHandler))
-	mux.Handle("/signup", auth.AuthWithoutScope(signupHandler))
-	mux.Handle("/plugins", auth.AuthWithoutScope(pluginsHandler))
-	mux.Handle("/plugin", auth.AuthWithoutScope(pluginHandler))
+	mux.Handle("/users", auth.RefreshOrContinue(userHandler))
+	mux.Handle("/", auth.RefreshOrContinue(rootHandler))
+	mux.Handle("/plugins", pluginsHandler)
+	mux.Handle("/plugin", auth.RefreshOrContinue(pluginHandler))
+	mux.Handle("/profile", auth.AuthReq(profileHandler))
 	mux.Handle("/login", loginHandler)
 	mux.Handle("/logout", logoutHandler)
+	mux.Handle("/signup", signupHandler)
 	mux.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("assets/public"))))
 
 	c := cors.New(cors.Options{

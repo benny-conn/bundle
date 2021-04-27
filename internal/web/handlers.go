@@ -25,9 +25,9 @@ func init() {
 func RootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	profile, _ := getProfileFromCookie(r)
+	user, _ := getProfileFromCookie(r)
 	data := bundle.TemplateData{
-		Profile: profile,
+		User: user,
 	}
 
 	err := tpl.ExecuteTemplate(w, "index", data)
@@ -165,40 +165,28 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			Password: req.FormValue("password"),
 		}
 
-		asJSON, err := json.Marshal(user)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		userJSON := string(asJSON)
-		validatedUser, err := bundle.ValidateAndReturnUser(userJSON)
+		isValid := bundle.IsUserValid(user)
 
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if !isValid {
+			http.Error(w, "invalid request format", http.StatusBadRequest)
 			return
 		}
 
-		dbUser, err := storage.GetUser(*validatedUser)
+		dbUser, err := storage.GetUser(user)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(validatedUser.Password))
+		err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(isValid.Password))
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		profile := bundle.Profile{
-			Username: dbUser.Username,
-			Email:    dbUser.Email,
-			Scopes:   dbUser.Scopes,
-		}
-
-		token, err := auth.NewAuthToken(profile)
+		token, err := auth.NewAuthToken(dbUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -238,7 +226,7 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	profile, _ := getProfileFromCookie(req)
+	user, _ := getProfileFromCookie(req)
 
 	pluginName := req.FormValue("plugin")
 
@@ -263,7 +251,7 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		data := bundle.TemplateData{
 			Plugins: plugins,
-			Profile: profile,
+			User:    user,
 		}
 
 		err = tpl.ExecuteTemplate(w, "plugin", data)
@@ -293,12 +281,60 @@ func PluginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := bundle.TemplateData{
-		Profile: profile,
-		Plugin:  plugin,
+		User:   user,
+		Plugin: plugin,
 	}
 
 	err = tpl.ExecuteTemplate(w, "plugin", data)
 	if err != nil {
 		panic(err)
 	}
+}
+
+func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
+
+	user, err := getProfileFromCookie(req)
+	if err != nil {
+		http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	fmt.Println(user)
+	if req.Method == http.MethodPost {
+
+		req.ParseForm()
+
+		newUsername := req.FormValue("username")
+		newTag := req.FormValue("tag")
+
+		updatedUser := bundle.User{
+			Username: newUsername,
+			Tag:      newTag,
+		}
+
+		err = storage.UpdateUser(user.Username, updatedUser)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		dbUpdatedUser, _ := storage.GetUser(updatedUser)
+
+		fmt.Println(dbUpdatedUser)
+
+		token, _ := auth.NewAuthToken(dbUpdatedUser)
+		c := auth.NewAccessCookie(token)
+		http.SetCookie(w, c)
+
+	}
+
+	data := bundle.TemplateData{
+		User: user,
+	}
+
+	err = tpl.ExecuteTemplate(w, "profile", data)
+	if err != nil {
+		panic(err)
+	}
+
 }

@@ -14,16 +14,16 @@ import (
 )
 
 type CustomClaims struct {
-	Profile bundle.Profile `json:"profile"`
+	User bundle.User `json:"user"`
 	jwt.StandardClaims
 }
 
-func NewAuthToken(profile bundle.Profile) (string, error) {
+func NewAuthToken(user bundle.User) (string, error) {
 
 	secret := viper.GetString("ClientSecret")
 
 	claims := CustomClaims{
-		Profile: profile,
+		User: user,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
 			Issuer:    "bundle",
@@ -39,7 +39,7 @@ func NewAuthToken(profile bundle.Profile) (string, error) {
 
 func CheckScope(tokenString string, scopes ...string) bool {
 
-	tokenUser, err := GetProfileFromToken(tokenString)
+	tokenUser, err := GetUserFromToken(tokenString)
 	if err != nil {
 		return false
 	}
@@ -53,13 +53,13 @@ func CheckScope(tokenString string, scopes ...string) bool {
 	return isAuthorized
 }
 
-func GetProfileFromToken(tokenString string) (bundle.Profile, error) {
+func GetUserFromToken(tokenString string) (bundle.User, error) {
 	claims, err := ValidateToken(tokenString)
 	if err != nil {
-		return bundle.Profile{}, err
+		return bundle.User{}, err
 	}
 
-	return claims.Profile, nil
+	return claims.User, nil
 
 }
 
@@ -91,11 +91,11 @@ func ValidateToken(tokenString string) (*CustomClaims, error) {
 
 }
 
-func AuthWithScope(next http.Handler, scopes ...string) http.Handler {
+func AuthReqWithScope(next http.Handler, scopes ...string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := r.Cookie("access_token")
 		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusUnauthorized)
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 			return
 		}
 		tokenString := token.Value
@@ -103,7 +103,7 @@ func AuthWithScope(next http.Handler, scopes ...string) http.Handler {
 		canContinue := CheckScope(tokenString, scopes...)
 
 		if !canContinue {
-			http.Error(w, "unautorized", http.StatusUnauthorized)
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -111,7 +111,24 @@ func AuthWithScope(next http.Handler, scopes ...string) http.Handler {
 	})
 }
 
-func AuthWithoutScope(next http.Handler) http.Handler {
+func AuthReq(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := r.Cookie("access_token")
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+		_, err = ValidateToken(token.Value)
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+
+		RefreshToken(next).ServeHTTP(w, r)
+	})
+}
+
+func RefreshOrContinue(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := r.Cookie("access_token")
 		if err != nil {
@@ -156,7 +173,7 @@ func AuthUpload(next http.Handler) http.Handler {
 				return
 			}
 
-			dbUser, err := storage.GetUser(*validatedUser)
+			dbUser, err := storage.GetUser(validatedUser)
 
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
@@ -194,15 +211,17 @@ func RefreshToken(next http.Handler) http.Handler {
 		}
 		tokenString := token.Value
 
-		tokenUser, err := GetProfileFromToken(tokenString)
+		tokenUser, err := GetUserFromToken(tokenString)
 		if err != nil {
-			http.Redirect(w, req, "/logout", http.StatusUnauthorized)
+			token.MaxAge = -1
+			http.SetCookie(w, token)
+			next.ServeHTTP(w, req)
 			return
 		}
 
 		newToken, err := NewAuthToken(tokenUser)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 

@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"reflect"
 	"time"
 
 	bundle "github.com/bennycio/bundle/internal"
@@ -15,18 +15,19 @@ import (
 )
 
 func InsertUser(user bundle.User) error {
-	asJSON, _ := json.Marshal(user)
-	validatedUser, err := bundle.ValidateAndReturnUser(string(asJSON))
+	isValid := bundle.IsUserValid(user)
+
+	if !isValid {
+		return errors.New("invalid user")
+	}
+
+	bcryptPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
 	if err != nil {
 		return err
 	}
 
-	bcryptPass, err := bcrypt.GenerateFromPassword([]byte(validatedUser.Password), bcrypt.DefaultCost)
-
-	if err != nil {
-		return err
-	}
+	user.Password = string(bcryptPass)
 
 	session, err := getMongoSession()
 	if err != nil {
@@ -36,7 +37,7 @@ func InsertUser(user bundle.User) error {
 
 	collection := session.Client.Database("main").Collection("users")
 
-	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", bundle.NewCaseInsensitiveRegex(validatedUser.Username)}})
+	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", bundle.NewCaseInsensitiveRegex(user.Username)}})
 
 	if err != nil {
 		return err
@@ -47,7 +48,7 @@ func InsertUser(user bundle.User) error {
 		return err
 	}
 
-	countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", bundle.NewCaseInsensitiveRegex(validatedUser.Email)}})
+	countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", bundle.NewCaseInsensitiveRegex(user.Email)}})
 
 	if err != nil {
 		return err
@@ -58,7 +59,9 @@ func InsertUser(user bundle.User) error {
 		return err
 	}
 
-	_, err = collection.InsertOne(session.Ctx, bson.D{{"username", validatedUser.Username}, {"email", validatedUser.Email}, {"password", string(bcryptPass)}})
+	userToInsert := marshallBsonClean(user)
+
+	_, err = collection.InsertOne(session.Ctx, userToInsert)
 
 	if err != nil {
 		return err
@@ -91,6 +94,27 @@ func GetUser(user bundle.User) (bundle.User, error) {
 	return *decodedUser, nil
 }
 
+func UpdateUser(username string, user bundle.User) error {
+	session, err := getMongoSession()
+	if err != nil {
+		return err
+	}
+	defer session.Cancel()
+
+	collection := session.Client.Database("main").Collection("users")
+
+	updatedUser := marshallBsonClean(user)
+
+	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"username", bundle.NewCaseInsensitiveRegex(username)}}, bson.D{{"$set", updatedUser}})
+	if err != nil {
+		return err
+	}
+	if updateResult.MatchedCount < 1 {
+		return errors.New("no user found")
+	}
+	return nil
+}
+
 func InsertPlugin(plugin bundle.Plugin) error {
 	session, err := getMongoSession()
 	if err != nil {
@@ -100,7 +124,10 @@ func InsertPlugin(plugin bundle.Plugin) error {
 
 	collection := session.Client.Database("main").Collection("plugins")
 
-	_, err = collection.InsertOne(session.Ctx, bson.D{{"name", plugin.Name}, {"author", plugin.Author}, {"version", plugin.Version}, {"lastUpdated", time.Now().Unix()}})
+	newPlugin := marshallBsonClean(plugin)
+	newPlugin = append(newPlugin, bson.E{"lastUpdated", time.Now().Unix()})
+
+	_, err = collection.InsertOne(session.Ctx, newPlugin)
 
 	if err != nil {
 		return err
@@ -118,9 +145,11 @@ func UpdatePlugin(name string, plugin bundle.Plugin) error {
 	defer session.Cancel()
 
 	collection := session.Client.Database("main").Collection("plugins")
-	decodedPluginResult := &bundle.Plugin{}
 
-	updateResult, err := collection.ReplaceOne(session.Ctx, bson.D{{"name", bundle.NewCaseInsensitiveRegex(name)}}, bson.D{{"name", decodedPluginResult.Name}, {"author", plugin.Author}, {"version", plugin.Version}, {"description", plugin.Description}, {"lastUpdated", time.Now().Unix()}})
+	updatedPlugin := marshallBsonClean(plugin)
+	updatedPlugin = append(updatedPlugin, bson.E{"lastUpdated", time.Now().Unix()})
+
+	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"name", bundle.NewCaseInsensitiveRegex(name)}}, bson.D{{"$set", updatedPlugin}})
 	if err != nil {
 		return err
 	}
@@ -162,7 +191,6 @@ func PaginatePlugins(page int) ([]bundle.Plugin, error) {
 	defer session.Cancel()
 
 	findOptions := options.Find()
-	// Sort by `price` field descending
 	findOptions.SetSort(bson.D{{"lastUpdated", -1}})
 	if page > 1 {
 		findOptions.SetSkip(int64(page*10 - 10))
@@ -202,4 +230,37 @@ func getMongoSession() (*bundle.Mongo, error) {
 		return mg, err
 	}
 	return mg, nil
+}
+
+func marshallBsonClean(val interface{}) bson.D {
+
+	bs, _ := bson.Marshal(val)
+
+	ogBson := bson.D{}
+	bson.Unmarshal(bs, &ogBson)
+
+	newVal := removeZeroOrNilValues(ogBson)
+	return newVal
+}
+
+func removeZeroOrNilValues(val bson.D) bson.D {
+	b := val
+	for i, v := range b {
+		refVal := reflect.ValueOf(v.Value)
+		if !refVal.IsValid() {
+			b = remove(b, i)
+			return removeZeroOrNilValues(b)
+		}
+		if refVal.IsZero() {
+			b = remove(b, i)
+			return removeZeroOrNilValues(b)
+		}
+
+	}
+	return b
+}
+
+func remove(s bson.D, i int) bson.D {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
 }

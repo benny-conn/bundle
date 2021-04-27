@@ -16,11 +16,11 @@
     crossorigin="anonymous"
   />
   <link
+    href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"
     rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
   />
 
-  <link rel="stylesheet" href="public/css/styles.css?rnd=1122" />
+  <link rel="stylesheet" href="public/css/styles.css?rnd=12" />
 </head>
 {{ end }}
 
@@ -64,9 +64,8 @@
             <a href="/downloads" class="nav-link">Downloads</a>
           </li>
           <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
-          {{
-            with.Profile.Username
-          }}
+          <!-- prettier-ignore -->
+          {{with .User.Username}}
           <li class="nav-item">
             <a class="btn btn-light mx-1" href="/profile"> Profile </a>
           </li>
@@ -80,9 +79,8 @@
           <li class="nav-item">
             <a class="btn btn-warning mx-1" href="/signup"> Sign Up </a>
           </li>
-          {{
-            end
-          }}
+          <!-- prettier-ignore -->
+          {{end}}
         </ul>
       </div>
     </div>

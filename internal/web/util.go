@@ -10,15 +10,15 @@ import (
 	"github.com/bennycio/bundle/internal/storage"
 )
 
-func getProfileFromCookie(r *http.Request) (bundle.Profile, error) {
+func getProfileFromCookie(r *http.Request) (bundle.User, error) {
 
 	c, err := r.Cookie("access_token")
 	if err != nil {
-		return bundle.Profile{}, err
+		return bundle.User{}, err
 	}
-	user, err := auth.GetProfileFromToken(c.Value)
+	user, err := auth.GetUserFromToken(c.Value)
 	if err != nil {
-		return bundle.Profile{}, err
+		return bundle.User{}, err
 	}
 	return user, nil
 

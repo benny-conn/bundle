@@ -7,23 +7,20 @@ import (
 )
 
 type User struct {
-	Username string   `json:"username"`
-	Email    string   `json:"email"`
-	Password string   `json:"password"`
-	Scopes   []string `json:"scopes"`
-}
-
-type Profile struct {
-	Username string
-	Email    string
-	Tags     []string
-	Scopes   []string
+	Username  string   `json:"username"`
+	Email     string   `json:"email"`
+	Password  string   `json:"password"`
+	Scopes    []string `json:"scopes"`
+	Plugins   []string `json:"plugins"`
+	Tag       string   `json:"tag"`
+	Thumbnail []byte
 }
 
 type TemplateData struct {
-	Profile Profile
-	Plugin  Plugin
-	Plugins []Plugin
+	User     User
+	Plugin   Plugin
+	Plugins  []Plugin
+	TestData string
 }
 
 type Plugin struct {

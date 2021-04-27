@@ -29,22 +29,22 @@
         <div class="card">
           <!-- prettier-ignore -->
           {{ range .Plugins }}
-          <a href="?plugin={{.Name}}">
-            <div class="plugin row">
-              <div class="col-sm-6 col-md-3">
-                <img
-                  id="{{.Name}}-thumbnail"
-                  class="thumbnail"
-                  src="https://via.placeholder.com/125.png"
-                />
-              </div>
-              <div class="col-sm-6 col-md-9">
-                <h4>{{.Name}}</h4>
-                <h6>Author: {{.Author}}</h6>
-                <p>{{.Description}}</p>
-              </div>
+          <div class="plugin row">
+            <div class="col-sm-6 col-md-3">
+              <img
+                id="{{.Name}}-thumbnail"
+                class="img-thumbnail thumbnail"
+                src="https://via.placeholder.com/125.png"
+              />
             </div>
-          </a>
+            <div class="col-sm-6 col-md-9">
+              <h4>{{.Name}}</h4>
+              <h6>Author: {{.Author}}</h6>
+              <p>{{.Description}}</p>
+            </div>
+            <a class="stretched-link" href="?plugin={{.Name}}"></a>
+          </div>
+
           {{ end }}
         </div>
       </div>
