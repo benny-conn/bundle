@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "github.com/bennycio/bundle/proto/storage";
+
+package Storage;
+
+service UsersService {
+    rpc GetUser (GetUserRequest) returns (User){}
+    rpc InsertUser (User) returns (SuccessResponse) {}
+    rpc UpdateUser (UpdateUserRequest) returns (SuccessResponse) {}
+}
+
+
+message GetUserRequest {
+    string username = 1;
+    string email = 2;
+}
+
+message UpdateUserRequest {
+    string username = 1;
+    User updatedUser = 2;
+}
+
+message User {
+    string username = 1;
+    string email = 2;
+    string password = 3;
+    repeated string scopes = 4;
+    string tag = 5;
+    bytes thumbnail = 6;
+}
+
+message SuccessResponse {
+    bool success = 1;
+}
