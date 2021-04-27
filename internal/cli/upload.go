@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -33,7 +34,7 @@ var uploadCmd = &cobra.Command{
 
 		user := credentialsPrompt()
 
-		plugin := bundle.Plugin{}
+		plugin := &api.Plugin{}
 
 		isReadme := strings.HasSuffix(path, "README.md")
 
@@ -95,7 +96,7 @@ var uploadCmd = &cobra.Command{
 	},
 }
 
-func uploadToRepo(file io.Reader, plugin bundle.Plugin, user bundle.User) (*http.Response, error) {
+func uploadToRepo(file io.Reader, plugin *api.Plugin, user *api.User) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/bundle", file)
 	if err != nil {
 		return nil, err
@@ -124,12 +125,12 @@ func init() {
 	rootCmd.AddCommand(uploadCmd)
 }
 
-func pluginInfoPrompt() bundle.Plugin {
+func pluginInfoPrompt() *api.Plugin {
 	fmt.Println("Enter plugin name: ")
 	var pluginName string
 	fmt.Scanln(&pluginName)
 
-	plugin := bundle.Plugin{
+	plugin := &api.Plugin{
 		Name:    pluginName,
 		Version: "README",
 	}

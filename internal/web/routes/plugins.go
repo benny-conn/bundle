@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/storage"
+	"github.com/bennycio/bundle/pkg"
 	"github.com/russross/blackfriday/v2"
 )
 
@@ -35,7 +37,7 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		plugins, err := storage.PaginatePlugins(pageNumber)
+		plugins, err := pkg.PaginatePlugins(pageNumber)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -43,7 +45,7 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		data := bundle.TemplateData{
 			Plugins: plugins,
-			User:    user,
+			User:    *user,
 		}
 
 		err = tpl.ExecuteTemplate(w, "plugin", data)
@@ -54,13 +56,13 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	plugin, err := storage.GetPlugin(pluginName)
+	plugin, err := pkg.GetPlugin(pluginName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	pluginReadme := bundle.Plugin{
+	pluginReadme := api.Plugin{
 		Name:    plugin.Name,
 		Author:  plugin.Author,
 		Version: "README",
@@ -73,8 +75,8 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := bundle.TemplateData{
-		User:   user,
-		Plugin: plugin,
+		User:   *user,
+		Plugin: *plugin,
 	}
 
 	err = tpl.ExecuteTemplate(w, "plugin", data)

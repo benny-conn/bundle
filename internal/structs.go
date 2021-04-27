@@ -3,34 +3,15 @@ package internal
 import (
 	"context"
 
+	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type User struct {
-	Username  string   `json:"username"`
-	Email     string   `json:"email"`
-	Password  string   `json:"password"`
-	Scopes    []string `json:"scopes"`
-	Plugins   []string `json:"plugins"`
-	Tag       string   `json:"tag"`
-	Thumbnail []byte
-}
-
 type TemplateData struct {
-	User     User
-	Plugin   Plugin
-	Plugins  []Plugin
+	User     api.User
+	Plugin   api.Plugin
+	Plugins  []api.Plugin
 	TestData string
-}
-
-type Plugin struct {
-	Name        string `json:"name"`
-	Author      string `json:"author"`
-	Version     string `json:"version"`
-	Description string `json:"description"`
-	Readme      string
-	Thumbnail   []byte
-	LastUpdated int64 `json:"lastUpdated"`
 }
 
 type Mongo struct {

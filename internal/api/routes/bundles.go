@@ -2,9 +2,12 @@ package routes
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
+	pb "github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/storage"
 )
@@ -22,7 +25,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
 		version := r.FormValue("version")
 
-		plugin, err := storage.GetPlugin(name)
+		plugin, err := getPlugin(name)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -44,7 +47,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		plugin := r.Header.Get("Plugin")
 
-		reqPlugin := &bundle.Plugin{}
+		reqPlugin := &pb.Plugin{}
 
 		err := json.Unmarshal([]byte(plugin), reqPlugin)
 		if err != nil {
@@ -52,7 +55,7 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		finalPlugin, err := validateAndReturnPlugin(*reqPlugin)
+		finalPlugin, err := updateOrInsertPlugin(reqPlugin)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -67,4 +70,37 @@ func BundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Successfully uploaded to", uploadLocation)
 	}
 
+}
+
+func updateOrInsertPlugin(plugin *pb.Plugin) (*pb.Plugin, error) {
+	isReadme := plugin.Version == "README"
+	dbPlugin, err := getPlugin(plugin.Name)
+
+	if err == nil {
+		isUserPluginAuthor := strings.EqualFold(dbPlugin.Author, plugin.Author)
+
+		if isUserPluginAuthor {
+			if isReadme {
+				dbPlugin.Version = plugin.Version
+			} else {
+				err = updatePlugin(plugin.Name, plugin)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			return nil, err
+		}
+	} else {
+		if isReadme {
+			err = errors.New("no plugin to attach readme to")
+			return nil, err
+		}
+		err = insertPlugin(plugin)
+		if err != nil {
+			return nil, err
+		}
+		return plugin, nil
+	}
+	return dbPlugin, nil
 }

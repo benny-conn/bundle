@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
-	"github.com/bennycio/bundle/internal/storage"
+	"github.com/bennycio/bundle/pkg"
 )
 
 func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -25,18 +26,18 @@ func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		newUsername := req.FormValue("username")
 		newTag := req.FormValue("tag")
 
-		updatedUser := bundle.User{
+		updatedUser := &api.User{
 			Username: newUsername,
 			Tag:      newTag,
 		}
 
-		err = storage.UpdateUser(user.Username, updatedUser)
+		err = pkg.UpdateUser(user.Username, updatedUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		dbUpdatedUser, _ := storage.GetUser(updatedUser)
+		dbUpdatedUser, _ := pkg.GetUser(updatedUser.Username, updatedUser.Email)
 
 		fmt.Println(dbUpdatedUser)
 
@@ -47,7 +48,7 @@ func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := bundle.TemplateData{
-		User: user,
+		User: *user,
 	}
 
 	err = tpl.ExecuteTemplate(w, "profile", data)

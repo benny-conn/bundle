@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/bennycio/bundle/proto/storage";
+option go_package = "github.com/bennycio/bundle/api";
 
 package Storage;
 
@@ -26,8 +26,45 @@ message User {
     string email = 2;
     string password = 3;
     repeated string scopes = 4;
-    string tag = 5;
-    bytes thumbnail = 6;
+    repeated string plugins = 5;
+    string tag = 6;
+    bytes thumbnail = 7;
+}
+
+service PluginsService {
+    rpc GetPlugin (GetPluginRequest) returns (Plugin){}
+    rpc InsertPlugin (Plugin) returns (SuccessResponse) {}
+    rpc UpdatePlugin (UpdatePluginRequest) returns (SuccessResponse) {}
+    rpc PaginatePlugins (PaginatePluginsRequest) returns (PaginatePluginsResponse) {}
+}
+
+
+message GetPluginRequest {
+    string name = 1;
+}
+
+message UpdatePluginRequest {
+    string name = 1;
+    Plugin updatedPlugin = 2;
+}
+
+message PaginatePluginsRequest {
+    int32 page = 1;
+}
+
+message PaginatePluginsResponse {
+    repeated Plugin plugins = 1;
+}
+
+message Plugin {
+    string name = 1;
+    string author = 2;
+    string version = 3;
+    string description = 4;
+    bytes pluginData = 5;
+    string readme = 6;
+    bytes thumbnail = 7;
+    int64 lastUpdated = 8;
 }
 
 message SuccessResponse {

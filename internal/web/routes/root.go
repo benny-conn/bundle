@@ -11,7 +11,7 @@ func RootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := getProfileFromCookie(r)
 	data := bundle.TemplateData{
-		User: user,
+		User: *user,
 	}
 
 	err := tpl.ExecuteTemplate(w, "index", data)

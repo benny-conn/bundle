@@ -3,19 +3,19 @@ package routes
 import (
 	"net/http"
 
-	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/auth"
 )
 
-func getProfileFromCookie(r *http.Request) (bundle.User, error) {
+func getProfileFromCookie(r *http.Request) (*api.User, error) {
 
 	c, err := r.Cookie("access_token")
 	if err != nil {
-		return bundle.User{}, err
+		return nil, err
 	}
 	user, err := auth.GetUserFromToken(c.Value)
 	if err != nil {
-		return bundle.User{}, err
+		return nil, err
 	}
 	return user, nil
 

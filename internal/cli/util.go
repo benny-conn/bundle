@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/api"
 	"gopkg.in/yaml.v2"
 )
 
@@ -37,7 +37,7 @@ func isPluginDirectory() bool {
 	return true
 }
 
-func credentialsPrompt() bundle.User {
+func credentialsPrompt() *api.User {
 
 	fmt.Println("Enter your username or email: ")
 	var userOrEmail string
@@ -48,7 +48,7 @@ func credentialsPrompt() bundle.User {
 
 	isEmail := emailRegex.MatchString(userOrEmail)
 
-	user := bundle.User{}
+	user := &api.User{}
 	user.Password = password
 	if isEmail {
 		user.Email = userOrEmail

@@ -1,10 +1,11 @@
 package routes
 
 import (
+	"context"
 	"net/http"
 
-	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/storage"
+	pb "github.com/bennycio/bundle/api"
+	"google.golang.org/grpc"
 )
 
 func UsersHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -13,12 +14,12 @@ func UsersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 
 		req.ParseForm()
-		newUser := bundle.User{
+		newUser := &pb.User{
 			Username: req.FormValue("username"),
 			Email:    req.FormValue("email"),
 			Password: req.FormValue("password"),
 		}
-		err := storage.InsertUser(newUser)
+		err := insertUser(newUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -27,4 +28,15 @@ func UsersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
 	}
 
+}
+
+func insertUser(user *pb.User) error {
+	conn, err := grpc.Dial(grpcAddress)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	client := pb.NewUsersServiceClient(conn)
+	client.InsertUser(context.Background(), user)
+	return nil
 }

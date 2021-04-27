@@ -3,9 +3,10 @@ package routes
 import (
 	"net/http"
 
+	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
-	"github.com/bennycio/bundle/internal/storage"
+	"github.com/bennycio/bundle/pkg"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,7 +16,7 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 
 		req.ParseForm()
-		user := bundle.User{
+		user := &api.User{
 			Username: req.FormValue("username"),
 			Password: req.FormValue("password"),
 		}
@@ -27,7 +28,7 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		dbUser, err := storage.GetUser(user)
+		dbUser, err := pkg.GetUser(user.Username, user.Email)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

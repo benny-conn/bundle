@@ -3,6 +3,8 @@ package internal
 import (
 	"os"
 	"regexp"
+
+	"github.com/bennycio/bundle/api"
 )
 
 func IsValidPath(path string) bool {
@@ -10,7 +12,7 @@ func IsValidPath(path string) bool {
 	return err == nil
 }
 
-func IsUserValid(user User) bool {
+func IsUserValid(user *api.User) bool {
 
 	var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 

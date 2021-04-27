@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/storage"
 	"github.com/form3tech-oss/jwt-go"
@@ -14,16 +15,16 @@ import (
 )
 
 type CustomClaims struct {
-	User bundle.User `json:"user"`
+	User api.User `json:"user"`
 	jwt.StandardClaims
 }
 
-func NewAuthToken(user bundle.User) (string, error) {
+func NewAuthToken(user *api.User) (string, error) {
 
 	secret := viper.GetString("ClientSecret")
 
 	claims := CustomClaims{
-		User: user,
+		User: *user,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
 			Issuer:    "bundle",
@@ -53,13 +54,13 @@ func CheckScope(tokenString string, scopes ...string) bool {
 	return isAuthorized
 }
 
-func GetUserFromToken(tokenString string) (bundle.User, error) {
+func GetUserFromToken(tokenString string) (*api.User, error) {
 	claims, err := ValidateToken(tokenString)
 	if err != nil {
-		return bundle.User{}, err
+		return nil, err
 	}
 
-	return claims.User, nil
+	return &claims.User, nil
 
 }
 
@@ -144,7 +145,7 @@ func AuthUpload(next http.Handler) http.Handler {
 		if r.Method == http.MethodPost {
 
 			userJSON := r.Header.Get("User")
-			user := bundle.User{}
+			user := api.User{}
 
 			err := json.Unmarshal([]byte(userJSON), &user)
 			if err != nil {
