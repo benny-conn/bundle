@@ -165,7 +165,7 @@ func AuthUpload(next http.Handler) http.Handler {
 				userJSON = string(asJSON)
 			}
 
-			validatedUser, err := bundle.ValidateAndReturnUser(userJSON)
+			validatedUser, err := bundle.IsUserValid(userJSON)
 
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)

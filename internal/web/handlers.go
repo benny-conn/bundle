@@ -179,7 +179,7 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(isValid.Password))
+		err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
