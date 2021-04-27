@@ -4,28 +4,22 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/internal/auth"
+	"github.com/bennycio/bundle/internal/web/routes"
 	"github.com/rs/cors"
 )
 
-func NewBundleMux() http.Handler {
+func NewWebMux() http.Handler {
 
 	mux := http.NewServeMux()
+	rootHandler := http.HandlerFunc(routes.RootHandlerFunc)
+	signupHandler := http.HandlerFunc(routes.SignupHandlerFunc)
+	loginHandler := http.HandlerFunc(routes.LoginHandlerFunc)
+	logoutHandler := http.HandlerFunc(routes.LogoutHandlerFunc)
+	pluginHandler := http.HandlerFunc(routes.PluginsHandlerFunc)
+	profileHandler := http.HandlerFunc(routes.ProfileHandlerFunc)
 
-	bundleHandler := http.HandlerFunc(BundleHandlerFunc)
-	userHandler := http.HandlerFunc(UserHandlerFunc)
-	rootHandler := http.HandlerFunc(RootHandlerFunc)
-	signupHandler := http.HandlerFunc(SignupHandlerFunc)
-	pluginsHandler := http.HandlerFunc(PluginsHandlerFunc)
-	loginHandler := http.HandlerFunc(LoginHandlerFunc)
-	logoutHandler := http.HandlerFunc(LogoutHandlerFunc)
-	pluginHandler := http.HandlerFunc(PluginHandlerFunc)
-	profileHandler := http.HandlerFunc(ProfileHandlerFunc)
-
-	mux.Handle("/bundle", auth.AuthUpload(bundleHandler))
-	mux.Handle("/users", auth.RefreshOrContinue(userHandler))
-	mux.Handle("/", auth.RefreshOrContinue(rootHandler))
-	mux.Handle("/plugins", pluginsHandler)
-	mux.Handle("/plugin", auth.RefreshOrContinue(pluginHandler))
+	mux.Handle("/", auth.Refresh(rootHandler))
+	mux.Handle("/plugin", auth.Refresh(pluginHandler))
 	mux.Handle("/profile", auth.AuthReq(profileHandler))
 	mux.Handle("/login", loginHandler)
 	mux.Handle("/logout", logoutHandler)

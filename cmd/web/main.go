@@ -21,7 +21,7 @@ func init() {
 }
 
 func main() {
-	mux := web.NewBundleMux()
+	mux := web.NewWebMux()
 
 	fmt.Println("Started server on port 8080")
 

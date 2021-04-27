@@ -128,7 +128,7 @@ func AuthReq(next http.Handler) http.Handler {
 	})
 }
 
-func RefreshOrContinue(next http.Handler) http.Handler {
+func Refresh(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := r.Cookie("access_token")
 		if err != nil {
@@ -143,49 +143,33 @@ func AuthUpload(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 
-			var userJSON string
+			userJSON := r.Header.Get("User")
+			user := bundle.User{}
 
-			userJSON = r.Header.Get("User")
-			if userJSON == "" {
-				err := r.ParseForm()
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-				user := bundle.User{
-					Username: r.FormValue("username"),
-					Email:    r.FormValue("email"),
-					Password: r.FormValue("password"),
-				}
-				asJSON, err := json.Marshal(user)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-				userJSON = string(asJSON)
-			}
-
-			validatedUser, err := bundle.IsUserValid(userJSON)
-
+			err := json.Unmarshal([]byte(userJSON), &user)
 			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(err.Error()))
+				http.Error(w, "invalid user", http.StatusBadRequest)
 				return
 			}
 
-			dbUser, err := storage.GetUser(validatedUser)
+			isValid := bundle.IsUserValid(user)
 
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(err.Error()))
+			if !isValid {
+				http.Error(w, "invalid user", http.StatusBadRequest)
 				return
 			}
 
-			err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(validatedUser.Password))
+			dbUser, err := storage.GetUser(user)
 
 			if err != nil {
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("Password does not match stored password"))
+				http.Error(w, "invalid user", http.StatusBadRequest)
+				return
+			}
+
+			err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
+
+			if err != nil {
+				http.Error(w, "incorrect password", http.StatusUnauthorized)
 				return
 			}
 		}
