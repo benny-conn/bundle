@@ -14,6 +14,7 @@ service UsersService {
 message GetUserRequest {
     string username = 1;
     string email = 2;
+    bool withThumbnail = 3;
 }
 
 message UpdateUserRequest {
@@ -36,11 +37,32 @@ service PluginsService {
     rpc InsertPlugin (Plugin) returns (SuccessResponse) {}
     rpc UpdatePlugin (UpdatePluginRequest) returns (SuccessResponse) {}
     rpc PaginatePlugins (PaginatePluginsRequest) returns (PaginatePluginsResponse) {}
+    rpc GetPluginData(GetPluginDataRequest) returns (Plugin) {}
+    rpc InsertPluginData(InsertPluginDataRequest) returns (SuccessResponse) {}
 }
 
 
 message GetPluginRequest {
     string name = 1;
+}
+
+message GetPluginDataRequest {
+    string name = 1;
+    string version = 2;
+    bool withPlugin = 3;
+    bool withReadme = 4;
+    bool withThumbnail = 5;
+}
+
+message InsertPluginDataRequest {
+    Plugin plugin = 1;
+    User author = 2;
+    enum DataType {
+        PLUGIN = 0;
+        README = 1;
+        THUMBNAIL = 2;
+    }
+    DataType dataType = 3;
 }
 
 message UpdatePluginRequest {
@@ -62,7 +84,7 @@ message Plugin {
     string version = 3;
     string description = 4;
     bytes pluginData = 5;
-    string readme = 6;
+    bytes readme = 6;
     bytes thumbnail = 7;
     int64 lastUpdated = 8;
 }
@@ -70,3 +92,4 @@ message Plugin {
 message SuccessResponse {
     bool success = 1;
 }
+

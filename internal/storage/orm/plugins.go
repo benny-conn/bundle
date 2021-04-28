@@ -4,13 +4,13 @@ import (
 	"errors"
 	"time"
 
-	pb "github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func InsertPlugin(plugin *pb.Plugin) error {
+func InsertPlugin(plugin *api.Plugin) error {
 	session, err := getMongoSession()
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func InsertPlugin(plugin *pb.Plugin) error {
 
 }
 
-func UpdatePlugin(name string, plugin *pb.Plugin) error {
+func UpdatePlugin(name string, plugin *api.Plugin) error {
 
 	session, err := getMongoSession()
 	if err != nil {
@@ -55,7 +55,7 @@ func UpdatePlugin(name string, plugin *pb.Plugin) error {
 
 }
 
-func GetPlugin(name string) (*pb.Plugin, error) {
+func GetPlugin(name string) (*api.Plugin, error) {
 	if name == "" {
 		return nil, errors.New("no plugin name provided")
 	}
@@ -67,7 +67,7 @@ func GetPlugin(name string) (*pb.Plugin, error) {
 	defer session.Cancel()
 
 	collection := session.Client.Database("main").Collection("plugins")
-	decodedPluginResult := &pb.Plugin{}
+	decodedPluginResult := &api.Plugin{}
 
 	err = collection.FindOne(session.Ctx, bson.D{{"name", bundle.NewCaseInsensitiveRegex(name)}}).Decode(decodedPluginResult)
 	if err != nil {
@@ -78,7 +78,7 @@ func GetPlugin(name string) (*pb.Plugin, error) {
 
 }
 
-func PaginatePlugins(page int) ([]*pb.Plugin, error) {
+func PaginatePlugins(page int) ([]*api.Plugin, error) {
 	session, err := getMongoSession()
 	if err != nil {
 		return nil, err
@@ -99,10 +99,10 @@ func PaginatePlugins(page int) ([]*pb.Plugin, error) {
 		return nil, err
 	}
 
-	results := []*pb.Plugin{}
+	results := []*api.Plugin{}
 	defer cur.Close(session.Ctx)
 	for cur.Next(session.Ctx) {
-		plugin := &pb.Plugin{}
+		plugin := &api.Plugin{}
 		if err = cur.Decode(&plugin); err != nil {
 			return nil, err
 		}

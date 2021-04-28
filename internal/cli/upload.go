@@ -3,17 +3,16 @@ package cli
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/pkg"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -80,45 +79,31 @@ var uploadCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
+		defer file.Close()
 
-		resp, err := uploadToRepo(file, plugin, user)
+		fb, err := io.ReadAll(file)
+
+		var dataType api.InsertPluginDataRequest_DataType
+		if isReadme {
+			plugin.Readme = fb
+			dataType = api.InsertPluginDataRequest_README
+		} else {
+			plugin.PluginData = fb
+			dataType = api.InsertPluginDataRequest_PLUGIN
+		}
+
+		req := &api.InsertPluginDataRequest{
+			Plugin:   plugin,
+			Author:   user,
+			DataType: dataType,
+		}
+		err = pkg.InsertPluginData(req)
 
 		if err != nil {
 			panic(err)
 		}
-		defer resp.Body.Close()
-		respBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(string(resp.Status))
-		fmt.Println(string(respBody))
+
 	},
-}
-
-func uploadToRepo(file io.Reader, plugin *api.Plugin, user *api.User) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/bundle", file)
-	if err != nil {
-		return nil, err
-	}
-
-	userJSON, err := json.Marshal(user)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pluginJSON, err := json.Marshal(plugin)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req.Header.Add("Plugin", string(pluginJSON))
-	req.Header.Add("User", string(userJSON))
-
-	resp, err := http.DefaultClient.Do(req)
-	return resp, err
 }
 
 func init() {

@@ -8,11 +8,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/api"
 	"github.com/spf13/viper"
 )
 
-func UploadToRepo(plugin bundle.Plugin, body io.Reader) (string, error) {
+func UploadToRepo(plugin *api.Plugin, body io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 	var fp string
 	if plugin.Version == "README" {
@@ -33,29 +33,49 @@ func UploadToRepo(plugin bundle.Plugin, body io.Reader) (string, error) {
 	return result.Location, nil
 }
 
-func DownloadFromRepo(plugin bundle.Plugin) ([]byte, error) {
+func DownloadFromRepo(plugin *api.Plugin, opts *api.GetPluginDataRequest) error {
 
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	buf := aws.NewWriteAtBuffer([]byte{})
-
-	var fn string
-
-	if plugin.Version == "README" {
-		fn = filepath.Join(plugin.Author, plugin.Name, "README.md")
-	} else if plugin.Version == "THUMBNAIL" {
-		fn = filepath.Join(plugin.Author, plugin.Name, "THUMBNAIL.png")
-
-	} else {
-		fn = filepath.Join(plugin.Author, plugin.Name, plugin.Version, plugin.Name+".jar")
+	if opts.WithReadme {
+		fn := filepath.Join(plugin.Author, plugin.Name, "README.md")
+		buf := aws.NewWriteAtBuffer([]byte{})
+		downloader := s3manager.NewDownloader(sess)
+		_, err := downloader.Download(buf, &s3.GetObjectInput{
+			Bucket: aws.String(viper.GetString("AWSBucket")),
+			Key:    aws.String(fn),
+		})
+		if err != nil {
+			return err
+		}
+		plugin.Readme = string(buf.Bytes())
 	}
-	downloader := s3manager.NewDownloader(sess)
-	_, err := downloader.Download(buf, &s3.GetObjectInput{
-		Bucket: aws.String(viper.GetString("AWSBucket")),
-		Key:    aws.String(fn),
-	})
-	if err != nil {
-		return nil, err
+	if opts.WithThumbnail {
+		fn := filepath.Join(plugin.Author, plugin.Name, "THUMBNAIL.png")
+		buf := aws.NewWriteAtBuffer([]byte{})
+		downloader := s3manager.NewDownloader(sess)
+		_, err := downloader.Download(buf, &s3.GetObjectInput{
+			Bucket: aws.String(viper.GetString("AWSBucket")),
+			Key:    aws.String(fn),
+		})
+		if err != nil {
+			return err
+		}
+		plugin.Thumbnail = buf.Bytes()
 	}
-	return buf.Bytes(), nil
+	if opts.WithPlugin {
+		fn := filepath.Join(plugin.Author, plugin.Name, plugin.Version, plugin.Name+".jar")
+		buf := aws.NewWriteAtBuffer([]byte{})
+		downloader := s3manager.NewDownloader(sess)
+		_, err := downloader.Download(buf, &s3.GetObjectInput{
+			Bucket: aws.String(viper.GetString("AWSBucket")),
+			Key:    aws.String(fn),
+		})
+		if err != nil {
+			return err
+		}
+		plugin.PluginData = buf.Bytes()
+	}
+
+	return nil
 }

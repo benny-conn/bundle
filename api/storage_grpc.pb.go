@@ -180,6 +180,8 @@ type PluginsServiceClient interface {
 	InsertPlugin(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*SuccessResponse, error)
 	UpdatePlugin(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
 	PaginatePlugins(ctx context.Context, in *PaginatePluginsRequest, opts ...grpc.CallOption) (*PaginatePluginsResponse, error)
+	GetPluginData(ctx context.Context, in *GetPluginDataRequest, opts ...grpc.CallOption) (*Plugin, error)
+	InsertPluginData(ctx context.Context, in *InsertPluginDataRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
 }
 
 type pluginsServiceClient struct {
@@ -226,6 +228,24 @@ func (c *pluginsServiceClient) PaginatePlugins(ctx context.Context, in *Paginate
 	return out, nil
 }
 
+func (c *pluginsServiceClient) GetPluginData(ctx context.Context, in *GetPluginDataRequest, opts ...grpc.CallOption) (*Plugin, error) {
+	out := new(Plugin)
+	err := c.cc.Invoke(ctx, "/Storage.PluginsService/GetPluginData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pluginsServiceClient) InsertPluginData(ctx context.Context, in *InsertPluginDataRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
+	out := new(SuccessResponse)
+	err := c.cc.Invoke(ctx, "/Storage.PluginsService/InsertPluginData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PluginsServiceServer is the server API for PluginsService service.
 // All implementations must embed UnimplementedPluginsServiceServer
 // for forward compatibility
@@ -234,6 +254,8 @@ type PluginsServiceServer interface {
 	InsertPlugin(context.Context, *Plugin) (*SuccessResponse, error)
 	UpdatePlugin(context.Context, *UpdatePluginRequest) (*SuccessResponse, error)
 	PaginatePlugins(context.Context, *PaginatePluginsRequest) (*PaginatePluginsResponse, error)
+	GetPluginData(context.Context, *GetPluginDataRequest) (*Plugin, error)
+	InsertPluginData(context.Context, *InsertPluginDataRequest) (*SuccessResponse, error)
 	mustEmbedUnimplementedPluginsServiceServer()
 }
 
@@ -252,6 +274,12 @@ func (UnimplementedPluginsServiceServer) UpdatePlugin(context.Context, *UpdatePl
 }
 func (UnimplementedPluginsServiceServer) PaginatePlugins(context.Context, *PaginatePluginsRequest) (*PaginatePluginsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PaginatePlugins not implemented")
+}
+func (UnimplementedPluginsServiceServer) GetPluginData(context.Context, *GetPluginDataRequest) (*Plugin, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPluginData not implemented")
+}
+func (UnimplementedPluginsServiceServer) InsertPluginData(context.Context, *InsertPluginDataRequest) (*SuccessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InsertPluginData not implemented")
 }
 func (UnimplementedPluginsServiceServer) mustEmbedUnimplementedPluginsServiceServer() {}
 
@@ -338,6 +366,42 @@ func _PluginsService_PaginatePlugins_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PluginsService_GetPluginData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPluginDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PluginsServiceServer).GetPluginData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Storage.PluginsService/GetPluginData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PluginsServiceServer).GetPluginData(ctx, req.(*GetPluginDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PluginsService_InsertPluginData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InsertPluginDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PluginsServiceServer).InsertPluginData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Storage.PluginsService/InsertPluginData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PluginsServiceServer).InsertPluginData(ctx, req.(*InsertPluginDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PluginsService_ServiceDesc is the grpc.ServiceDesc for PluginsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -360,6 +424,14 @@ var PluginsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PaginatePlugins",
 			Handler:    _PluginsService_PaginatePlugins_Handler,
+		},
+		{
+			MethodName: "GetPluginData",
+			Handler:    _PluginsService_GetPluginData_Handler,
+		},
+		{
+			MethodName: "InsertPluginData",
+			Handler:    _PluginsService_InsertPluginData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

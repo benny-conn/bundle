@@ -42,6 +42,10 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			plugins, err := paginatePlugins(convPage)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			asJSON, err := json.Marshal(plugins)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

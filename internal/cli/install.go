@@ -75,6 +75,7 @@ func init() {
 	installCmd.PersistentFlags().StringVarP(&SpecifiedVersion, "version", "v", "latest", "Specify version for installing")
 }
 
+// MAKE THIS WORK WITH THE NEW gRPC API
 func installPlugin(pluginName string, bundleVersion string) (string, error) {
 
 	version := bundleVersion

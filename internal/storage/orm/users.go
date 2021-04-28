@@ -3,13 +3,13 @@ package orm
 import (
 	"errors"
 
-	pb "github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func InsertUser(user *pb.User) error {
+func InsertUser(user *api.User) error {
 	isValid := bundle.IsUserValid(user)
 
 	if !isValid {
@@ -64,7 +64,7 @@ func InsertUser(user *pb.User) error {
 	return nil
 }
 
-func GetUser(username string, email string) (*pb.User, error) {
+func GetUser(username string, email string) (*api.User, error) {
 	session, err := getMongoSession()
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func GetUser(username string, email string) (*pb.User, error) {
 
 	collection := session.Client.Database("main").Collection("users")
 
-	decodedUser := &pb.User{}
+	decodedUser := &api.User{}
 
 	if email == "" {
 		err = collection.FindOne(session.Ctx, bson.D{{"username", username}}).Decode(decodedUser)
@@ -89,7 +89,7 @@ func GetUser(username string, email string) (*pb.User, error) {
 	return decodedUser, nil
 }
 
-func UpdateUser(username string, user *pb.User) error {
+func UpdateUser(username string, user *api.User) error {
 	session, err := getMongoSession()
 	if err != nil {
 		return err
