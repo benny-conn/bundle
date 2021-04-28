@@ -84,7 +84,7 @@ message Plugin {
     string version = 3;
     string description = 4;
     bytes pluginData = 5;
-    bytes readme = 6;
+    string readme = 6;
     bytes thumbnail = 7;
     int64 lastUpdated = 8;
 }

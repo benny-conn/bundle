@@ -6,7 +6,6 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/storage"
 	"github.com/bennycio/bundle/pkg"
 	"github.com/russross/blackfriday/v2"
 )
@@ -62,15 +61,16 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	pluginReadme := api.Plugin{
-		Name:    plugin.Name,
-		Author:  plugin.Author,
-		Version: "README",
+	opts := &api.GetPluginDataRequest{
+		Name:       plugin.Name,
+		Version:    plugin.Version,
+		WithReadme: true,
 	}
 
-	md, err := storage.DownloadFromRepo(pluginReadme)
+	// make readme not bytes
+	md, err := pkg.GetPluginData(opts)
 	if err == nil {
-		output := blackfriday.Run(md)
+		output := blackfriday.Run(md.Readme)
 		plugin.Readme = string(output)
 	}
 

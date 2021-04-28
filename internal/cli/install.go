@@ -2,13 +2,11 @@ package cli
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
 
+	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/pkg"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
@@ -90,23 +88,15 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 
 	fmt.Printf("Installing Jar %s with version %s\n", pluginName, version)
 
-	u, err := url.Parse("http://localhost:8080/bundle")
+	opts := &api.GetPluginDataRequest{
+		Name:       pluginName,
+		Version:    version,
+		WithPlugin: true,
+	}
+	pl, err := pkg.GetPluginData(opts)
 	if err != nil {
 		return "", err
 	}
-
-	q := u.Query()
-	q.Set("name", pluginName)
-	q.Set("version", version)
-	u.RawQuery = q.Encode()
-
-	resp, err := http.Get(u.String())
-
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
 
 	fp := filepath.Join("plugins", pluginName+".jar")
 
@@ -120,7 +110,7 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 		return "", err
 	}
 
-	io.Copy(file, resp.Body)
+	file.Write(pl.PluginData)
 
 	fmt.Printf("Successfully downloaded the plugin %s with version %s at file path: %s \n", pluginName, bundleVersion, file.Name())
 	return version, nil

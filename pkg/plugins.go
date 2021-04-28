@@ -75,7 +75,7 @@ func GetPlugin(name string) (*api.Plugin, error) {
 
 }
 
-func GetPluginData(name string, version string, opts *api.GetPluginDataRequest) (*api.Plugin, error) {
+func GetPluginData(opts *api.GetPluginDataRequest) (*api.Plugin, error) {
 	u, err := url.Parse(ApiServerHost + "/bundles")
 	if err != nil {
 		return nil, err
@@ -86,8 +86,8 @@ func GetPluginData(name string, version string, opts *api.GetPluginDataRequest) 
 	withThumbnail := strconv.FormatBool(opts.WithThumbnail)
 
 	q := u.Query()
-	q.Set("name", name)
-	q.Set("version", version)
+	q.Set("name", opts.Name)
+	q.Set("version", opts.Version)
 	q.Set("withPlugin", withPlugin)
 	q.Set("withReadme", withReadme)
 	q.Set("withThumbnail", withThumbnail)

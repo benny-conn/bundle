@@ -8,7 +8,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/storage"
+	"github.com/bennycio/bundle/pkg"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
@@ -145,9 +145,9 @@ func AuthUpload(next http.Handler) http.Handler {
 		if r.Method == http.MethodPost {
 
 			userJSON := r.Header.Get("User")
-			user := api.User{}
+			user := &api.User{}
 
-			err := json.Unmarshal([]byte(userJSON), &user)
+			err := json.Unmarshal([]byte(userJSON), user)
 			if err != nil {
 				http.Error(w, "invalid user", http.StatusBadRequest)
 				return
@@ -160,7 +160,7 @@ func AuthUpload(next http.Handler) http.Handler {
 				return
 			}
 
-			dbUser, err := storage.GetUser(user)
+			dbUser, err := pkg.GetUser(user.Username, user.Email)
 
 			if err != nil {
 				http.Error(w, "invalid user", http.StatusBadRequest)
