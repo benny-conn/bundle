@@ -6,7 +6,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
-	"github.com/bennycio/bundle/pkg"
+	"github.com/bennycio/bundle/wrapper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,7 +28,7 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		dbUser, err := pkg.GetUser(user.Username, user.Email)
+		dbUser, err := wrapper.GetUserApi(user.Username, user.Email)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

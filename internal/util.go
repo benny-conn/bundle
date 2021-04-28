@@ -1,8 +1,10 @@
 package internal
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -23,4 +25,16 @@ func Contains(s []string, str string) bool {
 	}
 
 	return false
+}
+
+func InitConfig() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("/etc/bundle/")
+	viper.AddConfigPath("$HOME/.bundle")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error parsing config file: %s", err))
+	}
 }

@@ -2,19 +2,21 @@ syntax = "proto3";
 
 option go_package = "github.com/bennycio/bundle/api";
 
-package Storage;
+package api;
+
+
+// USERS ------------------------------------------------------------------ ||
 
 service UsersService {
     rpc GetUser (GetUserRequest) returns (User){}
-    rpc InsertUser (User) returns (SuccessResponse) {}
-    rpc UpdateUser (UpdateUserRequest) returns (SuccessResponse) {}
+    rpc InsertUser (User) returns (Empty) {}
+    rpc UpdateUser (UpdateUserRequest) returns (Empty) {}
 }
 
 
 message GetUserRequest {
     string username = 1;
     string email = 2;
-    bool withThumbnail = 3;
 }
 
 message UpdateUserRequest {
@@ -29,16 +31,15 @@ message User {
     repeated string scopes = 4;
     repeated string plugins = 5;
     string tag = 6;
-    bytes thumbnail = 7;
 }
+
+// PLUGINS --------------------------------------------------------------------- ||
 
 service PluginsService {
     rpc GetPlugin (GetPluginRequest) returns (Plugin){}
-    rpc InsertPlugin (Plugin) returns (SuccessResponse) {}
-    rpc UpdatePlugin (UpdatePluginRequest) returns (SuccessResponse) {}
+    rpc InsertPlugin (Plugin) returns (Empty) {}
+    rpc UpdatePlugin (UpdatePluginRequest) returns (Empty) {}
     rpc PaginatePlugins (PaginatePluginsRequest) returns (PaginatePluginsResponse) {}
-    rpc GetPluginData(GetPluginDataRequest) returns (Plugin) {}
-    rpc InsertPluginData(InsertPluginDataRequest) returns (SuccessResponse) {}
 }
 
 
@@ -46,24 +47,6 @@ message GetPluginRequest {
     string name = 1;
 }
 
-message GetPluginDataRequest {
-    string name = 1;
-    string version = 2;
-    bool withPlugin = 3;
-    bool withReadme = 4;
-    bool withThumbnail = 5;
-}
-
-message InsertPluginDataRequest {
-    Plugin plugin = 1;
-    User author = 2;
-    enum DataType {
-        PLUGIN = 0;
-        README = 1;
-        THUMBNAIL = 2;
-    }
-    DataType dataType = 3;
-}
 
 message UpdatePluginRequest {
     string name = 1;
@@ -83,13 +66,35 @@ message Plugin {
     string author = 2;
     string version = 3;
     string description = 4;
-    bytes pluginData = 5;
-    string readme = 6;
-    bytes thumbnail = 7;
     int64 lastUpdated = 8;
 }
 
-message SuccessResponse {
-    bool success = 1;
+
+
+// AUTH ------------------------------------------------------------ ||
+
+service AuthService {
+    rpc NewJwt(User) returns (Jwt) {}
+    rpc Validate(Jwt) returns (Empty) {}
+    rpc Refresh(Jwt) returns (Jwt) {}
+    rpc CheckScope(Claim) returns (Empty) {}
+    rpc GetUser(Jwt) returns (User) {}
 }
+
+message Jwt {
+    string jwt = 1;
+}
+
+message Claim {
+    repeated string scopes = 1;
+    Jwt jwt = 2;
+}
+
+
+// UTIL ----------------------------------------------------------------- ||
+
+
+message Empty {
+}
+
 

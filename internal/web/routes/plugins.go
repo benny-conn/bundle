@@ -4,10 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/pkg"
-	"github.com/russross/blackfriday/v2"
+	"github.com/bennycio/bundle/wrapper"
 )
 
 func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -36,7 +34,7 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		plugins, err := pkg.PaginatePlugins(pageNumber)
+		plugins, err := wrapper.PaginatePluginsApi(pageNumber)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -55,24 +53,17 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	plugin, err := pkg.GetPlugin(pluginName)
+	plugin, err := wrapper.GetPluginApi(pluginName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	opts := &api.GetPluginDataRequest{
-		Name:       plugin.Name,
-		Version:    plugin.Version,
-		WithReadme: true,
-	}
-
-	// make readme not bytes
-	md, err := pkg.GetPluginData(opts)
-	if err == nil {
-		output := blackfriday.Run(md.Readme)
-		plugin.Readme = string(output)
-	}
+	// DO THIS
+	// md, err := pkg.GetPluginData(opts)
+	// if err == nil {
+	// 	output := blackfriday.Run(md.Readme)
+	// }
 
 	data := bundle.TemplateData{
 		User:   *user,

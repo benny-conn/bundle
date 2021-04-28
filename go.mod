@@ -12,7 +12,6 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/rs/cors v1.7.0
-	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/schollz/progressbar/v3 v3.8.0
 	github.com/smartystreets/assertions v1.2.0 // indirect
 	github.com/spf13/afero v1.6.0 // indirect

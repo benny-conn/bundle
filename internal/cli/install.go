@@ -6,8 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/pkg"
+	"github.com/bennycio/bundle/wrapper"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
@@ -73,13 +72,12 @@ func init() {
 	installCmd.PersistentFlags().StringVarP(&SpecifiedVersion, "version", "v", "latest", "Specify version for installing")
 }
 
-// MAKE THIS WORK WITH THE NEW gRPC API
 func installPlugin(pluginName string, bundleVersion string) (string, error) {
 
 	version := bundleVersion
 
 	if Force && version != "latest" {
-		plugin, err := pkg.GetPlugin(pluginName)
+		plugin, err := wrapper.GetPlugin(pluginName)
 		if err != nil {
 			return "", err
 		}
@@ -88,12 +86,7 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 
 	fmt.Printf("Installing Jar %s with version %s\n", pluginName, version)
 
-	opts := &api.GetPluginDataRequest{
-		Name:       pluginName,
-		Version:    version,
-		WithPlugin: true,
-	}
-	pl, err := pkg.GetPluginData(opts)
+	pl, err := wrapper.DownloadPlugin(pluginName, version)
 	if err != nil {
 		return "", err
 	}
@@ -110,7 +103,7 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 		return "", err
 	}
 
-	file.Write(pl.PluginData)
+	file.Write(pl)
 
 	fmt.Printf("Successfully downloaded the plugin %s with version %s at file path: %s \n", pluginName, bundleVersion, file.Name())
 	return version, nil

@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/pkg"
+	"github.com/bennycio/bundle/wrapper"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -33,7 +33,7 @@ var statusCmd = &cobra.Command{
 			go func(pluginName string, bundleVersion string) {
 				defer wg.Done()
 
-				plugin, err := pkg.GetPlugin(pluginName)
+				plugin, err := wrapper.GetPlugin(pluginName)
 				if err != nil {
 					panic(err)
 				}

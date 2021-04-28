@@ -22,20 +22,20 @@ func (s *pluginsServer) GetPlugin(ctx context.Context, req *api.GetPluginRequest
 
 }
 
-func (s *pluginsServer) UpdatePlugin(ctx context.Context, req *api.UpdatePluginRequest) (*api.SuccessResponse, error) {
+func (s *pluginsServer) UpdatePlugin(ctx context.Context, req *api.UpdatePluginRequest) (*api.Empty, error) {
 	err := orm.UpdatePlugin(req.Name, req.UpdatedPlugin)
 	if err != nil {
-		return &api.SuccessResponse{Success: false}, err
+		return &api.Empty{}, err
 	}
-	return &api.SuccessResponse{Success: true}, nil
+	return &api.Empty{}, nil
 }
 
-func (s *pluginsServer) InsertPlugin(ctx context.Context, plugin *api.Plugin) (*api.SuccessResponse, error) {
+func (s *pluginsServer) InsertPlugin(ctx context.Context, plugin *api.Plugin) (*api.Empty, error) {
 	err := orm.InsertPlugin(plugin)
 	if err != nil {
-		return &api.SuccessResponse{Success: false}, err
+		return &api.Empty{}, err
 	}
-	return &api.SuccessResponse{Success: true}, nil
+	return &api.Empty{}, nil
 }
 
 func (s *pluginsServer) PaginatePlugins(ctx context.Context, req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
@@ -46,18 +46,6 @@ func (s *pluginsServer) PaginatePlugins(ctx context.Context, req *api.PaginatePl
 	return &api.PaginatePluginsResponse{
 		Plugins: pls,
 	}, nil
-}
-
-func (s *pluginsServer) GetPluginData(ctx context.Context, req *api.GetPluginDataRequest) (*api.Plugin, error) {
-	pl, err := orm.GetPlugin(req.Name)
-	if err != nil {
-		return nil, err
-	}
-	err = DownloadFromRepo(pl, req)
-	if err != nil {
-		return nil, err
-	}
-	return pl, nil
 }
 
 func NewPluginsServer() *pluginsServer {

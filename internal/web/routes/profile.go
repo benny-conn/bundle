@@ -7,7 +7,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
-	"github.com/bennycio/bundle/pkg"
+	"github.com/bennycio/bundle/wrapper"
 )
 
 func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -31,13 +31,13 @@ func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			Tag:      newTag,
 		}
 
-		err = pkg.UpdateUser(user.Username, updatedUser)
+		err = wrapper.UpdateUserApi(user.Username, updatedUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		dbUpdatedUser, _ := pkg.GetUser(updatedUser.Username, updatedUser.Email)
+		dbUpdatedUser, _ := wrapper.GetUserApi(updatedUser.Username, updatedUser.Email)
 
 		fmt.Println(dbUpdatedUser)
 

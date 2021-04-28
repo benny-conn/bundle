@@ -19,28 +19,20 @@ func (s *usersServer) GetUser(ctx context.Context, req *api.GetUserRequest) (*ap
 	}
 	return user, nil
 }
-func (s *usersServer) UpdateUser(ctx context.Context, req *api.UpdateUserRequest) (*api.SuccessResponse, error) {
+func (s *usersServer) UpdateUser(ctx context.Context, req *api.UpdateUserRequest) (*api.Empty, error) {
 	err := orm.UpdateUser(req.Username, req.UpdatedUser)
 	if err != nil {
-		return &api.SuccessResponse{
-			Success: false,
-		}, err
+		return &api.Empty{}, err
 	}
-	return &api.SuccessResponse{
-		Success: true,
-	}, nil
+	return &api.Empty{}, nil
 }
 
-func (s *usersServer) InsertUser(ctx context.Context, user *api.User) (*api.SuccessResponse, error) {
+func (s *usersServer) InsertUser(ctx context.Context, user *api.User) (*api.Empty, error) {
 	err := orm.InsertUser(user)
 	if err != nil {
-		return &api.SuccessResponse{
-			Success: false,
-		}, err
+		return &api.Empty{}, err
 	}
-	return &api.SuccessResponse{
-		Success: true,
-	}, nil
+	return &api.Empty{}, nil
 }
 
 func NewUsersServer() *usersServer {

@@ -5,14 +5,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/pkg"
+	"github.com/bennycio/bundle/wrapper"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -69,8 +68,7 @@ var uploadCmd = &cobra.Command{
 
 			plugin.Name = result.Name
 			plugin.Version = result.Version
-			plugin.Description = result.Description
-			plugin.Author = user.Username
+
 		}
 
 		fmt.Printf("Uploading to Bundle Repository From: %s\n", path)
@@ -81,24 +79,11 @@ var uploadCmd = &cobra.Command{
 		}
 		defer file.Close()
 
-		fb, err := io.ReadAll(file)
-
-		var dataType api.InsertPluginDataRequest_DataType
 		if isReadme {
-			plugin.Readme = fb
-			dataType = api.InsertPluginDataRequest_README
+			err = wrapper.UploadReadmeApi(user, plugin.Name, file)
 		} else {
-			plugin.PluginData = fb
-			dataType = api.InsertPluginDataRequest_PLUGIN
+			err = wrapper.UploadPluginApi(user, plugin.Name, plugin.Version, file)
 		}
-
-		req := &api.InsertPluginDataRequest{
-			Plugin:   plugin,
-			Author:   user,
-			DataType: dataType,
-		}
-		err = pkg.InsertPluginData(req)
-
 		if err != nil {
 			panic(err)
 		}

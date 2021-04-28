@@ -7,7 +7,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/storage"
+	"github.com/bennycio/bundle/internal/auth"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
@@ -15,15 +15,13 @@ import (
 func init() {
 	internal.InitConfig()
 }
-
 func main() {
 	port := viper.GetInt("Port")
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	api.RegisterUsersServiceServer(grpcServer, storage.NewUsersServer())
-	api.RegisterPluginsServiceServer(grpcServer, storage.NewPluginsServer())
+	api.RegisterAuthServiceServer(grpcServer, auth.NewAuthServer())
 	grpcServer.Serve(lis)
 }

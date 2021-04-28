@@ -19,8 +19,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsersServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error)
-	InsertUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*SuccessResponse, error)
-	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
+	InsertUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*Empty, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type usersServiceClient struct {
@@ -33,25 +33,25 @@ func NewUsersServiceClient(cc grpc.ClientConnInterface) UsersServiceClient {
 
 func (c *usersServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error) {
 	out := new(User)
-	err := c.cc.Invoke(ctx, "/Storage.UsersService/GetUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.UsersService/GetUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *usersServiceClient) InsertUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*SuccessResponse, error) {
-	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, "/Storage.UsersService/InsertUser", in, out, opts...)
+func (c *usersServiceClient) InsertUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.UsersService/InsertUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *usersServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
-	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, "/Storage.UsersService/UpdateUser", in, out, opts...)
+func (c *usersServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.UsersService/UpdateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +63,8 @@ func (c *usersServiceClient) UpdateUser(ctx context.Context, in *UpdateUserReque
 // for forward compatibility
 type UsersServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*User, error)
-	InsertUser(context.Context, *User) (*SuccessResponse, error)
-	UpdateUser(context.Context, *UpdateUserRequest) (*SuccessResponse, error)
+	InsertUser(context.Context, *User) (*Empty, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*Empty, error)
 	mustEmbedUnimplementedUsersServiceServer()
 }
 
@@ -75,10 +75,10 @@ type UnimplementedUsersServiceServer struct {
 func (UnimplementedUsersServiceServer) GetUser(context.Context, *GetUserRequest) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
-func (UnimplementedUsersServiceServer) InsertUser(context.Context, *User) (*SuccessResponse, error) {
+func (UnimplementedUsersServiceServer) InsertUser(context.Context, *User) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InsertUser not implemented")
 }
-func (UnimplementedUsersServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*SuccessResponse, error) {
+func (UnimplementedUsersServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedUsersServiceServer) mustEmbedUnimplementedUsersServiceServer() {}
@@ -104,7 +104,7 @@ func _UsersService_GetUser_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Storage.UsersService/GetUser",
+		FullMethod: "/api.UsersService/GetUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersServiceServer).GetUser(ctx, req.(*GetUserRequest))
@@ -122,7 +122,7 @@ func _UsersService_InsertUser_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Storage.UsersService/InsertUser",
+		FullMethod: "/api.UsersService/InsertUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersServiceServer).InsertUser(ctx, req.(*User))
@@ -140,7 +140,7 @@ func _UsersService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Storage.UsersService/UpdateUser",
+		FullMethod: "/api.UsersService/UpdateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsersServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
@@ -152,7 +152,7 @@ func _UsersService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UsersService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Storage.UsersService",
+	ServiceName: "api.UsersService",
 	HandlerType: (*UsersServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -169,7 +169,7 @@ var UsersService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "storage.proto",
+	Metadata: "api.proto",
 }
 
 // PluginsServiceClient is the client API for PluginsService service.
@@ -177,11 +177,9 @@ var UsersService_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PluginsServiceClient interface {
 	GetPlugin(ctx context.Context, in *GetPluginRequest, opts ...grpc.CallOption) (*Plugin, error)
-	InsertPlugin(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*SuccessResponse, error)
-	UpdatePlugin(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
+	InsertPlugin(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*Empty, error)
+	UpdatePlugin(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*Empty, error)
 	PaginatePlugins(ctx context.Context, in *PaginatePluginsRequest, opts ...grpc.CallOption) (*PaginatePluginsResponse, error)
-	GetPluginData(ctx context.Context, in *GetPluginDataRequest, opts ...grpc.CallOption) (*Plugin, error)
-	InsertPluginData(ctx context.Context, in *InsertPluginDataRequest, opts ...grpc.CallOption) (*SuccessResponse, error)
 }
 
 type pluginsServiceClient struct {
@@ -194,25 +192,25 @@ func NewPluginsServiceClient(cc grpc.ClientConnInterface) PluginsServiceClient {
 
 func (c *pluginsServiceClient) GetPlugin(ctx context.Context, in *GetPluginRequest, opts ...grpc.CallOption) (*Plugin, error) {
 	out := new(Plugin)
-	err := c.cc.Invoke(ctx, "/Storage.PluginsService/GetPlugin", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.PluginsService/GetPlugin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *pluginsServiceClient) InsertPlugin(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*SuccessResponse, error) {
-	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, "/Storage.PluginsService/InsertPlugin", in, out, opts...)
+func (c *pluginsServiceClient) InsertPlugin(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.PluginsService/InsertPlugin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *pluginsServiceClient) UpdatePlugin(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
-	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, "/Storage.PluginsService/UpdatePlugin", in, out, opts...)
+func (c *pluginsServiceClient) UpdatePlugin(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.PluginsService/UpdatePlugin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -221,25 +219,7 @@ func (c *pluginsServiceClient) UpdatePlugin(ctx context.Context, in *UpdatePlugi
 
 func (c *pluginsServiceClient) PaginatePlugins(ctx context.Context, in *PaginatePluginsRequest, opts ...grpc.CallOption) (*PaginatePluginsResponse, error) {
 	out := new(PaginatePluginsResponse)
-	err := c.cc.Invoke(ctx, "/Storage.PluginsService/PaginatePlugins", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *pluginsServiceClient) GetPluginData(ctx context.Context, in *GetPluginDataRequest, opts ...grpc.CallOption) (*Plugin, error) {
-	out := new(Plugin)
-	err := c.cc.Invoke(ctx, "/Storage.PluginsService/GetPluginData", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *pluginsServiceClient) InsertPluginData(ctx context.Context, in *InsertPluginDataRequest, opts ...grpc.CallOption) (*SuccessResponse, error) {
-	out := new(SuccessResponse)
-	err := c.cc.Invoke(ctx, "/Storage.PluginsService/InsertPluginData", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.PluginsService/PaginatePlugins", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -251,11 +231,9 @@ func (c *pluginsServiceClient) InsertPluginData(ctx context.Context, in *InsertP
 // for forward compatibility
 type PluginsServiceServer interface {
 	GetPlugin(context.Context, *GetPluginRequest) (*Plugin, error)
-	InsertPlugin(context.Context, *Plugin) (*SuccessResponse, error)
-	UpdatePlugin(context.Context, *UpdatePluginRequest) (*SuccessResponse, error)
+	InsertPlugin(context.Context, *Plugin) (*Empty, error)
+	UpdatePlugin(context.Context, *UpdatePluginRequest) (*Empty, error)
 	PaginatePlugins(context.Context, *PaginatePluginsRequest) (*PaginatePluginsResponse, error)
-	GetPluginData(context.Context, *GetPluginDataRequest) (*Plugin, error)
-	InsertPluginData(context.Context, *InsertPluginDataRequest) (*SuccessResponse, error)
 	mustEmbedUnimplementedPluginsServiceServer()
 }
 
@@ -266,20 +244,14 @@ type UnimplementedPluginsServiceServer struct {
 func (UnimplementedPluginsServiceServer) GetPlugin(context.Context, *GetPluginRequest) (*Plugin, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPlugin not implemented")
 }
-func (UnimplementedPluginsServiceServer) InsertPlugin(context.Context, *Plugin) (*SuccessResponse, error) {
+func (UnimplementedPluginsServiceServer) InsertPlugin(context.Context, *Plugin) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InsertPlugin not implemented")
 }
-func (UnimplementedPluginsServiceServer) UpdatePlugin(context.Context, *UpdatePluginRequest) (*SuccessResponse, error) {
+func (UnimplementedPluginsServiceServer) UpdatePlugin(context.Context, *UpdatePluginRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePlugin not implemented")
 }
 func (UnimplementedPluginsServiceServer) PaginatePlugins(context.Context, *PaginatePluginsRequest) (*PaginatePluginsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PaginatePlugins not implemented")
-}
-func (UnimplementedPluginsServiceServer) GetPluginData(context.Context, *GetPluginDataRequest) (*Plugin, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPluginData not implemented")
-}
-func (UnimplementedPluginsServiceServer) InsertPluginData(context.Context, *InsertPluginDataRequest) (*SuccessResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InsertPluginData not implemented")
 }
 func (UnimplementedPluginsServiceServer) mustEmbedUnimplementedPluginsServiceServer() {}
 
@@ -304,7 +276,7 @@ func _PluginsService_GetPlugin_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Storage.PluginsService/GetPlugin",
+		FullMethod: "/api.PluginsService/GetPlugin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PluginsServiceServer).GetPlugin(ctx, req.(*GetPluginRequest))
@@ -322,7 +294,7 @@ func _PluginsService_InsertPlugin_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Storage.PluginsService/InsertPlugin",
+		FullMethod: "/api.PluginsService/InsertPlugin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PluginsServiceServer).InsertPlugin(ctx, req.(*Plugin))
@@ -340,7 +312,7 @@ func _PluginsService_UpdatePlugin_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Storage.PluginsService/UpdatePlugin",
+		FullMethod: "/api.PluginsService/UpdatePlugin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PluginsServiceServer).UpdatePlugin(ctx, req.(*UpdatePluginRequest))
@@ -358,46 +330,10 @@ func _PluginsService_PaginatePlugins_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Storage.PluginsService/PaginatePlugins",
+		FullMethod: "/api.PluginsService/PaginatePlugins",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PluginsServiceServer).PaginatePlugins(ctx, req.(*PaginatePluginsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PluginsService_GetPluginData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPluginDataRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PluginsServiceServer).GetPluginData(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Storage.PluginsService/GetPluginData",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginsServiceServer).GetPluginData(ctx, req.(*GetPluginDataRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PluginsService_InsertPluginData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InsertPluginDataRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PluginsServiceServer).InsertPluginData(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Storage.PluginsService/InsertPluginData",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginsServiceServer).InsertPluginData(ctx, req.(*InsertPluginDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -406,7 +342,7 @@ func _PluginsService_InsertPluginData_Handler(srv interface{}, ctx context.Conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PluginsService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Storage.PluginsService",
+	ServiceName: "api.PluginsService",
 	HandlerType: (*PluginsServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -425,15 +361,237 @@ var PluginsService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "PaginatePlugins",
 			Handler:    _PluginsService_PaginatePlugins_Handler,
 		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api.proto",
+}
+
+// AuthServiceClient is the client API for AuthService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AuthServiceClient interface {
+	NewJwt(ctx context.Context, in *User, opts ...grpc.CallOption) (*Jwt, error)
+	Validate(ctx context.Context, in *Jwt, opts ...grpc.CallOption) (*Empty, error)
+	Refresh(ctx context.Context, in *Jwt, opts ...grpc.CallOption) (*Jwt, error)
+	CheckScope(ctx context.Context, in *Claim, opts ...grpc.CallOption) (*Empty, error)
+	GetUser(ctx context.Context, in *Jwt, opts ...grpc.CallOption) (*User, error)
+}
+
+type authServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
+	return &authServiceClient{cc}
+}
+
+func (c *authServiceClient) NewJwt(ctx context.Context, in *User, opts ...grpc.CallOption) (*Jwt, error) {
+	out := new(Jwt)
+	err := c.cc.Invoke(ctx, "/api.AuthService/NewJwt", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) Validate(ctx context.Context, in *Jwt, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.AuthService/Validate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) Refresh(ctx context.Context, in *Jwt, opts ...grpc.CallOption) (*Jwt, error) {
+	out := new(Jwt)
+	err := c.cc.Invoke(ctx, "/api.AuthService/Refresh", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) CheckScope(ctx context.Context, in *Claim, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.AuthService/CheckScope", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetUser(ctx context.Context, in *Jwt, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := c.cc.Invoke(ctx, "/api.AuthService/GetUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AuthServiceServer is the server API for AuthService service.
+// All implementations must embed UnimplementedAuthServiceServer
+// for forward compatibility
+type AuthServiceServer interface {
+	NewJwt(context.Context, *User) (*Jwt, error)
+	Validate(context.Context, *Jwt) (*Empty, error)
+	Refresh(context.Context, *Jwt) (*Jwt, error)
+	CheckScope(context.Context, *Claim) (*Empty, error)
+	GetUser(context.Context, *Jwt) (*User, error)
+	mustEmbedUnimplementedAuthServiceServer()
+}
+
+// UnimplementedAuthServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedAuthServiceServer struct {
+}
+
+func (UnimplementedAuthServiceServer) NewJwt(context.Context, *User) (*Jwt, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewJwt not implemented")
+}
+func (UnimplementedAuthServiceServer) Validate(context.Context, *Jwt) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
+}
+func (UnimplementedAuthServiceServer) Refresh(context.Context, *Jwt) (*Jwt, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
+}
+func (UnimplementedAuthServiceServer) CheckScope(context.Context, *Claim) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckScope not implemented")
+}
+func (UnimplementedAuthServiceServer) GetUser(context.Context, *Jwt) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
+
+// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuthServiceServer will
+// result in compilation errors.
+type UnsafeAuthServiceServer interface {
+	mustEmbedUnimplementedAuthServiceServer()
+}
+
+func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
+	s.RegisterService(&AuthService_ServiceDesc, srv)
+}
+
+func _AuthService_NewJwt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).NewJwt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.AuthService/NewJwt",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).NewJwt(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_Validate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Jwt)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).Validate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.AuthService/Validate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).Validate(ctx, req.(*Jwt))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Jwt)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).Refresh(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.AuthService/Refresh",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).Refresh(ctx, req.(*Jwt))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_CheckScope_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Claim)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).CheckScope(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.AuthService/CheckScope",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).CheckScope(ctx, req.(*Claim))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Jwt)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.AuthService/GetUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetUser(ctx, req.(*Jwt))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AuthService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.AuthService",
+	HandlerType: (*AuthServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetPluginData",
-			Handler:    _PluginsService_GetPluginData_Handler,
+			MethodName: "NewJwt",
+			Handler:    _AuthService_NewJwt_Handler,
 		},
 		{
-			MethodName: "InsertPluginData",
-			Handler:    _PluginsService_InsertPluginData_Handler,
+			MethodName: "Validate",
+			Handler:    _AuthService_Validate_Handler,
+		},
+		{
+			MethodName: "Refresh",
+			Handler:    _AuthService_Refresh_Handler,
+		},
+		{
+			MethodName: "CheckScope",
+			Handler:    _AuthService_CheckScope_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _AuthService_GetUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "storage.proto",
+	Metadata: "api.proto",
 }
