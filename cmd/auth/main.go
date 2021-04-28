@@ -10,6 +10,7 @@ import (
 	"github.com/bennycio/bundle/internal/auth"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 func init() {
@@ -21,7 +22,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	grpcServer := grpc.NewServer()
+
+	creds, err := credentials.NewServerTLSFromFile("tls/server-cert.pem", "tls/server-key.pem")
+	if err != nil {
+		log.Fatalf("Failed to setup tls: %v", err)
+	}
+
+	grpcServer := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterAuthServiceServer(grpcServer, auth.NewAuthServer())
 	grpcServer.Serve(lis)
 }

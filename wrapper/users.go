@@ -4,17 +4,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/bennycio/bundle/api"
 	"google.golang.org/grpc"
 )
 
 func UpdateUserApi(username string, updatedUser *api.User) error {
-
-	u, err := url.Parse(ApiServerHost + "/users")
+	port := os.Getenv("API_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	u, err := url.Parse(addr + "/users")
 	if err != nil {
 		return err
 	}
@@ -42,8 +45,9 @@ func UpdateUserApi(username string, updatedUser *api.User) error {
 }
 
 func GetUserApi(username string, email string) (*api.User, error) {
-
-	u, err := url.Parse(ApiServerHost + "/users")
+	port := os.Getenv("API_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	u, err := url.Parse(addr + "/users")
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +79,10 @@ func GetUserApi(username string, email string) (*api.User, error) {
 }
 
 func InsertUser(user *api.User) error {
-	conn, err := grpc.Dial(grpcAddress)
+	creds, err := GetCert()
+	port := os.Getenv("DATABASE_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
 	}
@@ -86,7 +93,10 @@ func InsertUser(user *api.User) error {
 }
 
 func GetUser(req *api.GetUserRequest) (*api.User, error) {
-	conn, err := grpc.Dial(grpcAddress)
+	creds, err := GetCert()
+	port := os.Getenv("DATABASE_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.38.22
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible
 	github.com/gopherjs/gopherjs v0.0.0-20210420193930-a4630ec28c79 // indirect
+	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/klauspost/compress v1.12.1 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-runewidth v0.0.12 // indirect

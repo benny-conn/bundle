@@ -3,17 +3,20 @@ package wrapper
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/bennycio/bundle/api"
 	"google.golang.org/grpc"
 )
 
 func PaginatePluginsApi(page int) ([]api.Plugin, error) {
-
-	u, err := url.Parse(ApiServerHost)
+	port := os.Getenv("API_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	u, err := url.Parse(addr + "/plugins")
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +46,9 @@ func PaginatePluginsApi(page int) ([]api.Plugin, error) {
 }
 
 func GetPluginApi(name string) (*api.Plugin, error) {
-
-	u, err := url.Parse(ApiServerHost + "/plugins")
+	port := os.Getenv("API_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	u, err := url.Parse(addr + "/plugins")
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +80,10 @@ func GetPluginApi(name string) (*api.Plugin, error) {
 
 func GetPlugin(name string) (*api.Plugin, error) {
 
-	conn, err := grpc.Dial(grpcAddress)
+	creds, err := GetCert()
+	port := os.Getenv("DATABASE_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +98,10 @@ func GetPlugin(name string) (*api.Plugin, error) {
 }
 
 func UpdatePlugin(name string, updatedPlugin *api.Plugin) error {
-	conn, err := grpc.Dial(grpcAddress)
+	creds, err := GetCert()
+	port := os.Getenv("DATABASE_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
 	}
@@ -106,7 +116,10 @@ func UpdatePlugin(name string, updatedPlugin *api.Plugin) error {
 }
 
 func InsertPlugin(plugin *api.Plugin) error {
-	conn, err := grpc.Dial(grpcAddress)
+	creds, err := GetCert()
+	port := os.Getenv("DATABASE_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
 	}
@@ -120,7 +133,10 @@ func InsertPlugin(plugin *api.Plugin) error {
 }
 
 func PaginatePlugins(page int) ([]*api.Plugin, error) {
-	conn, err := grpc.Dial(grpcAddress)
+	creds, err := GetCert()
+	port := os.Getenv("DATABASE_PORT")
+	addr := fmt.Sprintf(":%d", port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
 	}

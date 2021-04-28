@@ -4,3 +4,4 @@ build/
 plugins/
 .VSCodeCounter/
 config.yaml
+*.pem
