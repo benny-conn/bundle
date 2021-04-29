@@ -1,4 +1,4 @@
-package routes
+package api
 
 import "google.golang.org/grpc/credentials"
 

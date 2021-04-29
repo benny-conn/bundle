@@ -1,4 +1,4 @@
-package routes
+package web
 
 import (
 	"net/http"
@@ -26,6 +26,7 @@ func userToProfile(user *api.User) Profile {
 		Username: user.Username,
 		Email:    user.Email,
 		Tag:      user.Tag,
+		Scopes:   user.Scopes,
 	}
 }
 

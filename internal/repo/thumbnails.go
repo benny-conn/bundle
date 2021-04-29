@@ -1,4 +1,4 @@
-package routes
+package repo
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
@@ -28,7 +28,6 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		name := r.FormValue("name")
-		version := r.FormValue("version")
 
 		plugin, err := wrapper.GetPluginApi(name)
 		if err != nil {
@@ -36,11 +35,7 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if version != "latest" {
-			plugin.Version = version
-		}
-
-		pl, err := downloadPluginFromRepo(plugin.Name, plugin.Version, plugin.Author)
+		pl, err := downloadThumbnailFromRepo(plugin.Name, plugin.Author)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -51,20 +46,12 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 
-		fmt.Println("GOT HERE")
-
 		pluginJSON := r.Header.Get("Resource")
 
 		plugin := &api.Plugin{}
 		json.Unmarshal([]byte(pluginJSON), plugin)
 
-		err := updateOrInsertPlugin(plugin)
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		loc, err := uploadPluginToRepo(plugin.Name, plugin.Version, plugin.Author, r.Body)
+		loc, err := uploadThumbnailToRepo(plugin.Name, plugin.Author, r.Body)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -74,29 +61,10 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func updateOrInsertPlugin(plugin *api.Plugin) error {
-	dbPlugin, err := wrapper.GetPluginApi(plugin.Name)
-
-	if err == nil {
-		err = wrapper.UpdatePluginApi(dbPlugin.Name, plugin)
-		if err != nil {
-			return err
-		}
-	} else {
-
-		err = wrapper.InsertPluginApi(plugin)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	return nil
-}
-
-func uploadPluginToRepo(name string, version string, author string, body io.Reader) (string, error) {
+func uploadThumbnailToRepo(name string, author string, body io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fp := filepath.Join(author, name, version, name+".jar")
+	fp := filepath.Join(author, name, "THUMBNAIL.png")
 
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.Upload(&s3manager.UploadInput{
@@ -110,16 +78,17 @@ func uploadPluginToRepo(name string, version string, author string, body io.Read
 	return result.Location, nil
 }
 
-func downloadPluginFromRepo(name string, version string, author string) ([]byte, error) {
+func downloadThumbnailFromRepo(name string, author string) ([]byte, error) {
 
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fn := filepath.Join(author, name, version, name+".jar")
+	fp := filepath.Join(author, name, "THUMBNAIL.png")
+
 	buf := aws.NewWriteAtBuffer([]byte{})
 	downloader := s3manager.NewDownloader(sess)
 	_, err := downloader.Download(buf, &s3.GetObjectInput{
 		Bucket: aws.String(viper.GetString("AWSBucket")),
-		Key:    aws.String(fn),
+		Key:    aws.String(fp),
 	})
 	if err != nil {
 		return nil, err

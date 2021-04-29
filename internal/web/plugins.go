@@ -1,4 +1,4 @@
-package routes
+package web
 
 import (
 	"net/http"
@@ -17,7 +17,7 @@ type PluginInfo struct {
 	Thumbnail   []byte
 }
 
-func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
+func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	err := req.ParseForm()
 	if err != nil {

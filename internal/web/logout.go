@@ -1,8 +1,8 @@
-package routes
+package web
 
 import "net/http"
 
-func LogoutHandlerFunc(w http.ResponseWriter, req *http.Request) {
+func logoutHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	accessCookie, err := req.Cookie("access_token")
 	if err == nil {

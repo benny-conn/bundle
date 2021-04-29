@@ -1,26 +1,27 @@
-package storage
+package db
 
 import (
 	"context"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal/storage/orm"
+	"github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/db/orm"
 )
 
 type usersServer struct {
+	orm internal.UserService
 	api.UnimplementedUsersServiceServer
 }
 
 func (s *usersServer) GetUser(ctx context.Context, req *api.GetUserRequest) (*api.User, error) {
-
-	user, err := orm.GetUser(req.Username, req.Email)
+	user, err := s.orm.Get(req)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 func (s *usersServer) UpdateUser(ctx context.Context, req *api.UpdateUserRequest) (*api.Empty, error) {
-	err := orm.UpdateUser(req.Username, req.UpdatedUser)
+	err := s.orm.Update(req)
 	if err != nil {
 		return &api.Empty{}, err
 	}
@@ -28,14 +29,14 @@ func (s *usersServer) UpdateUser(ctx context.Context, req *api.UpdateUserRequest
 }
 
 func (s *usersServer) InsertUser(ctx context.Context, user *api.User) (*api.Empty, error) {
-	err := orm.InsertUser(user)
+	err := s.orm.Insert(user)
 	if err != nil {
 		return &api.Empty{}, err
 	}
 	return &api.Empty{}, nil
 }
 
-func NewUsersServer() *usersServer {
-	s := &usersServer{}
+func newUsersServer() *usersServer {
+	s := &usersServer{orm: orm.NewUsersOrm()}
 	return s
 }

@@ -1,10 +1,10 @@
-package routes
+package web
 
 import (
 	"net/http"
 )
 
-func RootHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := getProfileFromCookie(r)
 	data := TemplateData{

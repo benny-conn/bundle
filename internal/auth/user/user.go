@@ -15,7 +15,7 @@ import (
 )
 
 type CustomClaims struct {
-	User api.User `json:"user"`
+	User *api.User `json:"user"`
 	jwt.StandardClaims
 }
 
@@ -24,7 +24,7 @@ func NewAuthToken(user *api.User) (string, error) {
 	secret := viper.GetString("ClientSecret")
 
 	claims := CustomClaims{
-		User: *user,
+		User: user,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
 			Issuer:    "bundle",
@@ -74,7 +74,7 @@ func GetUserFromToken(tokenString string) (*api.User, error) {
 		return nil, err
 	}
 
-	return &claims.User, nil
+	return claims.User, nil
 
 }
 

@@ -1,19 +1,21 @@
-package storage
+package db
 
 import (
 	"context"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal/storage/orm"
+	"github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/db/orm"
 )
 
 type pluginsServer struct {
+	orm internal.PluginService
 	api.UnimplementedPluginsServiceServer
 }
 
 func (s *pluginsServer) GetPlugin(ctx context.Context, req *api.GetPluginRequest) (*api.Plugin, error) {
 
-	pl, err := orm.GetPlugin(req.Name)
+	pl, err := s.orm.Get(req)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +25,7 @@ func (s *pluginsServer) GetPlugin(ctx context.Context, req *api.GetPluginRequest
 }
 
 func (s *pluginsServer) UpdatePlugin(ctx context.Context, req *api.UpdatePluginRequest) (*api.Empty, error) {
-	err := orm.UpdatePlugin(req.Name, req.UpdatedPlugin)
+	err := s.orm.Update(req)
 	if err != nil {
 		return &api.Empty{}, err
 	}
@@ -31,7 +33,7 @@ func (s *pluginsServer) UpdatePlugin(ctx context.Context, req *api.UpdatePluginR
 }
 
 func (s *pluginsServer) InsertPlugin(ctx context.Context, plugin *api.Plugin) (*api.Empty, error) {
-	err := orm.InsertPlugin(plugin)
+	err := s.orm.Insert(plugin)
 	if err != nil {
 		return &api.Empty{}, err
 	}
@@ -39,16 +41,14 @@ func (s *pluginsServer) InsertPlugin(ctx context.Context, plugin *api.Plugin) (*
 }
 
 func (s *pluginsServer) PaginatePlugins(ctx context.Context, req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
-	pls, err := orm.PaginatePlugins(int(req.Page))
+	pls, err := s.orm.Paginate(req)
 	if err != nil {
 		return nil, err
 	}
-	return &api.PaginatePluginsResponse{
-		Plugins: pls,
-	}, nil
+	return pls, nil
 }
 
-func NewPluginsServer() *pluginsServer {
-	s := &pluginsServer{}
+func newPluginsServer() *pluginsServer {
+	s := &pluginsServer{orm: orm.NewPluginsOrm()}
 	return s
 }

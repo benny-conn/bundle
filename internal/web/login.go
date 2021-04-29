@@ -1,4 +1,4 @@
-package routes
+package web
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
+func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	if req.Method == http.MethodPost {
 

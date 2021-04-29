@@ -4,13 +4,18 @@ import (
 	"errors"
 
 	"github.com/bennycio/bundle/api"
-	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func InsertUser(user *api.User) error {
-	isValid := bundle.IsUserValid(user)
+type UsersOrm struct{}
+
+func NewUsersOrm() internal.UserService { return &UsersOrm{} }
+
+func (u *UsersOrm) Insert(user *api.User) error {
+	isValid := internal.IsUserValid(user)
 
 	if !isValid {
 		return errors.New("invalid user")
@@ -64,7 +69,7 @@ func InsertUser(user *api.User) error {
 	return nil
 }
 
-func GetUser(username string, email string) (*api.User, error) {
+func (u *UsersOrm) Get(req *api.GetUserRequest) (*api.User, error) {
 	session, err := getMongoSession()
 	if err != nil {
 		return nil, err
@@ -75,12 +80,12 @@ func GetUser(username string, email string) (*api.User, error) {
 
 	decodedUser := &api.User{}
 
-	if email == "" {
-		err = collection.FindOne(session.Ctx, bson.D{{"username", username}}).Decode(decodedUser)
-	} else if username == "" {
-		err = collection.FindOne(session.Ctx, bson.D{{"email", caseInsensitive(email)}}).Decode(decodedUser)
+	if req.Email == "" {
+		err = collection.FindOne(session.Ctx, bson.D{{"username", req.Username}}).Decode(decodedUser)
+	} else if req.Username == "" {
+		err = collection.FindOne(session.Ctx, bson.D{{"email", caseInsensitive(req.Email)}}).Decode(decodedUser)
 	} else {
-		err = collection.FindOne(session.Ctx, bson.D{{"username", username}, {"email", caseInsensitive(email)}}).Decode(decodedUser)
+		err = collection.FindOne(session.Ctx, bson.D{{"username", req.Username}, {"email", caseInsensitive(req.Email)}}).Decode(decodedUser)
 	}
 	if err != nil {
 		return nil, err
@@ -89,7 +94,7 @@ func GetUser(username string, email string) (*api.User, error) {
 	return decodedUser, nil
 }
 
-func UpdateUser(username string, user *api.User) error {
+func (u *UsersOrm) Update(req *api.UpdateUserRequest) error {
 	session, err := getMongoSession()
 	if err != nil {
 		return err
@@ -98,9 +103,9 @@ func UpdateUser(username string, user *api.User) error {
 
 	collection := session.Client.Database("main").Collection("users")
 
-	updatedUser := marshallBsonClean(user)
+	updatedUser := marshallBsonClean(req.UpdatedUser)
 
-	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"username", caseInsensitive(username)}}, bson.D{{"$set", updatedUser}})
+	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"username", caseInsensitive(req.Username)}}, bson.D{{"$set", updatedUser}})
 	if err != nil {
 		return err
 	}

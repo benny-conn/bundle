@@ -1,4 +1,4 @@
-package routes
+package web
 
 import (
 	"fmt"
@@ -13,9 +13,10 @@ type Profile struct {
 	Username string
 	Email    string
 	Tag      string
+	Scopes   []string
 }
 
-func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
+func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	user, err := getProfileFromCookie(req)
 	if err != nil {

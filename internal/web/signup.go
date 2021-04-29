@@ -1,4 +1,4 @@
-package routes
+package web
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 	"github.com/bennycio/bundle/wrapper"
 )
 
-func SignupHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		r.ParseForm()

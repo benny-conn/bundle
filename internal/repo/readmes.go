@@ -1,4 +1,4 @@
-package routes
+package repo
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func ThumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
@@ -35,7 +35,7 @@ func ThumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		pl, err := downloadThumbnailFromRepo(plugin.Name, plugin.Author)
+		pl, err := downloadReadmeFromRepo(plugin.Name, plugin.Author)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -51,7 +51,7 @@ func ThumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		plugin := &api.Plugin{}
 		json.Unmarshal([]byte(pluginJSON), plugin)
 
-		loc, err := uploadThumbnailToRepo(plugin.Name, plugin.Author, r.Body)
+		loc, err := uploadReadmeToRepo(plugin.Name, plugin.Author, r.Body)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -61,10 +61,10 @@ func ThumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func uploadThumbnailToRepo(name string, author string, body io.Reader) (string, error) {
+func uploadReadmeToRepo(name string, author string, body io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fp := filepath.Join(author, name, "THUMBNAIL.png")
+	fp := filepath.Join(author, name, "README.md")
 
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.Upload(&s3manager.UploadInput{
@@ -78,11 +78,11 @@ func uploadThumbnailToRepo(name string, author string, body io.Reader) (string, 
 	return result.Location, nil
 }
 
-func downloadThumbnailFromRepo(name string, author string) ([]byte, error) {
+func downloadReadmeFromRepo(name string, author string) ([]byte, error) {
 
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fp := filepath.Join(author, name, "THUMBNAIL.png")
+	fp := filepath.Join(author, name, "README.md")
 
 	buf := aws.NewWriteAtBuffer([]byte{})
 	downloader := s3manager.NewDownloader(sess)

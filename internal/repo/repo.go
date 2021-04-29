@@ -1,17 +1,16 @@
-package repository
+package repo
 
 import (
 	"net/http"
 
 	auth "github.com/bennycio/bundle/internal/auth/user"
-	"github.com/bennycio/bundle/internal/repository/routes"
 )
 
 func NewRepositoryMux() http.Handler {
 	mux := http.NewServeMux()
-	pluginsHandler := http.HandlerFunc(routes.PluginsHandlerFunc)
-	readmesHandler := http.HandlerFunc(routes.ReadmesHandlerFunc)
-	thumbnailsHandler := http.HandlerFunc(routes.ThumbnailsHandlerFunc)
+	pluginsHandler := http.HandlerFunc(pluginsHandlerFunc)
+	readmesHandler := http.HandlerFunc(readmesHandlerFunc)
+	thumbnailsHandler := http.HandlerFunc(thumbnailsHandlerFunc)
 
 	mux.Handle("/repo/plugins", auth.AuthUpload(pluginsHandler))
 	mux.Handle("/repo/readmes", auth.AuthUpload(readmesHandler))

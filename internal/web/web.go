@@ -3,19 +3,18 @@ package web
 import (
 	"net/http"
 
-	"github.com/bennycio/bundle/internal/web/routes"
 	"github.com/rs/cors"
 )
 
 func NewWebMux() http.Handler {
 
 	mux := http.NewServeMux()
-	rootHandler := http.HandlerFunc(routes.RootHandlerFunc)
-	signupHandler := http.HandlerFunc(routes.SignupHandlerFunc)
-	loginHandler := http.HandlerFunc(routes.LoginHandlerFunc)
-	logoutHandler := http.HandlerFunc(routes.LogoutHandlerFunc)
-	pluginHandler := http.HandlerFunc(routes.PluginsHandlerFunc)
-	profileHandler := http.HandlerFunc(routes.ProfileHandlerFunc)
+	rootHandler := http.HandlerFunc(rootHandlerFunc)
+	signupHandler := http.HandlerFunc(signupHandlerFunc)
+	loginHandler := http.HandlerFunc(loginHandlerFunc)
+	logoutHandler := http.HandlerFunc(logoutHandlerFunc)
+	pluginHandler := http.HandlerFunc(pluginsHandlerFunc)
+	profileHandler := http.HandlerFunc(profileHandlerFunc)
 
 	mux.Handle("/", rootHandler)
 	mux.Handle("/plugin", pluginHandler)

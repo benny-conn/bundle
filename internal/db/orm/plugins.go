@@ -5,11 +5,16 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func InsertPlugin(plugin *api.Plugin) error {
+type PluginsOrm struct{}
+
+func NewPluginsOrm() internal.PluginService { return &PluginsOrm{} }
+
+func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 	session, err := getMongoSession()
 	if err != nil {
 		return err
@@ -30,7 +35,7 @@ func InsertPlugin(plugin *api.Plugin) error {
 
 }
 
-func UpdatePlugin(name string, plugin *api.Plugin) error {
+func (p *PluginsOrm) Update(req *api.UpdatePluginRequest) error {
 
 	session, err := getMongoSession()
 	if err != nil {
@@ -40,10 +45,10 @@ func UpdatePlugin(name string, plugin *api.Plugin) error {
 
 	collection := session.Client.Database("main").Collection("plugins")
 
-	updatedPlugin := marshallBsonClean(plugin)
+	updatedPlugin := marshallBsonClean(req.UpdatedPlugin)
 	updatedPlugin = append(updatedPlugin, bson.E{"lastUpdated", time.Now().Unix()})
 
-	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"name", caseInsensitive(name)}}, bson.D{{"$set", updatedPlugin}})
+	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}, bson.D{{"$set", updatedPlugin}})
 	if err != nil {
 		return err
 	}
@@ -54,8 +59,8 @@ func UpdatePlugin(name string, plugin *api.Plugin) error {
 
 }
 
-func GetPlugin(name string) (*api.Plugin, error) {
-	if name == "" {
+func (p *PluginsOrm) Get(req *api.GetPluginRequest) (*api.Plugin, error) {
+	if req.Name == "" {
 		return nil, errors.New("no plugin name provided")
 	}
 
@@ -68,7 +73,7 @@ func GetPlugin(name string) (*api.Plugin, error) {
 	collection := session.Client.Database("main").Collection("plugins")
 	decodedPluginResult := &api.Plugin{}
 
-	err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(name)}}).Decode(decodedPluginResult)
+	err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}).Decode(decodedPluginResult)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +82,7 @@ func GetPlugin(name string) (*api.Plugin, error) {
 
 }
 
-func PaginatePlugins(page int) ([]*api.Plugin, error) {
+func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
 	session, err := getMongoSession()
 	if err != nil {
 		return nil, err
@@ -86,8 +91,8 @@ func PaginatePlugins(page int) ([]*api.Plugin, error) {
 
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{"lastUpdated", -1}})
-	if page > 1 {
-		findOptions.SetSkip(int64(page*10 - 10))
+	if req.Page > 1 {
+		findOptions.SetSkip(int64(req.Page*10 - 10))
 	}
 	findOptions.SetLimit(10)
 
@@ -108,6 +113,8 @@ func PaginatePlugins(page int) ([]*api.Plugin, error) {
 		results = append(results, plugin)
 	}
 
-	return results, nil
+	return &api.PaginatePluginsResponse{
+		Plugins: results,
+	}, nil
 
 }
