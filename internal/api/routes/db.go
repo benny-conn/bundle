@@ -81,4 +81,28 @@ func UsersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	}
 
+	if req.Method == http.MethodGet {
+		req.ParseForm()
+
+		userName := req.FormValue("username")
+		email := req.FormValue("email")
+
+		r := &api.GetUserRequest{
+			Username: userName,
+			Email:    email,
+		}
+		user, err := wrapper.GetUser(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		bs, err := json.Marshal(user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		internal.WriteResponse(w, string(bs), http.StatusOK)
+	}
+
 }

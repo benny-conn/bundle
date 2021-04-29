@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
@@ -14,12 +15,21 @@ import (
 )
 
 func init() {
-	internal.InitConfig()
+	internal.InitEnv()
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./cmd/storage")
+	viper.AddConfigPath("/etc/bundle/")
+	viper.AddConfigPath("$HOME/.bundle")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error parsing config file: %s", err))
+	}
 }
 
 func main() {
-	port := viper.GetInt("Port")
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+	port := os.Getenv("DATABASE_PORT")
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -31,5 +41,8 @@ func main() {
 	grpcServer := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterUsersServiceServer(grpcServer, storage.NewUsersServer())
 	api.RegisterPluginsServiceServer(grpcServer, storage.NewPluginsServer())
+
+	fmt.Printf("Started Database Server on port %v", port)
+
 	grpcServer.Serve(lis)
 }

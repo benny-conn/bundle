@@ -16,7 +16,7 @@ import (
 
 func UpdateUserApi(username string, updatedUser *api.User) error {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	addr := fmt.Sprintf("http://localhost:%v", port)
 	u, err := url.Parse(addr + "/api/users")
 	if err != nil {
 		return err
@@ -46,8 +46,8 @@ func UpdateUserApi(username string, updatedUser *api.User) error {
 
 func GetUserApi(username string, email string) (*api.User, error) {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf(":%v", port)
-	u, err := url.Parse(addr + "/api/users")
+	addr := fmt.Sprintf("http://localhost:%v/api/users", port)
+	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,10 @@ func InsertUser(user *api.User) error {
 	}
 	defer conn.Close()
 	client := api.NewUsersServiceClient(conn)
-	client.InsertUser(context.Background(), user)
+	_, err = client.InsertUser(context.Background(), user)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

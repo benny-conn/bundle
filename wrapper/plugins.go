@@ -15,7 +15,7 @@ import (
 
 func PaginatePluginsApi(page int) ([]api.Plugin, error) {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	addr := fmt.Sprintf("http://localhost:%v", port)
 	u, err := url.Parse(addr + "/api/plugins")
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func PaginatePluginsApi(page int) ([]api.Plugin, error) {
 
 func GetPluginApi(name string) (*api.Plugin, error) {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	addr := fmt.Sprintf("http://localhost:%v", port)
 	u, err := url.Parse(addr + "/api/plugins")
 	if err != nil {
 		return nil, err

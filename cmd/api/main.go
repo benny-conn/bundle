@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	internal.InitConfig()
+	internal.InitEnv()
 }
 
 func main() {

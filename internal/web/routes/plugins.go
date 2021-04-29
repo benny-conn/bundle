@@ -41,7 +41,7 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		data := bundle.TemplateData{
 			Plugins: plugins,
-			User:    *user,
+			Profile: user,
 		}
 
 		err = tpl.ExecuteTemplate(w, "plugin", data)
@@ -65,8 +65,8 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	// }
 
 	data := bundle.TemplateData{
-		User:   *user,
-		Plugin: *plugin,
+		Profile: user,
+		Plugin:  *plugin,
 	}
 
 	err = tpl.ExecuteTemplate(w, "plugin", data)

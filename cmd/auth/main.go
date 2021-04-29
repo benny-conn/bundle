@@ -9,12 +9,24 @@ import (
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 func init() {
-	internal.InitConfig()
+	internal.InitEnv()
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+
+	viper.AddConfigPath("./cmd/auth")
+
+	viper.AddConfigPath("/etc/bundle/")
+	viper.AddConfigPath("$HOME/.bundle")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error parsing config file: %s", err))
+	}
 }
 func main() {
 	port := os.Getenv("AUTH_PORT")
@@ -30,5 +42,8 @@ func main() {
 
 	grpcServer := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterAuthServiceServer(grpcServer, auth.NewAuthServer())
+
+	fmt.Printf("Started Auth Server on port %v", port)
+
 	grpcServer.Serve(lis)
 }

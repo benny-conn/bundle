@@ -51,6 +51,8 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 
+		fmt.Println("GOT HERE")
+
 		pluginJSON := r.Header.Get("Resource")
 
 		plugin := &api.Plugin{}

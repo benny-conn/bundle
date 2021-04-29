@@ -5,7 +5,7 @@ import (
 )
 
 func GetCert() (credentials.TransportCredentials, error) {
-	creds, err := credentials.NewClientTLSFromFile("cmd/server/server-cert.pem", "")
+	creds, err := credentials.NewClientTLSFromFile("tls/server-cert.pem", "")
 	if err != nil {
 		return nil, err
 	}

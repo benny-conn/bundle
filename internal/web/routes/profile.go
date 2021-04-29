@@ -48,7 +48,7 @@ func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := bundle.TemplateData{
-		User: *user,
+		Profile: user,
 	}
 
 	err = tpl.ExecuteTemplate(w, "profile", data)

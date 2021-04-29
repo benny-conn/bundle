@@ -48,3 +48,22 @@ func Refresh(jwt *api.Jwt) (*api.Jwt, error) {
 	}
 	return ref, nil
 }
+func GetUserFromToken(jwt *api.Jwt) (*api.User, error) {
+	creds, err := GetCert()
+	if err != nil {
+		return nil, err
+	}
+	port := os.Getenv("AUTH_PORT")
+	addr := fmt.Sprintf(":%v", port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	client := api.NewAuthServiceClient(conn)
+	user, err := client.GetUser(context.Background(), jwt)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}

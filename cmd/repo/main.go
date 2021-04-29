@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/web"
+	"github.com/bennycio/bundle/internal/repository"
 	"github.com/spf13/viper"
 )
 
@@ -14,8 +14,7 @@ func init() {
 	internal.InitEnv()
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./cmd/web")
-
+	viper.AddConfigPath("./cmd/repo")
 	viper.AddConfigPath("/etc/bundle/")
 	viper.AddConfigPath("$HOME/.bundle")
 	err := viper.ReadInConfig()
@@ -26,10 +25,10 @@ func init() {
 
 func main() {
 
-	port := os.Getenv("WEB_PORT")
-	mux := web.NewWebMux()
+	port := os.Getenv("REPO_PORT")
+	mux := repository.NewRepositoryMux()
 
-	fmt.Printf("Started Web Server on port %v", port)
+	fmt.Printf("Started Repo Server on port %v", port)
 
 	http.ListenAndServe(fmt.Sprintf(":%v", port), mux)
 }

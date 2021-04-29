@@ -13,9 +13,9 @@ func NewRepositoryMux() http.Handler {
 	readmesHandler := http.HandlerFunc(routes.ReadmesHandlerFunc)
 	thumbnailsHandler := http.HandlerFunc(routes.ThumbnailsHandlerFunc)
 
-	mux.Handle("/plugins", auth.AuthUpload(pluginsHandler))
-	mux.Handle("/readmes", auth.AuthUpload(readmesHandler))
-	mux.Handle("/thumbnails", auth.AuthUpload(thumbnailsHandler))
+	mux.Handle("/repo/plugins", auth.AuthUpload(pluginsHandler))
+	mux.Handle("/repo/readmes", auth.AuthUpload(readmesHandler))
+	mux.Handle("/repo/thumbnails", auth.AuthUpload(thumbnailsHandler))
 
 	return mux
 }

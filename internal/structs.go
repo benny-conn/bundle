@@ -8,10 +8,16 @@ import (
 )
 
 type TemplateData struct {
-	User     api.User
+	Profile  Profile
 	Plugin   api.Plugin
 	Plugins  []api.Plugin
 	TestData string
+}
+
+type Profile struct {
+	Username string
+	Email    string
+	Tag      string
 }
 
 type Mongo struct {
