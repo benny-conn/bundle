@@ -9,7 +9,6 @@ import (
 )
 
 func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
-	defer req.Body.Close()
 
 	err := req.ParseForm()
 	if err != nil {

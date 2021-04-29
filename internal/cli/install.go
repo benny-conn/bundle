@@ -86,7 +86,7 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 
 	fmt.Printf("Installing Jar %s with version %s\n", pluginName, version)
 
-	pl, err := wrapper.DownloadPlugin(pluginName, version)
+	pl, err := wrapper.DownloadPluginApi(pluginName, version)
 	if err != nil {
 		return "", err
 	}

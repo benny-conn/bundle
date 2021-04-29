@@ -4,14 +4,13 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
 	"github.com/bennycio/bundle/wrapper"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
-	defer req.Body.Close()
 
 	if req.Method == http.MethodPost {
 
@@ -21,7 +20,7 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			Password: req.FormValue("password"),
 		}
 
-		isValid := bundle.IsUserValid(user)
+		isValid := internal.IsUserValid(user)
 
 		if !isValid {
 			http.Error(w, "invalid request format", http.StatusBadRequest)
@@ -42,12 +41,12 @@ func LoginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		token, err := auth.NewAuthToken(dbUser)
+		token, err := wrapper.NewJWT(dbUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		tokenCookie := auth.NewAccessCookie(token)
+		tokenCookie := auth.NewAccessCookie(token.Jwt)
 		http.SetCookie(w, tokenCookie)
 		http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
 	}

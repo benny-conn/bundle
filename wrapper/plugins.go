@@ -15,14 +15,14 @@ import (
 
 func PaginatePluginsApi(page int) ([]api.Plugin, error) {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf(":%d", port)
-	u, err := url.Parse(addr + "/plugins")
+	addr := fmt.Sprintf(":%v", port)
+	u, err := url.Parse(addr + "/api/plugins")
 	if err != nil {
 		return nil, err
 	}
 
 	q := u.Query()
-	q.Set("page", string(page))
+	q.Set("page", fmt.Sprint(page))
 	u.RawQuery = q.Encode()
 
 	resp, err := http.Get(u.String())
@@ -47,8 +47,8 @@ func PaginatePluginsApi(page int) ([]api.Plugin, error) {
 
 func GetPluginApi(name string) (*api.Plugin, error) {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf(":%d", port)
-	u, err := url.Parse(addr + "/plugins")
+	addr := fmt.Sprintf(":%v", port)
+	u, err := url.Parse(addr + "/api/plugins")
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +81,11 @@ func GetPluginApi(name string) (*api.Plugin, error) {
 func GetPlugin(name string) (*api.Plugin, error) {
 
 	creds, err := GetCert()
+	if err != nil {
+		return nil, err
+	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf(":%v", port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
@@ -99,8 +102,11 @@ func GetPlugin(name string) (*api.Plugin, error) {
 
 func UpdatePlugin(name string, updatedPlugin *api.Plugin) error {
 	creds, err := GetCert()
+	if err != nil {
+		return err
+	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf(":%v", port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -117,8 +123,11 @@ func UpdatePlugin(name string, updatedPlugin *api.Plugin) error {
 
 func InsertPlugin(plugin *api.Plugin) error {
 	creds, err := GetCert()
+	if err != nil {
+		return err
+	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf(":%v", port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -134,8 +143,11 @@ func InsertPlugin(plugin *api.Plugin) error {
 
 func PaginatePlugins(page int) ([]*api.Plugin, error) {
 	creds, err := GetCert()
+	if err != nil {
+		return nil, err
+	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf(":%v", port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err

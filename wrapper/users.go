@@ -16,8 +16,8 @@ import (
 
 func UpdateUserApi(username string, updatedUser *api.User) error {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf(":%d", port)
-	u, err := url.Parse(addr + "/users")
+	addr := fmt.Sprintf(":%v", port)
+	u, err := url.Parse(addr + "/api/users")
 	if err != nil {
 		return err
 	}
@@ -46,8 +46,8 @@ func UpdateUserApi(username string, updatedUser *api.User) error {
 
 func GetUserApi(username string, email string) (*api.User, error) {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf(":%d", port)
-	u, err := url.Parse(addr + "/users")
+	addr := fmt.Sprintf(":%v", port)
+	u, err := url.Parse(addr + "/api/users")
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +80,11 @@ func GetUserApi(username string, email string) (*api.User, error) {
 
 func InsertUser(user *api.User) error {
 	creds, err := GetCert()
+	if err != nil {
+		return err
+	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf(":%v", port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -94,8 +97,11 @@ func InsertUser(user *api.User) error {
 
 func GetUser(req *api.GetUserRequest) (*api.User, error) {
 	creds, err := GetCert()
+	if err != nil {
+		return nil, err
+	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf(":%v", port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err

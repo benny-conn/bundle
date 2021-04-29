@@ -2,15 +2,17 @@ package routes
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
-	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/wrapper"
 )
 
 func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+
 	if r.Method == http.MethodGet {
 		err := r.ParseForm()
 		if err != nil {
@@ -31,7 +33,7 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				panic(err)
 			}
 
-			bundle.WriteResponse(w, string(asJSON), http.StatusOK)
+			internal.WriteResponse(w, string(asJSON), http.StatusOK)
 			return
 		} else if page != "" {
 			convPage, err := strconv.Atoi(page)
@@ -49,8 +51,34 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			bundle.WriteResponse(w, string(asJSON), http.StatusOK)
+			internal.WriteResponse(w, string(asJSON), http.StatusOK)
 			return
 		}
 	}
+}
+
+func UsersHandlerFunc(w http.ResponseWriter, req *http.Request) {
+
+	if req.Method == http.MethodPost {
+
+		bs, err := io.ReadAll(req.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		newUser := &api.User{}
+		err = json.Unmarshal(bs, newUser)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		err = wrapper.InsertUser(newUser)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+	}
+
 }

@@ -38,7 +38,7 @@ func NewAuthToken(user *api.User) (string, error) {
 	return signedToken, nil
 }
 
-func CheckScope(tokenString string, scopes ...string) bool {
+func checkScope(tokenString string, scopes ...string) bool {
 
 	tokenUser, err := GetUserFromToken(tokenString)
 	if err != nil {
@@ -78,7 +78,7 @@ func GetUserFromToken(tokenString string) (*api.User, error) {
 
 }
 
-func ValidateToken(tokenString string) error {
+func validateToken(tokenString string) error {
 	secret := viper.GetString("ClientSecret")
 
 	token, err := jwt.ParseWithClaims(
@@ -188,7 +188,7 @@ func NewAccessCookie(token string) *http.Cookie {
 // }
 
 func RefreshToken(token string) (string, error) {
-	err := ValidateToken(token)
+	err := validateToken(token)
 	if err != nil {
 		return "", err
 	}

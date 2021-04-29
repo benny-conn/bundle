@@ -1,23 +1,126 @@
 package wrapper
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
+	"net/http"
+	"net/url"
+	"os"
 
 	"github.com/bennycio/bundle/api"
 )
 
-func DownloadReadme(pluginName string) (string, error) {}
+func DownloadReadmeApi(pluginName string) ([]byte, error) {
+	port := os.Getenv("API_PORT")
+	u, err := url.Parse(fmt.Sprintf(":%v/api/repo/readmes", port))
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	q.Add("name", pluginName)
+	u.RawQuery = q.Encode()
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
+}
 
-func DownloadPlugin(pluginName string, version string) ([]byte, error) {}
+func DownloadPluginApi(pluginName string, version string) ([]byte, error) {
+	port := os.Getenv("API_PORT")
+	u, err := url.Parse(fmt.Sprintf(":%v/api/repo/plugins", port))
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	q.Add("name", pluginName)
+	q.Add("version", version)
+	u.RawQuery = q.Encode()
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
+}
 
-func UploadPlugin(user *api.User, pluginName string, version string, data io.Reader) error {}
+func UploadPluginApi(user *api.User, pluginName string, version string, data io.Reader) error {
+	port := os.Getenv("API_PORT")
+	u, err := url.Parse(fmt.Sprintf(":%v/api/repo/plugins", port))
+	if err != nil {
+		return err
+	}
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+	plugin := &api.Plugin{
+		Name:    pluginName,
+		Version: version,
+		Author:  user.Username,
+	}
+	pluginJSON, err := json.Marshal(plugin)
+	if err != nil {
+		return err
+	}
 
-func UploadReadme(user *api.User, pluginName string, data io.Reader) error {}
+	req, err := http.NewRequest(http.MethodPost, u.String(), data)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("User", string(userJSON))
+	req.Header.Add("Resource", string(pluginJSON))
 
-func DownloadReadmeApi(pluginName string) (string, error) {}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
 
-func DownloadPluginApi(pluginName string, version string) ([]byte, error) {}
+	defer resp.Body.Close()
+	return nil
+}
 
-func UploadPluginApi(user *api.User, pluginName string, version string, data io.Reader) error {}
+func UploadReadmeApi(user *api.User, pluginName string, data io.Reader) error {
+	port := os.Getenv("API_PORT")
+	u, err := url.Parse(fmt.Sprintf(":%v/api/repo/readmes", port))
+	if err != nil {
+		return err
+	}
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+	plugin := &api.Plugin{
+		Name:   pluginName,
+		Author: user.Username,
+	}
+	pluginJSON, err := json.Marshal(plugin)
+	if err != nil {
+		return err
+	}
 
-func UploadReadmeApi(user *api.User, pluginName string, data io.Reader) error {}
+	req, err := http.NewRequest(http.MethodPost, u.String(), data)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("User", string(userJSON))
+	req.Header.Add("Resource", string(pluginJSON))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	return nil
+}

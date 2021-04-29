@@ -33,7 +33,7 @@ var statusCmd = &cobra.Command{
 			go func(pluginName string, bundleVersion string) {
 				defer wg.Done()
 
-				plugin, err := wrapper.GetPlugin(pluginName)
+				plugin, err := wrapper.GetPluginApi(pluginName)
 				if err != nil {
 					panic(err)
 				}

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/auth"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -17,8 +17,8 @@ func init() {
 	internal.InitConfig()
 }
 func main() {
-	port := viper.GetInt("Port")
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	port := os.Getenv("AUTH_PORT")
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

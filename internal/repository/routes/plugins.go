@@ -18,7 +18,7 @@ import (
 )
 
 func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+
 	if r.Method == http.MethodGet {
 
 		err := r.ParseForm()
@@ -70,7 +70,6 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("Successfully uploaded to " + loc)
 	}
-
 }
 
 func updateOrInsertPlugin(plugin *api.Plugin) error {

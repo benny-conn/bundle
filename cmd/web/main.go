@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/web"
-	"github.com/spf13/viper"
 )
 
 func init() {
@@ -15,10 +15,10 @@ func init() {
 
 func main() {
 
-	port := viper.GetInt("Port")
+	port := os.Getenv("WEB_PORT")
 	mux := web.NewWebMux()
 
-	fmt.Printf("Started server on port %d", port)
+	fmt.Printf("Started server on port %v", port)
 
-	http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
+	http.ListenAndServe(fmt.Sprintf(":%v", port), mux)
 }

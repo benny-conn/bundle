@@ -20,7 +20,7 @@ func (a *authServer) NewJwt(ctx context.Context, user *api.User) (*api.Jwt, erro
 }
 
 func (a *authServer) Validate(ctx context.Context, jwt *api.Jwt) (*api.Empty, error) {
-	err := ValidateToken(jwt.Jwt)
+	err := validateToken(jwt.Jwt)
 	if err != nil {
 		return &api.Empty{}, err
 	}
@@ -36,7 +36,7 @@ func (a *authServer) Refresh(ctx context.Context, jwt *api.Jwt) (*api.Jwt, error
 }
 
 func (a *authServer) CheckScope(ctx context.Context, claims *api.Claim) (*api.Empty, error) {
-	result := CheckScope(claims.Jwt.Jwt, claims.Scopes...)
+	result := checkScope(claims.Jwt.Jwt, claims.Scopes...)
 	if !result {
 		return &api.Empty{}, errors.New("not authorized")
 	}
