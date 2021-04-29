@@ -18,9 +18,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsersServiceClient interface {
-	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error)
-	InsertUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*Empty, error)
-	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Empty, error)
+	Get(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error)
+	Insert(ctx context.Context, in *User, opts ...grpc.CallOption) (*Empty, error)
+	Update(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type usersServiceClient struct {
@@ -31,27 +31,27 @@ func NewUsersServiceClient(cc grpc.ClientConnInterface) UsersServiceClient {
 	return &usersServiceClient{cc}
 }
 
-func (c *usersServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error) {
+func (c *usersServiceClient) Get(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error) {
 	out := new(User)
-	err := c.cc.Invoke(ctx, "/api.UsersService/GetUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.UsersService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *usersServiceClient) InsertUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*Empty, error) {
+func (c *usersServiceClient) Insert(ctx context.Context, in *User, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/api.UsersService/InsertUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.UsersService/Insert", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *usersServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *usersServiceClient) Update(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/api.UsersService/UpdateUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.UsersService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,9 @@ func (c *usersServiceClient) UpdateUser(ctx context.Context, in *UpdateUserReque
 // All implementations must embed UnimplementedUsersServiceServer
 // for forward compatibility
 type UsersServiceServer interface {
-	GetUser(context.Context, *GetUserRequest) (*User, error)
-	InsertUser(context.Context, *User) (*Empty, error)
-	UpdateUser(context.Context, *UpdateUserRequest) (*Empty, error)
+	Get(context.Context, *GetUserRequest) (*User, error)
+	Insert(context.Context, *User) (*Empty, error)
+	Update(context.Context, *UpdateUserRequest) (*Empty, error)
 	mustEmbedUnimplementedUsersServiceServer()
 }
 
@@ -72,14 +72,14 @@ type UsersServiceServer interface {
 type UnimplementedUsersServiceServer struct {
 }
 
-func (UnimplementedUsersServiceServer) GetUser(context.Context, *GetUserRequest) (*User, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+func (UnimplementedUsersServiceServer) Get(context.Context, *GetUserRequest) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedUsersServiceServer) InsertUser(context.Context, *User) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InsertUser not implemented")
+func (UnimplementedUsersServiceServer) Insert(context.Context, *User) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Insert not implemented")
 }
-func (UnimplementedUsersServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+func (UnimplementedUsersServiceServer) Update(context.Context, *UpdateUserRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedUsersServiceServer) mustEmbedUnimplementedUsersServiceServer() {}
 
@@ -94,56 +94,56 @@ func RegisterUsersServiceServer(s grpc.ServiceRegistrar, srv UsersServiceServer)
 	s.RegisterService(&UsersService_ServiceDesc, srv)
 }
 
-func _UsersService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UsersService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsersServiceServer).GetUser(ctx, in)
+		return srv.(UsersServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.UsersService/GetUser",
+		FullMethod: "/api.UsersService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).GetUser(ctx, req.(*GetUserRequest))
+		return srv.(UsersServiceServer).Get(ctx, req.(*GetUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UsersService_InsertUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UsersService_Insert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(User)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsersServiceServer).InsertUser(ctx, in)
+		return srv.(UsersServiceServer).Insert(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.UsersService/InsertUser",
+		FullMethod: "/api.UsersService/Insert",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).InsertUser(ctx, req.(*User))
+		return srv.(UsersServiceServer).Insert(ctx, req.(*User))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UsersService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UsersService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsersServiceServer).UpdateUser(ctx, in)
+		return srv.(UsersServiceServer).Update(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.UsersService/UpdateUser",
+		FullMethod: "/api.UsersService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
+		return srv.(UsersServiceServer).Update(ctx, req.(*UpdateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -156,30 +156,30 @@ var UsersService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UsersServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetUser",
-			Handler:    _UsersService_GetUser_Handler,
+			MethodName: "Get",
+			Handler:    _UsersService_Get_Handler,
 		},
 		{
-			MethodName: "InsertUser",
-			Handler:    _UsersService_InsertUser_Handler,
+			MethodName: "Insert",
+			Handler:    _UsersService_Insert_Handler,
 		},
 		{
-			MethodName: "UpdateUser",
-			Handler:    _UsersService_UpdateUser_Handler,
+			MethodName: "Update",
+			Handler:    _UsersService_Update_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api.proto",
+	Metadata: "api/api.proto",
 }
 
 // PluginsServiceClient is the client API for PluginsService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PluginsServiceClient interface {
-	GetPlugin(ctx context.Context, in *GetPluginRequest, opts ...grpc.CallOption) (*Plugin, error)
-	InsertPlugin(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*Empty, error)
-	UpdatePlugin(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*Empty, error)
-	PaginatePlugins(ctx context.Context, in *PaginatePluginsRequest, opts ...grpc.CallOption) (*PaginatePluginsResponse, error)
+	Get(ctx context.Context, in *GetPluginRequest, opts ...grpc.CallOption) (*Plugin, error)
+	Insert(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*Empty, error)
+	Update(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*Empty, error)
+	Paginate(ctx context.Context, in *PaginatePluginsRequest, opts ...grpc.CallOption) (*PaginatePluginsResponse, error)
 }
 
 type pluginsServiceClient struct {
@@ -190,36 +190,36 @@ func NewPluginsServiceClient(cc grpc.ClientConnInterface) PluginsServiceClient {
 	return &pluginsServiceClient{cc}
 }
 
-func (c *pluginsServiceClient) GetPlugin(ctx context.Context, in *GetPluginRequest, opts ...grpc.CallOption) (*Plugin, error) {
+func (c *pluginsServiceClient) Get(ctx context.Context, in *GetPluginRequest, opts ...grpc.CallOption) (*Plugin, error) {
 	out := new(Plugin)
-	err := c.cc.Invoke(ctx, "/api.PluginsService/GetPlugin", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.PluginsService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *pluginsServiceClient) InsertPlugin(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*Empty, error) {
+func (c *pluginsServiceClient) Insert(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/api.PluginsService/InsertPlugin", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.PluginsService/Insert", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *pluginsServiceClient) UpdatePlugin(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *pluginsServiceClient) Update(ctx context.Context, in *UpdatePluginRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/api.PluginsService/UpdatePlugin", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.PluginsService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *pluginsServiceClient) PaginatePlugins(ctx context.Context, in *PaginatePluginsRequest, opts ...grpc.CallOption) (*PaginatePluginsResponse, error) {
+func (c *pluginsServiceClient) Paginate(ctx context.Context, in *PaginatePluginsRequest, opts ...grpc.CallOption) (*PaginatePluginsResponse, error) {
 	out := new(PaginatePluginsResponse)
-	err := c.cc.Invoke(ctx, "/api.PluginsService/PaginatePlugins", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.PluginsService/Paginate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -230,10 +230,10 @@ func (c *pluginsServiceClient) PaginatePlugins(ctx context.Context, in *Paginate
 // All implementations must embed UnimplementedPluginsServiceServer
 // for forward compatibility
 type PluginsServiceServer interface {
-	GetPlugin(context.Context, *GetPluginRequest) (*Plugin, error)
-	InsertPlugin(context.Context, *Plugin) (*Empty, error)
-	UpdatePlugin(context.Context, *UpdatePluginRequest) (*Empty, error)
-	PaginatePlugins(context.Context, *PaginatePluginsRequest) (*PaginatePluginsResponse, error)
+	Get(context.Context, *GetPluginRequest) (*Plugin, error)
+	Insert(context.Context, *Plugin) (*Empty, error)
+	Update(context.Context, *UpdatePluginRequest) (*Empty, error)
+	Paginate(context.Context, *PaginatePluginsRequest) (*PaginatePluginsResponse, error)
 	mustEmbedUnimplementedPluginsServiceServer()
 }
 
@@ -241,17 +241,17 @@ type PluginsServiceServer interface {
 type UnimplementedPluginsServiceServer struct {
 }
 
-func (UnimplementedPluginsServiceServer) GetPlugin(context.Context, *GetPluginRequest) (*Plugin, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPlugin not implemented")
+func (UnimplementedPluginsServiceServer) Get(context.Context, *GetPluginRequest) (*Plugin, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedPluginsServiceServer) InsertPlugin(context.Context, *Plugin) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InsertPlugin not implemented")
+func (UnimplementedPluginsServiceServer) Insert(context.Context, *Plugin) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Insert not implemented")
 }
-func (UnimplementedPluginsServiceServer) UpdatePlugin(context.Context, *UpdatePluginRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdatePlugin not implemented")
+func (UnimplementedPluginsServiceServer) Update(context.Context, *UpdatePluginRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedPluginsServiceServer) PaginatePlugins(context.Context, *PaginatePluginsRequest) (*PaginatePluginsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PaginatePlugins not implemented")
+func (UnimplementedPluginsServiceServer) Paginate(context.Context, *PaginatePluginsRequest) (*PaginatePluginsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Paginate not implemented")
 }
 func (UnimplementedPluginsServiceServer) mustEmbedUnimplementedPluginsServiceServer() {}
 
@@ -266,74 +266,74 @@ func RegisterPluginsServiceServer(s grpc.ServiceRegistrar, srv PluginsServiceSer
 	s.RegisterService(&PluginsService_ServiceDesc, srv)
 }
 
-func _PluginsService_GetPlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PluginsService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPluginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PluginsServiceServer).GetPlugin(ctx, in)
+		return srv.(PluginsServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.PluginsService/GetPlugin",
+		FullMethod: "/api.PluginsService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginsServiceServer).GetPlugin(ctx, req.(*GetPluginRequest))
+		return srv.(PluginsServiceServer).Get(ctx, req.(*GetPluginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PluginsService_InsertPlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PluginsService_Insert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Plugin)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PluginsServiceServer).InsertPlugin(ctx, in)
+		return srv.(PluginsServiceServer).Insert(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.PluginsService/InsertPlugin",
+		FullMethod: "/api.PluginsService/Insert",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginsServiceServer).InsertPlugin(ctx, req.(*Plugin))
+		return srv.(PluginsServiceServer).Insert(ctx, req.(*Plugin))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PluginsService_UpdatePlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PluginsService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdatePluginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PluginsServiceServer).UpdatePlugin(ctx, in)
+		return srv.(PluginsServiceServer).Update(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.PluginsService/UpdatePlugin",
+		FullMethod: "/api.PluginsService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginsServiceServer).UpdatePlugin(ctx, req.(*UpdatePluginRequest))
+		return srv.(PluginsServiceServer).Update(ctx, req.(*UpdatePluginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PluginsService_PaginatePlugins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PluginsService_Paginate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PaginatePluginsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PluginsServiceServer).PaginatePlugins(ctx, in)
+		return srv.(PluginsServiceServer).Paginate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.PluginsService/PaginatePlugins",
+		FullMethod: "/api.PluginsService/Paginate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginsServiceServer).PaginatePlugins(ctx, req.(*PaginatePluginsRequest))
+		return srv.(PluginsServiceServer).Paginate(ctx, req.(*PaginatePluginsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -346,22 +346,22 @@ var PluginsService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PluginsServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetPlugin",
-			Handler:    _PluginsService_GetPlugin_Handler,
+			MethodName: "Get",
+			Handler:    _PluginsService_Get_Handler,
 		},
 		{
-			MethodName: "InsertPlugin",
-			Handler:    _PluginsService_InsertPlugin_Handler,
+			MethodName: "Insert",
+			Handler:    _PluginsService_Insert_Handler,
 		},
 		{
-			MethodName: "UpdatePlugin",
-			Handler:    _PluginsService_UpdatePlugin_Handler,
+			MethodName: "Update",
+			Handler:    _PluginsService_Update_Handler,
 		},
 		{
-			MethodName: "PaginatePlugins",
-			Handler:    _PluginsService_PaginatePlugins_Handler,
+			MethodName: "Paginate",
+			Handler:    _PluginsService_Paginate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api.proto",
+	Metadata: "api/api.proto",
 }

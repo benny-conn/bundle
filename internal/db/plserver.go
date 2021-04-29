@@ -4,16 +4,15 @@ import (
 	"context"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/db/orm"
 )
 
 type pluginsServer struct {
-	orm internal.PluginService
+	orm *orm.PluginsOrm
 	api.UnimplementedPluginsServiceServer
 }
 
-func (s *pluginsServer) GetPlugin(ctx context.Context, req *api.GetPluginRequest) (*api.Plugin, error) {
+func (s *pluginsServer) Get(ctx context.Context, req *api.GetPluginRequest) (*api.Plugin, error) {
 
 	pl, err := s.orm.Get(req)
 	if err != nil {
@@ -24,7 +23,7 @@ func (s *pluginsServer) GetPlugin(ctx context.Context, req *api.GetPluginRequest
 
 }
 
-func (s *pluginsServer) UpdatePlugin(ctx context.Context, req *api.UpdatePluginRequest) (*api.Empty, error) {
+func (s *pluginsServer) Update(ctx context.Context, req *api.UpdatePluginRequest) (*api.Empty, error) {
 	err := s.orm.Update(req)
 	if err != nil {
 		return &api.Empty{}, err
@@ -32,7 +31,7 @@ func (s *pluginsServer) UpdatePlugin(ctx context.Context, req *api.UpdatePluginR
 	return &api.Empty{}, nil
 }
 
-func (s *pluginsServer) InsertPlugin(ctx context.Context, plugin *api.Plugin) (*api.Empty, error) {
+func (s *pluginsServer) Insert(ctx context.Context, plugin *api.Plugin) (*api.Empty, error) {
 	err := s.orm.Insert(plugin)
 	if err != nil {
 		return &api.Empty{}, err
@@ -40,7 +39,7 @@ func (s *pluginsServer) InsertPlugin(ctx context.Context, plugin *api.Plugin) (*
 	return &api.Empty{}, nil
 }
 
-func (s *pluginsServer) PaginatePlugins(ctx context.Context, req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
+func (s *pluginsServer) Paginate(ctx context.Context, req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
 	pls, err := s.orm.Paginate(req)
 	if err != nil {
 		return nil, err

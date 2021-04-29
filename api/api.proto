@@ -8,9 +8,9 @@ package api;
 // USERS ------------------------------------------------------------------ ||
 
 service UsersService {
-    rpc GetUser (GetUserRequest) returns (User){}
-    rpc InsertUser (User) returns (Empty) {}
-    rpc UpdateUser (UpdateUserRequest) returns (Empty) {}
+    rpc Get (GetUserRequest) returns (User){}
+    rpc Insert (User) returns (Empty) {}
+    rpc Update (UpdateUserRequest) returns (Empty) {}
 }
 
 
@@ -36,10 +36,10 @@ message User {
 // PLUGINS --------------------------------------------------------------------- ||
 
 service PluginsService {
-    rpc GetPlugin (GetPluginRequest) returns (Plugin){}
-    rpc InsertPlugin (Plugin) returns (Empty) {}
-    rpc UpdatePlugin (UpdatePluginRequest) returns (Empty) {}
-    rpc PaginatePlugins (PaginatePluginsRequest) returns (PaginatePluginsResponse) {}
+    rpc Get (GetPluginRequest) returns (Plugin){}
+    rpc Insert (Plugin) returns (Empty) {}
+    rpc Update (UpdatePluginRequest) returns (Empty) {}
+    rpc Paginate (PaginatePluginsRequest) returns (PaginatePluginsResponse) {}
 }
 
 

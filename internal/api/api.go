@@ -42,7 +42,7 @@ func (u *userGrpcService) Get(req *api.GetUserRequest) (*api.User, error) {
 	}
 	defer conn.Close()
 	client := api.NewUsersServiceClient(conn)
-	user, err := client.GetUser(context.Background(), req)
+	user, err := client.Get(context.Background(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (u *userGrpcService) Update(req *api.UpdateUserRequest) error {
 	}
 	defer conn.Close()
 	client := api.NewUsersServiceClient(conn)
-	_, err = client.UpdateUser(context.Background(), req)
+	_, err = client.Update(context.Background(), req)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (u *userGrpcService) Insert(user *api.User) error {
 	}
 	defer conn.Close()
 	client := api.NewUsersServiceClient(conn)
-	_, err = client.InsertUser(context.Background(), user)
+	_, err = client.Insert(context.Background(), user)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (p *pluginGrpcService) Get(req *api.GetPluginRequest) (*api.Plugin, error) 
 	}
 	defer conn.Close()
 	client := api.NewPluginsServiceClient(conn)
-	pl, err := client.GetPlugin(context.Background(), req)
+	pl, err := client.Get(context.Background(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (p *pluginGrpcService) Insert(plugin *api.Plugin) error {
 	}
 	defer conn.Close()
 	client := api.NewPluginsServiceClient(conn)
-	_, err = client.InsertPlugin(context.Background(), plugin)
+	_, err = client.Insert(context.Background(), plugin)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (p *pluginGrpcService) Update(req *api.UpdatePluginRequest) error {
 	defer conn.Close()
 	client := api.NewPluginsServiceClient(conn)
 
-	_, err = client.UpdatePlugin(context.Background(), req)
+	_, err = client.Update(context.Background(), req)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (p *pluginGrpcService) Paginate(req *api.PaginatePluginsRequest) (*api.Pagi
 	defer conn.Close()
 	client := api.NewPluginsServiceClient(conn)
 
-	results, err := client.PaginatePlugins(context.Background(), req)
+	results, err := client.Paginate(context.Background(), req)
 	if err != nil {
 		return nil, err
 	}

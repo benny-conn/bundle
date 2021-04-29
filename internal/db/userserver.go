@@ -4,23 +4,22 @@ import (
 	"context"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/db/orm"
 )
 
 type usersServer struct {
-	orm internal.UserService
+	orm *orm.UsersOrm
 	api.UnimplementedUsersServiceServer
 }
 
-func (s *usersServer) GetUser(ctx context.Context, req *api.GetUserRequest) (*api.User, error) {
+func (s *usersServer) Get(ctx context.Context, req *api.GetUserRequest) (*api.User, error) {
 	user, err := s.orm.Get(req)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
-func (s *usersServer) UpdateUser(ctx context.Context, req *api.UpdateUserRequest) (*api.Empty, error) {
+func (s *usersServer) Update(ctx context.Context, req *api.UpdateUserRequest) (*api.Empty, error) {
 	err := s.orm.Update(req)
 	if err != nil {
 		return &api.Empty{}, err
@@ -28,7 +27,7 @@ func (s *usersServer) UpdateUser(ctx context.Context, req *api.UpdateUserRequest
 	return &api.Empty{}, nil
 }
 
-func (s *usersServer) InsertUser(ctx context.Context, user *api.User) (*api.Empty, error) {
+func (s *usersServer) Insert(ctx context.Context, user *api.User) (*api.Empty, error) {
 	err := s.orm.Insert(user)
 	if err != nil {
 		return &api.Empty{}, err
