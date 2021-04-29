@@ -3,10 +3,9 @@ package client
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
+	"net/url"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/form3tech-oss/jwt-go"
@@ -89,24 +88,20 @@ func getPemCert(token *jwt.Token) (string, error) {
 
 func GetClientToken() (string, error) {
 
-	url := "https://bundle.us.auth0.com/oauth/token"
+	u := "https://bundle.us.auth0.com/oauth/token"
 
 	id := viper.GetString("Auth0ID")
 	secret := viper.GetString("Auth0Secret")
 	aud := viper.GetString("Auth0Api")
 
-	s := fmt.Sprintf("grant_type=client_credentials&client_id=%v&client_secret=%v&audience=%v", id, secret, aud)
+	form := url.Values{}
 
-	payload := strings.NewReader(s)
+	form.Set("grant_type", "client_credentials")
+	form.Set("client_id", id)
+	form.Set("client_secret", secret)
+	form.Set("audience", aud)
 
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return "", nil
-	}
-
-	req.Header.Add("content-type", "application/x-www-form-urlencoded")
-
-	res, err := http.DefaultClient.Do(req)
+	res, err := http.PostForm(u, form)
 	if err != nil {
 		return "", nil
 	}
@@ -117,6 +112,15 @@ func GetClientToken() (string, error) {
 		return "", nil
 	}
 
-	return string(bs), nil
+	j := &struct {
+		AccessToken string `json:"access_token"`
+	}{}
+
+	err = json.Unmarshal(bs, j)
+	if err != nil {
+		return "", nil
+	}
+
+	return j.AccessToken, nil
 
 }

@@ -38,10 +38,10 @@ func pluginToInfo(plugin *api.Plugin) PluginInfo {
 	}
 }
 
-func pluginsToInfos(plugins []api.Plugin) []PluginInfo {
+func pluginsToInfos(plugins []*api.Plugin) []PluginInfo {
 	result := []PluginInfo{}
 	for _, v := range plugins {
-		result = append(result, pluginToInfo(&v))
+		result = append(result, pluginToInfo(v))
 	}
 	return result
 }

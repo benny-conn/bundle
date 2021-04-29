@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/internal/api/routes"
+	auth "github.com/bennycio/bundle/internal/auth/client"
 )
 
 func NewApiMux() http.Handler {
@@ -13,7 +14,7 @@ func NewApiMux() http.Handler {
 	usersHandler := http.HandlerFunc(routes.UsersHandlerFunc)
 
 	mux.Handle("/api/plugins", pluginsHandler)
-	mux.Handle("/api/users", usersHandler)
+	mux.Handle("/api/users", auth.AuthClient(usersHandler))
 
 	return mux
 }

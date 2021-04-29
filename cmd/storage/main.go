@@ -42,7 +42,7 @@ func main() {
 	api.RegisterUsersServiceServer(grpcServer, storage.NewUsersServer())
 	api.RegisterPluginsServiceServer(grpcServer, storage.NewPluginsServer())
 
-	fmt.Printf("Started Database Server on port %v", port)
+	fmt.Printf("Started Database Server on port %v\n", port)
 
 	grpcServer.Serve(lis)
 }

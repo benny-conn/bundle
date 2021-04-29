@@ -28,7 +28,7 @@ func main() {
 	port := os.Getenv("REPO_PORT")
 	mux := repository.NewRepositoryMux()
 
-	fmt.Printf("Started Repo Server on port %v", port)
+	fmt.Printf("Started Repo Server on port %v\n", port)
 
 	http.ListenAndServe(fmt.Sprintf(":%v", port), mux)
 }

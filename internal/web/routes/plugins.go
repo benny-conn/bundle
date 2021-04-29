@@ -14,6 +14,7 @@ type PluginInfo struct {
 	Version     string
 	Description string
 	Readme      string
+	Thumbnail   []byte
 }
 
 func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {

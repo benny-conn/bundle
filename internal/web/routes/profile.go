@@ -23,7 +23,6 @@ func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Println(user)
 	if req.Method == http.MethodPost {
 
 		req.ParseForm()

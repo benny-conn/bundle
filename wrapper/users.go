@@ -68,11 +68,14 @@ func GetUserApi(username string, email string) (*api.User, error) {
 	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	access, err := auth.GetClientToken()
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -91,7 +94,6 @@ func GetUserApi(username string, email string) (*api.User, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return result, nil
 }
 

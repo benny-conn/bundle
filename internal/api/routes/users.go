@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 	"google.golang.org/grpc"
 )
 
@@ -37,7 +36,7 @@ func UsersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		internal.WriteResponse(w, string(bs), http.StatusOK)
+		w.Write(bs)
 	case http.MethodPost:
 		bs, err := io.ReadAll(req.Body)
 		if err != nil {

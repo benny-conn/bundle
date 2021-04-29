@@ -12,7 +12,7 @@ import (
 	"github.com/bennycio/bundle/api"
 )
 
-func PaginatePluginsApi(page int) ([]api.Plugin, error) {
+func PaginatePluginsApi(page int) ([]*api.Plugin, error) {
 	port := os.Getenv("API_PORT")
 	addr := fmt.Sprintf("http://localhost:%v", port)
 	u, err := url.Parse(addr + "/api/plugins")
@@ -34,7 +34,7 @@ func PaginatePluginsApi(page int) ([]api.Plugin, error) {
 		return nil, err
 	}
 
-	result := &[]api.Plugin{}
+	result := &[]*api.Plugin{}
 
 	err = json.Unmarshal(bs, result)
 	if err != nil {

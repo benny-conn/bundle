@@ -29,7 +29,7 @@ func main() {
 	port := os.Getenv("WEB_PORT")
 	mux := web.NewWebMux()
 
-	fmt.Printf("Started Web Server on port %v", port)
+	fmt.Printf("Started Web Server on port %v\n", port)
 
 	http.ListenAndServe(fmt.Sprintf(":%v", port), mux)
 }
