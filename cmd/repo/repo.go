@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/repository"
+	"github.com/bennycio/bundle/internal/repo"
 	"github.com/spf13/viper"
 )
 
@@ -15,8 +15,6 @@ func init() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./cmd/repo")
-	viper.AddConfigPath("/etc/bundle/")
-	viper.AddConfigPath("$HOME/.bundle")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("fatal error parsing config file: %s", err))
@@ -26,7 +24,7 @@ func init() {
 func main() {
 
 	port := os.Getenv("REPO_PORT")
-	mux := repository.NewRepositoryMux()
+	mux := repo.NewRepositoryMux()
 
 	fmt.Printf("Started Repo Server on port %v\n", port)
 

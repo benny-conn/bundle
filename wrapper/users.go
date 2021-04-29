@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
-	auth "github.com/bennycio/bundle/internal/auth/client"
+	auth "github.com/bennycio/bundle/internal/api"
 )
 
 func UpdateUserApi(username string, updatedUser *api.User) error {
@@ -39,7 +39,7 @@ func UpdateUserApi(username string, updatedUser *api.User) error {
 		return err
 	}
 
-	access, err := auth.GetClientToken()
+	access, err := auth.GetAccessToken()
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func GetUserApi(username string, email string) (*api.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	access, err := auth.GetClientToken()
+	access, err := auth.GetAccessToken()
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func InsertUserApi(user *api.User) error {
 	if err != nil {
 		return err
 	}
-	access, err := auth.GetClientToken()
+	access, err := auth.GetAccessToken()
 	if err != nil {
 		return err
 	}

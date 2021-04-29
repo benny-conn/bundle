@@ -15,9 +15,6 @@ func init() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./cmd/web")
-
-	viper.AddConfigPath("/etc/bundle/")
-	viper.AddConfigPath("$HOME/.bundle")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("fatal error parsing config file: %s", err))
