@@ -5,15 +5,21 @@ import (
 	"reflect"
 	"time"
 
-	bundle "github.com/bennycio/bundle/internal"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func getMongoSession() (*bundle.Mongo, error) {
-	mg := &bundle.Mongo{}
+type Mongo struct {
+	Client *mongo.Client
+	Ctx    context.Context
+	Cancel context.CancelFunc
+}
+
+func getMongoSession() (*Mongo, error) {
+	mg := &Mongo{}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("MongoURL")))
@@ -57,4 +63,8 @@ func removeZeroOrNilValues(val bson.D) bson.D {
 func remove(s bson.D, i int) bson.D {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
+}
+
+func caseInsensitive(value string) primitive.Regex {
+	return primitive.Regex{Pattern: value, Options: "i"}
 }

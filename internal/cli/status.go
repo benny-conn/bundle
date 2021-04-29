@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/wrapper"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -51,7 +50,7 @@ var statusCmd = &cobra.Command{
 
 				for _, file := range reader.File {
 					if strings.HasSuffix(file.Name, "plugin.yml") {
-						yml := &bundle.PluginYML{}
+						yml := &PluginYML{}
 						rc, err := file.Open()
 						if err != nil {
 							panic(err)

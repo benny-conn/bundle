@@ -71,26 +71,6 @@ message Plugin {
 
 
 
-// AUTH ------------------------------------------------------------ ||
-
-service AuthService {
-    rpc NewJwt(User) returns (Jwt) {}
-    rpc Validate(Jwt) returns (Empty) {}
-    rpc Refresh(Jwt) returns (Jwt) {}
-    rpc CheckScope(Claim) returns (Empty) {}
-    rpc GetUser(Jwt) returns (User) {}
-}
-
-message Jwt {
-    string jwt = 1;
-}
-
-message Claim {
-    repeated string scopes = 1;
-    Jwt jwt = 2;
-}
-
-
 // UTIL ----------------------------------------------------------------- ||
 
 

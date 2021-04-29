@@ -2,7 +2,6 @@ package wrapper
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,18 +10,23 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
-	"google.golang.org/grpc"
+	auth "github.com/bennycio/bundle/internal/auth/client"
 )
 
 func UpdateUserApi(username string, updatedUser *api.User) error {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf("http://localhost:%v", port)
-	u, err := url.Parse(addr + "/api/users")
+	addr := fmt.Sprintf("http://localhost:%v/api/users", port)
+	u, err := url.Parse(addr)
 	if err != nil {
 		return err
 	}
 
-	updatedBs, err := json.Marshal(updatedUser)
+	up := &api.UpdateUserRequest{
+		Username:    username,
+		UpdatedUser: updatedUser,
+	}
+
+	updatedBs, err := json.Marshal(up)
 	if err != nil {
 		return err
 	}
@@ -34,6 +38,12 @@ func UpdateUserApi(username string, updatedUser *api.User) error {
 	if err != nil {
 		return err
 	}
+
+	access, err := auth.GetClientToken()
+	if err != nil {
+		return err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -57,7 +67,14 @@ func GetUserApi(username string, email string) (*api.User, error) {
 	q.Set("email", email)
 	u.RawQuery = q.Encode()
 
-	resp, err := http.Get(u.String())
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	access, err := auth.GetClientToken()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -78,42 +95,37 @@ func GetUserApi(username string, email string) (*api.User, error) {
 	return result, nil
 }
 
-func InsertUser(user *api.User) error {
-	creds, err := GetCert()
+func InsertUserApi(user *api.User) error {
+	port := os.Getenv("API_PORT")
+	addr := fmt.Sprintf("http://localhost:%v/api/users", port)
+	u, err := url.Parse(addr)
 	if err != nil {
 		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	client := api.NewUsersServiceClient(conn)
-	_, err = client.InsertUser(context.Background(), user)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
-func GetUser(req *api.GetUserRequest) (*api.User, error) {
-	creds, err := GetCert()
+	bs, err := json.Marshal(user)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
+
+	buf := &bytes.Buffer{}
+	buf.Write(bs)
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer conn.Close()
-	client := api.NewUsersServiceClient(conn)
-	user, err := client.GetUser(context.Background(), req)
+	access, err := auth.GetClientToken()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return user, nil
+	req.Header.Add("authorization", "Bearer "+access)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	return nil
 }

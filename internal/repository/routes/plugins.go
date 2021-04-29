@@ -30,7 +30,7 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
 		version := r.FormValue("version")
 
-		plugin, err := wrapper.GetPlugin(name)
+		plugin, err := wrapper.GetPluginApi(name)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -75,16 +75,16 @@ func PluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateOrInsertPlugin(plugin *api.Plugin) error {
-	dbPlugin, err := wrapper.GetPlugin(plugin.Name)
+	dbPlugin, err := wrapper.GetPluginApi(plugin.Name)
 
 	if err == nil {
-		err = wrapper.UpdatePlugin(dbPlugin.Name, plugin)
+		err = wrapper.UpdatePluginApi(dbPlugin.Name, plugin)
 		if err != nil {
 			return err
 		}
 	} else {
 
-		err = wrapper.InsertPlugin(plugin)
+		err = wrapper.InsertPluginApi(plugin)
 		if err != nil {
 			return err
 		}

@@ -4,9 +4,17 @@ import (
 	"net/http"
 	"strconv"
 
-	bundle "github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/wrapper"
+	"github.com/russross/blackfriday/v2"
 )
+
+type PluginInfo struct {
+	Name        string
+	Author      string
+	Version     string
+	Description string
+	Readme      string
+}
 
 func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
@@ -39,8 +47,10 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		data := bundle.TemplateData{
-			Plugins: plugins,
+		infos := pluginsToInfos(plugins)
+
+		data := TemplateData{
+			Plugins: infos,
 			Profile: user,
 		}
 
@@ -58,15 +68,18 @@ func PluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// DO THIS
-	// md, err := pkg.GetPluginData(opts)
-	// if err == nil {
-	// 	output := blackfriday.Run(md.Readme)
-	// }
+	pluginInfo := pluginToInfo(plugin)
 
-	data := bundle.TemplateData{
+	readme, err := wrapper.DownloadReadmeApi(pluginName)
+
+	if err == nil {
+		output := blackfriday.Run(readme)
+		pluginInfo.Readme = string(output)
+	}
+
+	data := TemplateData{
 		Profile: user,
-		Plugin:  *plugin,
+		Plugin:  pluginInfo,
 	}
 
 	err = tpl.ExecuteTemplate(w, "plugin", data)

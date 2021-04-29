@@ -5,10 +5,15 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/auth"
+	auth "github.com/bennycio/bundle/internal/auth/user"
 	"github.com/bennycio/bundle/wrapper"
 )
+
+type Profile struct {
+	Username string
+	Email    string
+	Tag      string
+}
 
 func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
@@ -47,7 +52,7 @@ func ProfileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	data := bundle.TemplateData{
+	data := TemplateData{
 		Profile: user,
 	}
 

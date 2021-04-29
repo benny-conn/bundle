@@ -1,10 +1,8 @@
-package wrapper
+package routes
 
-import (
-	"google.golang.org/grpc/credentials"
-)
+import "google.golang.org/grpc/credentials"
 
-func GetCert() (credentials.TransportCredentials, error) {
+func getCert() (credentials.TransportCredentials, error) {
 	creds, err := credentials.NewClientTLSFromFile("tls/server-cert.pem", "")
 	if err != nil {
 		return nil, err

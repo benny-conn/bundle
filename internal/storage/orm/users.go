@@ -32,7 +32,7 @@ func InsertUser(user *api.User) error {
 
 	collection := session.Client.Database("main").Collection("users")
 
-	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", bundle.NewCaseInsensitiveRegex(user.Username)}})
+	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", caseInsensitive(user.Username)}})
 
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func InsertUser(user *api.User) error {
 		return err
 	}
 
-	countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", bundle.NewCaseInsensitiveRegex(user.Email)}})
+	countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", caseInsensitive(user.Email)}})
 
 	if err != nil {
 		return err
@@ -78,9 +78,9 @@ func GetUser(username string, email string) (*api.User, error) {
 	if email == "" {
 		err = collection.FindOne(session.Ctx, bson.D{{"username", username}}).Decode(decodedUser)
 	} else if username == "" {
-		err = collection.FindOne(session.Ctx, bson.D{{"email", bundle.NewCaseInsensitiveRegex(email)}}).Decode(decodedUser)
+		err = collection.FindOne(session.Ctx, bson.D{{"email", caseInsensitive(email)}}).Decode(decodedUser)
 	} else {
-		err = collection.FindOne(session.Ctx, bson.D{{"username", username}, {"email", bundle.NewCaseInsensitiveRegex(email)}}).Decode(decodedUser)
+		err = collection.FindOne(session.Ctx, bson.D{{"username", username}, {"email", caseInsensitive(email)}}).Decode(decodedUser)
 	}
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func UpdateUser(username string, user *api.User) error {
 
 	updatedUser := marshallBsonClean(user)
 
-	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"username", bundle.NewCaseInsensitiveRegex(username)}}, bson.D{{"$set", updatedUser}})
+	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"username", caseInsensitive(username)}}, bson.D{{"$set", updatedUser}})
 	if err != nil {
 		return err
 	}

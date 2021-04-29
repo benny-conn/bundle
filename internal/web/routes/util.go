@@ -4,28 +4,44 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/auth"
+	auth "github.com/bennycio/bundle/internal/auth/user"
 )
 
-func getProfileFromCookie(r *http.Request) (internal.Profile, error) {
+func getProfileFromCookie(r *http.Request) (Profile, error) {
 
 	c, err := r.Cookie("access_token")
 	if err != nil {
-		return internal.Profile{}, err
+		return Profile{}, err
 	}
 	user, err := auth.GetUserFromToken(c.Value)
 	if err != nil {
-		return internal.Profile{}, err
+		return Profile{}, err
 	}
 	return userToProfile(user), nil
 
 }
 
-func userToProfile(user *api.User) internal.Profile {
-	return internal.Profile{
+func userToProfile(user *api.User) Profile {
+	return Profile{
 		Username: user.Username,
 		Email:    user.Email,
 		Tag:      user.Tag,
 	}
+}
+
+func pluginToInfo(plugin *api.Plugin) PluginInfo {
+	return PluginInfo{
+		Name:        plugin.Name,
+		Version:     plugin.Version,
+		Author:      plugin.Author,
+		Description: plugin.Description,
+	}
+}
+
+func pluginsToInfos(plugins []api.Plugin) []PluginInfo {
+	result := []PluginInfo{}
+	for _, v := range plugins {
+		result = append(result, pluginToInfo(&v))
+	}
+	return result
 }

@@ -3,6 +3,7 @@ module github.com/bennycio/bundle
 go 1.16
 
 require (
+	github.com/auth0/go-jwt-middleware v1.0.0
 	github.com/aws/aws-sdk-go v1.38.22
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible
 	github.com/gopherjs/gopherjs v0.0.0-20210420193930-a4630ec28c79 // indirect
@@ -13,6 +14,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/rs/cors v1.7.0
+	github.com/russross/blackfriday/v2 v2.0.1
 	github.com/schollz/progressbar/v3 v3.8.0
 	github.com/smartystreets/assertions v1.2.0 // indirect
 	github.com/spf13/afero v1.6.0 // indirect

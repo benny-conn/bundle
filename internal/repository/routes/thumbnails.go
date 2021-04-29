@@ -29,7 +29,7 @@ func ThumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		name := r.FormValue("name")
 
-		plugin, err := wrapper.GetPlugin(name)
+		plugin, err := wrapper.GetPluginApi(name)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return

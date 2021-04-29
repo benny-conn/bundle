@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
-	bundle "github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/wrapper"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/spf13/viper"
@@ -47,7 +47,7 @@ func checkScope(tokenString string, scopes ...string) bool {
 
 	isAuthorized := true
 	for _, scope := range scopes {
-		if !bundle.Contains(tokenUser.Scopes, scope) {
+		if !internal.Contains(tokenUser.Scopes, scope) {
 			isAuthorized = false
 		}
 	}
@@ -78,7 +78,7 @@ func GetUserFromToken(tokenString string) (*api.User, error) {
 
 }
 
-func validateToken(tokenString string) error {
+func ValidateToken(tokenString string) error {
 	secret := viper.GetString("ClientSecret")
 
 	token, err := jwt.ParseWithClaims(
@@ -118,18 +118,14 @@ func AuthUpload(next http.Handler) http.Handler {
 				return
 			}
 
-			isValid := bundle.IsUserValid(user)
+			isValid := internal.IsUserValid(user)
 
 			if !isValid {
 				http.Error(w, "invalid user", http.StatusBadRequest)
 				return
 			}
 
-			req := &api.GetUserRequest{
-				Username: user.Username,
-				Email:    user.Email,
-			}
-			dbUser, err := wrapper.GetUser(req)
+			dbUser, err := wrapper.GetUserApi(user.Username, user.Email)
 
 			if err != nil {
 				http.Error(w, "invalid user", http.StatusBadRequest)
@@ -156,51 +152,33 @@ func NewAccessCookie(token string) *http.Cookie {
 	}
 }
 
-// func RefreshToken(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-// 		token, err := req.Cookie("access_token")
-// 		if err != nil {
-// 			http.Error(w, err.Error(), http.StatusBadRequest)
-// 			return
-// 		}
-// 		tokenString := token.Value
+func RefreshToken(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		token, err := req.Cookie("access_token")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		tokenString := token.Value
 
-// 		tokenUser, err := GetUserFromToken(tokenString)
-// 		if err != nil {
-// 			token.MaxAge = -1
-// 			http.SetCookie(w, token)
-// 			next.ServeHTTP(w, req)
-// 			return
-// 		}
+		tokenUser, err := GetUserFromToken(tokenString)
+		if err != nil {
+			token.MaxAge = -1
+			http.SetCookie(w, token)
+			next.ServeHTTP(w, req)
+			return
+		}
 
-// 		newToken, err := NewAuthToken(tokenUser)
-// 		if err != nil {
-// 			http.Error(w, err.Error(), http.StatusInternalServerError)
-// 			return
-// 		}
+		newToken, err := NewAuthToken(tokenUser)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-// 		newCookie := NewAccessCookie(newToken)
+		newCookie := NewAccessCookie(newToken)
 
-// 		http.SetCookie(w, newCookie)
+		http.SetCookie(w, newCookie)
 
-// 		next.ServeHTTP(w, req)
-// 	})
-// }
-
-func RefreshToken(token string) (string, error) {
-	err := validateToken(token)
-	if err != nil {
-		return "", err
-	}
-	user, err := GetUserFromToken(token)
-	if err != nil {
-		return "", err
-	}
-
-	newToken, err := NewAuthToken(user)
-	if err != nil {
-		return "", err
-	}
-
-	return newToken, nil
+		next.ServeHTTP(w, req)
+	})
 }

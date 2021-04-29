@@ -2,13 +2,15 @@ package routes
 
 import (
 	"text/template"
-
-	bundle "github.com/bennycio/bundle/internal"
 )
 
-var tpl *template.Template
+type TemplateData struct {
+	Profile Profile
+	Plugin  PluginInfo
+	Plugins []PluginInfo
+}
 
-const ReqFileType = bundle.RequiredFileType
+var tpl *template.Template
 
 func init() {
 	tpl = template.Must(template.ParseGlob("assets/templates/*.gohtml"))

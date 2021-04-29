@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
-	bundle "github.com/bennycio/bundle/internal"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -44,7 +43,7 @@ func UpdatePlugin(name string, plugin *api.Plugin) error {
 	updatedPlugin := marshallBsonClean(plugin)
 	updatedPlugin = append(updatedPlugin, bson.E{"lastUpdated", time.Now().Unix()})
 
-	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"name", bundle.NewCaseInsensitiveRegex(name)}}, bson.D{{"$set", updatedPlugin}})
+	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"name", caseInsensitive(name)}}, bson.D{{"$set", updatedPlugin}})
 	if err != nil {
 		return err
 	}
@@ -69,7 +68,7 @@ func GetPlugin(name string) (*api.Plugin, error) {
 	collection := session.Client.Database("main").Collection("plugins")
 	decodedPluginResult := &api.Plugin{}
 
-	err = collection.FindOne(session.Ctx, bson.D{{"name", bundle.NewCaseInsensitiveRegex(name)}}).Decode(decodedPluginResult)
+	err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(name)}}).Decode(decodedPluginResult)
 	if err != nil {
 		return nil, err
 	}

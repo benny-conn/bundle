@@ -77,7 +77,7 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 	version := bundleVersion
 
 	if Force && version != "latest" {
-		plugin, err := wrapper.GetPlugin(pluginName)
+		plugin, err := wrapper.GetPluginApi(pluginName)
 		if err != nil {
 			return "", err
 		}

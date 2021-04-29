@@ -3,7 +3,7 @@ package repository
 import (
 	"net/http"
 
-	"github.com/bennycio/bundle/internal/auth"
+	auth "github.com/bennycio/bundle/internal/auth/user"
 	"github.com/bennycio/bundle/internal/repository/routes"
 )
 

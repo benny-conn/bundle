@@ -1,7 +1,7 @@
 package wrapper
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,7 +10,6 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
-	"google.golang.org/grpc"
 )
 
 func PaginatePluginsApi(page int) ([]api.Plugin, error) {
@@ -78,86 +77,62 @@ func GetPluginApi(name string) (*api.Plugin, error) {
 	return result, nil
 }
 
-func GetPlugin(name string) (*api.Plugin, error) {
+func InsertPluginApi(plugin *api.Plugin) error {
+	port := os.Getenv("API_PORT")
+	addr := fmt.Sprintf("http://localhost:%v/api/plugins", port)
+	u, err := url.Parse(addr)
+	if err != nil {
+		return err
+	}
 
-	creds, err := GetCert()
+	bs, err := json.Marshal(plugin)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-	client := api.NewPluginsServiceClient(conn)
-	req := &api.GetPluginRequest{Name: name}
-	pl, err := client.GetPlugin(context.Background(), req)
-	if err != nil {
-		return nil, err
-	}
-	return pl, nil
-}
 
-func UpdatePlugin(name string, updatedPlugin *api.Plugin) error {
-	creds, err := GetCert()
+	buf := &bytes.Buffer{}
+	buf.Write(bs)
+
+	resp, err := http.Post(u.String(), "application/json", buf)
 	if err != nil {
 		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	client := api.NewPluginsServiceClient(conn)
-	req := &api.UpdatePluginRequest{Name: name, UpdatedPlugin: updatedPlugin}
-	_, err = client.UpdatePlugin(context.Background(), req)
-	if err != nil {
-		return err
-	}
+	defer resp.Body.Close()
+
 	return nil
 }
 
-func InsertPlugin(plugin *api.Plugin) error {
-	creds, err := GetCert()
+func UpdatePluginApi(pluginName string, updatedPlugin *api.Plugin) error {
+	port := os.Getenv("API_PORT")
+	addr := fmt.Sprintf("http://localhost:%v/api/plugins", port)
+	u, err := url.Parse(addr)
 	if err != nil {
 		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	client := api.NewPluginsServiceClient(conn)
-	_, err = client.InsertPlugin(context.Background(), plugin)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
-func PaginatePlugins(page int) ([]*api.Plugin, error) {
-	creds, err := GetCert()
-	if err != nil {
-		return nil, err
+	up := &api.UpdatePluginRequest{
+		Name:          pluginName,
+		UpdatedPlugin: updatedPlugin,
 	}
-	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
+
+	bs, err := json.Marshal(up)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer conn.Close()
-	client := api.NewPluginsServiceClient(conn)
-	req := &api.PaginatePluginsRequest{}
-	results, err := client.PaginatePlugins(context.Background(), req)
+
+	buf := &bytes.Buffer{}
+	buf.Write(bs)
+
+	req, err := http.NewRequest(http.MethodPatch, u.String(), buf)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return results.Plugins, nil
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
 }

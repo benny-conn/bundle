@@ -47,7 +47,7 @@ var uploadCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			result := &bundle.PluginYML{}
+			result := &PluginYML{}
 
 			for _, file := range reader.File {
 				if strings.HasSuffix(file.Name, "plugin.yml") {

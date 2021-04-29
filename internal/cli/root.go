@@ -6,14 +6,17 @@ import (
 	"github.com/spf13/cobra"
 
 	_ "embed"
-
-	bundle "github.com/bennycio/bundle/internal"
 )
 
 const (
-	BundleFileName   = bundle.BundleFileName
-	RequiredFileType = bundle.RequiredFileType
+	BundleFileName = "bundle.yml"
 )
+
+type PluginYML struct {
+	Name        string `yaml:"name"`
+	Version     string `yaml:"version"`
+	Description string `yaml:"description,omitempty"`
+}
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
