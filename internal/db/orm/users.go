@@ -12,7 +12,7 @@ import (
 
 type UsersOrm struct{}
 
-func NewUsersOrm() internal.UserService { return &UsersOrm{} }
+func NewUsersOrm() *UsersOrm { return &UsersOrm{} }
 
 func (u *UsersOrm) Insert(user *api.User) error {
 	isValid := internal.IsUserValid(user)

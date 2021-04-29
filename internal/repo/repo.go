@@ -2,8 +2,6 @@ package repo
 
 import (
 	"net/http"
-
-	auth "github.com/bennycio/bundle/internal/auth/user"
 )
 
 func NewRepositoryMux() http.Handler {
@@ -12,9 +10,9 @@ func NewRepositoryMux() http.Handler {
 	readmesHandler := http.HandlerFunc(readmesHandlerFunc)
 	thumbnailsHandler := http.HandlerFunc(thumbnailsHandlerFunc)
 
-	mux.Handle("/repo/plugins", auth.AuthUpload(pluginsHandler))
-	mux.Handle("/repo/readmes", auth.AuthUpload(readmesHandler))
-	mux.Handle("/repo/thumbnails", auth.AuthUpload(thumbnailsHandler))
+	mux.Handle("/repo/plugins", authUpload(pluginsHandler))
+	mux.Handle("/repo/readmes", authUpload(readmesHandler))
+	mux.Handle("/repo/thumbnails", authUpload(thumbnailsHandler))
 
 	return mux
 }

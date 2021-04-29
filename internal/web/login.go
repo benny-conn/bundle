@@ -5,7 +5,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
-	auth "github.com/bennycio/bundle/internal/auth/user"
+
 	"github.com/bennycio/bundle/wrapper"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,12 +41,12 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		token, err := auth.NewAuthToken(dbUser)
+		token, err := newAuthToken(dbUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		tokenCookie := auth.NewAccessCookie(token)
+		tokenCookie := newAccessCookie(token)
 		http.SetCookie(w, tokenCookie)
 		http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
 	}

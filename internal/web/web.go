@@ -16,9 +16,9 @@ func NewWebMux() http.Handler {
 	pluginHandler := http.HandlerFunc(pluginsHandlerFunc)
 	profileHandler := http.HandlerFunc(profileHandlerFunc)
 
-	mux.Handle("/", rootHandler)
-	mux.Handle("/plugin", pluginHandler)
-	mux.Handle("/profile", profileHandler)
+	mux.Handle("/", noGate(rootHandler))
+	mux.Handle("/plugin", noGate(pluginHandler))
+	mux.Handle("/profile", loginGate(profileHandler))
 	mux.Handle("/login", loginHandler)
 	mux.Handle("/logout", logoutHandler)
 	mux.Handle("/signup", signupHandler)

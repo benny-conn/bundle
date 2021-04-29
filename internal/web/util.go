@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-	auth "github.com/bennycio/bundle/internal/auth/user"
 )
 
 func getProfileFromCookie(r *http.Request) (Profile, error) {
@@ -13,7 +12,7 @@ func getProfileFromCookie(r *http.Request) (Profile, error) {
 	if err != nil {
 		return Profile{}, err
 	}
-	user, err := auth.GetUserFromToken(c.Value)
+	user, err := getUserFromToken(c.Value)
 	if err != nil {
 		return Profile{}, err
 	}

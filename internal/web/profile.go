@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-	auth "github.com/bennycio/bundle/internal/auth/user"
+
 	"github.com/bennycio/bundle/wrapper"
 )
 
@@ -46,8 +46,8 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		fmt.Println(dbUpdatedUser)
 
-		token, _ := auth.NewAuthToken(dbUpdatedUser)
-		c := auth.NewAccessCookie(token)
+		token, _ := newAuthToken(dbUpdatedUser)
+		c := newAccessCookie(token)
 		http.SetCookie(w, c)
 
 	}

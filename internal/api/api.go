@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 	"google.golang.org/grpc"
 )
 
@@ -14,8 +14,20 @@ type userGrpcService struct{}
 
 type pluginGrpcService struct{}
 
-func newUserClient() internal.UserService     { return &userGrpcService{} }
-func newPluginClient() internal.PluginService { return &pluginGrpcService{} }
+func newUserClient() *userGrpcService     { return &userGrpcService{} }
+func newPluginClient() *pluginGrpcService { return &pluginGrpcService{} }
+
+func NewApiMux() http.Handler {
+	mux := http.NewServeMux()
+
+	pluginsHandler := http.HandlerFunc(pluginsHandlerFunc)
+	usersHandler := http.HandlerFunc(usersHandlerFunc)
+
+	mux.Handle("/api/plugins", pluginsHandler)
+	mux.Handle("/api/users", simpleAuth(usersHandler))
+
+	return mux
+}
 
 func (u *userGrpcService) Get(req *api.GetUserRequest) (*api.User, error) {
 	creds, err := getCert()

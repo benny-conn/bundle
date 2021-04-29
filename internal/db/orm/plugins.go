@@ -5,14 +5,13 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type PluginsOrm struct{}
 
-func NewPluginsOrm() internal.PluginService { return &PluginsOrm{} }
+func NewPluginsOrm() *PluginsOrm { return &PluginsOrm{} }
 
 func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 	session, err := getMongoSession()

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-	auth "github.com/bennycio/bundle/internal/auth/user"
 	"github.com/bennycio/bundle/wrapper"
 )
 
@@ -25,12 +24,12 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		token, err := auth.NewAuthToken(user)
+		token, err := newAuthToken(user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		tokenCookie := auth.NewAccessCookie(token)
+		tokenCookie := newAccessCookie(token)
 		http.SetCookie(w, tokenCookie)
 
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)

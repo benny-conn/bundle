@@ -1,4 +1,4 @@
-package client
+package api
 
 import (
 	"encoding/json"
@@ -6,11 +6,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/bennycio/bundle/internal"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/spf13/viper"
 )
+
+type CustomClaims struct {
+	Scope string `json:"scope"`
+	jwt.StandardClaims
+}
 
 type jsonWebKeys struct {
 	Keys []jsonWebKey `json:"keys"`
@@ -52,8 +59,23 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 	SigningMethod: jwt.SigningMethodRS256,
 })
 
-func AuthClient(next http.Handler) http.Handler {
+func simpleAuth(next http.Handler) http.Handler {
 	return jwtMiddleware.Handler(next)
+}
+
+func scopedAuth(next http.Handler, scopes ...string) http.Handler {
+	return jwtMiddleware.Handler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		authHeaderParts := strings.Split(r.Header.Get("Authorization"), " ")
+		token := authHeaderParts[1]
+
+		hasScope := checkScope(token, scopes...)
+
+		if !hasScope {
+			internal.WriteResponse(rw, "insufficient scope", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(rw, r)
+	}))
 }
 
 func getPemCert(token *jwt.Token) (string, error) {
@@ -86,7 +108,7 @@ func getPemCert(token *jwt.Token) (string, error) {
 	return cert, nil
 }
 
-func GetClientToken() (string, error) {
+func GetAccessToken() (string, error) {
 
 	u := "https://bundle.us.auth0.com/oauth/token"
 
@@ -122,5 +144,29 @@ func GetClientToken() (string, error) {
 	}
 
 	return j.AccessToken, nil
+}
 
+func checkScope(tokenString string, scopes ...string) bool {
+	token, _ := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		cert, err := getPemCert(token)
+		if err != nil {
+			return nil, err
+		}
+		result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
+		return result, nil
+	})
+
+	claims, ok := token.Claims.(*CustomClaims)
+	if !ok {
+		return false
+	}
+
+	hasScope := true
+	for _, v := range scopes {
+		if !strings.Contains(claims.Scope, v) {
+			hasScope = false
+		}
+	}
+
+	return hasScope
 }

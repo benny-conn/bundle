@@ -1,17 +1,14 @@
-package user
+package web
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/wrapper"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type CustomClaims struct {
@@ -19,7 +16,7 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-func NewAuthToken(user *api.User) (string, error) {
+func newAuthToken(user *api.User) (string, error) {
 
 	secret := viper.GetString("ClientSecret")
 
@@ -40,7 +37,7 @@ func NewAuthToken(user *api.User) (string, error) {
 
 func checkScope(tokenString string, scopes ...string) bool {
 
-	tokenUser, err := GetUserFromToken(tokenString)
+	tokenUser, err := getUserFromToken(tokenString)
 	if err != nil {
 		return false
 	}
@@ -54,7 +51,7 @@ func checkScope(tokenString string, scopes ...string) bool {
 	return isAuthorized
 }
 
-func GetUserFromToken(tokenString string) (*api.User, error) {
+func getUserFromToken(tokenString string) (*api.User, error) {
 
 	secret := viper.GetString("ClientSecret")
 	token, err := jwt.ParseWithClaims(
@@ -78,7 +75,7 @@ func GetUserFromToken(tokenString string) (*api.User, error) {
 
 }
 
-func ValidateToken(tokenString string) error {
+func validateToken(tokenString string) error {
 	secret := viper.GetString("ClientSecret")
 
 	token, err := jwt.ParseWithClaims(
@@ -105,45 +102,7 @@ func ValidateToken(tokenString string) error {
 	return nil
 }
 
-func AuthUpload(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-
-			userJSON := r.Header.Get("User")
-			user := &api.User{}
-
-			err := json.Unmarshal([]byte(userJSON), user)
-			if err != nil {
-				http.Error(w, "invalid user", http.StatusBadRequest)
-				return
-			}
-
-			isValid := internal.IsUserValid(user)
-
-			if !isValid {
-				http.Error(w, "invalid user", http.StatusBadRequest)
-				return
-			}
-
-			dbUser, err := wrapper.GetUserApi(user.Username, user.Email)
-
-			if err != nil {
-				http.Error(w, "invalid user", http.StatusBadRequest)
-				return
-			}
-
-			err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
-
-			if err != nil {
-				http.Error(w, "incorrect password", http.StatusUnauthorized)
-				return
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func NewAccessCookie(token string) *http.Cookie {
+func newAccessCookie(token string) *http.Cookie {
 	return &http.Cookie{
 		Name:     "access_token",
 		Value:    token,
@@ -152,16 +111,47 @@ func NewAccessCookie(token string) *http.Cookie {
 	}
 }
 
-func RefreshToken(next http.Handler) http.Handler {
+func loginGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		token, err := req.Cookie("access_token")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
 			return
 		}
 		tokenString := token.Value
 
-		tokenUser, err := GetUserFromToken(tokenString)
+		tokenUser, err := getUserFromToken(tokenString)
+		if err != nil {
+			token.MaxAge = -1
+			http.SetCookie(w, token)
+			http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+
+		newToken, err := newAuthToken(tokenUser)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		newCookie := newAccessCookie(newToken)
+
+		http.SetCookie(w, newCookie)
+
+		next.ServeHTTP(w, req)
+	})
+}
+
+func noGate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		token, err := req.Cookie("access_token")
+		if err != nil {
+			next.ServeHTTP(w, req)
+			return
+		}
+		tokenString := token.Value
+
+		tokenUser, err := getUserFromToken(tokenString)
 		if err != nil {
 			token.MaxAge = -1
 			http.SetCookie(w, token)
@@ -169,13 +159,44 @@ func RefreshToken(next http.Handler) http.Handler {
 			return
 		}
 
-		newToken, err := NewAuthToken(tokenUser)
+		newToken, err := newAuthToken(tokenUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		newCookie := NewAccessCookie(newToken)
+		newCookie := newAccessCookie(newToken)
+
+		http.SetCookie(w, newCookie)
+
+		next.ServeHTTP(w, req)
+	})
+}
+
+func scopeGate(next http.Handler, scopes ...string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		token, err := req.Cookie("access_token")
+		if err != nil {
+			http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+		tokenString := token.Value
+
+		tokenUser, err := getUserFromToken(tokenString)
+		if err != nil {
+			token.MaxAge = -1
+			http.SetCookie(w, token)
+			http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+
+		newToken, err := newAuthToken(tokenUser)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		newCookie := newAccessCookie(newToken)
 
 		http.SetCookie(w, newCookie)
 
