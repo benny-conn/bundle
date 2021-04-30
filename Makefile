@@ -16,8 +16,3 @@ docker-build:
 docker-run: build docker-build
 	docker-compose up -d
 
-
-.PHONY: clean
-
-clean:
-	docker kill $(docker ps -q)
