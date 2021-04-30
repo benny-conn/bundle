@@ -5,13 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/api"
 )
-
-func init() {
-	internal.InitEnv()
-}
 
 func main() {
 	port := os.Getenv("API_PORT")

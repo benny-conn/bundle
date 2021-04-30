@@ -5,13 +5,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/web"
 	"github.com/spf13/viper"
 )
 
 func init() {
-	internal.InitEnv()
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./cmd/web")

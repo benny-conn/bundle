@@ -55,7 +55,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			Profile: user,
 		}
 
-		err = tpl.ExecuteTemplate(w, "plugin", data)
+		err = tpl.ExecuteTemplate(w, "plugins", data)
 		if err != nil {
 			panic(err)
 		}
@@ -83,7 +83,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		Plugin:  pluginInfo,
 	}
 
-	err = tpl.ExecuteTemplate(w, "plugin", data)
+	err = tpl.ExecuteTemplate(w, "plugins", data)
 	if err != nil {
 		panic(err)
 	}

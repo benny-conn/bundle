@@ -5,3 +5,5 @@ plugins/
 .VSCodeCounter/
 config.yaml
 *.pem
+src/
+

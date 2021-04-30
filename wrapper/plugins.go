@@ -14,8 +14,9 @@ import (
 
 func PaginatePluginsApi(page int) ([]*api.Plugin, error) {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf("http://localhost:%v", port)
-	u, err := url.Parse(addr + "/api/plugins")
+	host := os.Getenv("API_HOST")
+	addr := fmt.Sprintf("http://%v:%v/api/plugins", host, port)
+	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -33,21 +34,22 @@ func PaginatePluginsApi(page int) ([]*api.Plugin, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(string(bs))
 
-	result := &[]*api.Plugin{}
-
+	result := &api.PaginatePluginsResponse{}
 	err = json.Unmarshal(bs, result)
 	if err != nil {
 		return nil, err
 	}
-	return *result, nil
+	return result.Plugins, nil
 
 }
 
 func GetPluginApi(name string) (*api.Plugin, error) {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf("http://localhost:%v", port)
-	u, err := url.Parse(addr + "/api/plugins")
+	host := os.Getenv("API_HOST")
+	addr := fmt.Sprintf("http://%v:%v/api/plugins", host, port)
+	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +81,8 @@ func GetPluginApi(name string) (*api.Plugin, error) {
 
 func InsertPluginApi(plugin *api.Plugin) error {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf("http://localhost:%v/api/plugins", port)
+	host := os.Getenv("API_HOST")
+	addr := fmt.Sprintf("http://%v:%v/api/plugins", host, port)
 	u, err := url.Parse(addr)
 	if err != nil {
 		return err
@@ -104,7 +107,8 @@ func InsertPluginApi(plugin *api.Plugin) error {
 
 func UpdatePluginApi(pluginName string, updatedPlugin *api.Plugin) error {
 	port := os.Getenv("API_PORT")
-	addr := fmt.Sprintf("http://localhost:%v/api/plugins", port)
+	host := os.Getenv("API_HOST")
+	addr := fmt.Sprintf("http://%v:%v/api/plugins", host, port)
 	u, err := url.Parse(addr)
 	if err != nil {
 		return err

@@ -35,7 +35,8 @@ func (u *userGrpcService) Get(req *api.GetUserRequest) (*api.User, error) {
 		return nil, err
 	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	host := os.Getenv("DATABASE_HOST")
+	addr := fmt.Sprintf("%v:%v", host, port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
@@ -55,7 +56,8 @@ func (u *userGrpcService) Update(req *api.UpdateUserRequest) error {
 		return err
 	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	host := os.Getenv("DATABASE_HOST")
+	addr := fmt.Sprintf("%v:%v", host, port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -75,7 +77,8 @@ func (u *userGrpcService) Insert(user *api.User) error {
 		return err
 	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	host := os.Getenv("DATABASE_HOST")
+	addr := fmt.Sprintf("%v:%v", host, port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -96,7 +99,8 @@ func (p *pluginGrpcService) Get(req *api.GetPluginRequest) (*api.Plugin, error) 
 		return nil, err
 	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	host := os.Getenv("DATABASE_HOST")
+	addr := fmt.Sprintf("%v:%v", host, port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
@@ -115,7 +119,8 @@ func (p *pluginGrpcService) Insert(plugin *api.Plugin) error {
 		return err
 	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	host := os.Getenv("DATABASE_HOST")
+	addr := fmt.Sprintf("%v:%v", host, port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -134,7 +139,8 @@ func (p *pluginGrpcService) Update(req *api.UpdatePluginRequest) error {
 		return err
 	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	host := os.Getenv("DATABASE_HOST")
+	addr := fmt.Sprintf("%v:%v", host, port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -154,7 +160,8 @@ func (p *pluginGrpcService) Paginate(req *api.PaginatePluginsRequest) (*api.Pagi
 		return nil, err
 	}
 	port := os.Getenv("DATABASE_PORT")
-	addr := fmt.Sprintf(":%v", port)
+	host := os.Getenv("DATABASE_HOST")
+	addr := fmt.Sprintf("%v:%v", host, port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err

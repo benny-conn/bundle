@@ -12,7 +12,8 @@ import (
 
 func RunServer() error {
 	port := os.Getenv("DATABASE_PORT")
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
+	host := os.Getenv("DATABASE_HOST")
+	lis, err := net.Listen("tcp", fmt.Sprintf("%v:%v", host, port))
 	if err != nil {
 		return err
 	}

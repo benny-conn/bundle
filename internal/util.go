@@ -1,10 +1,7 @@
 package internal
 
 import (
-	"log"
 	"net/http"
-
-	"github.com/joho/godotenv"
 )
 
 func WriteResponse(w http.ResponseWriter, message string, status int) {
@@ -20,11 +17,4 @@ func Contains(s []string, str string) bool {
 	}
 
 	return false
-}
-
-func InitEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 }

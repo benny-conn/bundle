@@ -13,7 +13,8 @@ import (
 
 func DownloadReadmeApi(pluginName string) ([]byte, error) {
 	port := os.Getenv("REPO_PORT")
-	u, err := url.Parse(fmt.Sprintf("http://localhost:%v/repo/readmes", port))
+	host := os.Getenv("REPO_HOST")
+	u, err := url.Parse(fmt.Sprintf("http://%v:%v/repo/readmes", host, port))
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +35,8 @@ func DownloadReadmeApi(pluginName string) ([]byte, error) {
 
 func DownloadPluginApi(pluginName string, version string) ([]byte, error) {
 	port := os.Getenv("REPO_PORT")
-	u, err := url.Parse(fmt.Sprintf("http://localhost:%v/repo/plugins", port))
+	host := os.Getenv("REPO_HOST")
+	u, err := url.Parse(fmt.Sprintf("http://%v:%v/repo/plugins", host, port))
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,8 @@ func DownloadPluginApi(pluginName string, version string) ([]byte, error) {
 
 func UploadPluginApi(user *api.User, pluginName string, version string, data io.Reader) error {
 	port := os.Getenv("REPO_PORT")
-	u, err := url.Parse(fmt.Sprintf("http://localhost:%v/repo/plugins", port))
+	host := os.Getenv("REPO_HOST")
+	u, err := url.Parse(fmt.Sprintf("http://%v:%v/repo/plugins", host, port))
 	if err != nil {
 		return err
 	}
@@ -93,7 +96,8 @@ func UploadPluginApi(user *api.User, pluginName string, version string, data io.
 
 func UploadReadmeApi(user *api.User, pluginName string, data io.Reader) error {
 	port := os.Getenv("REPO_PORT")
-	u, err := url.Parse(fmt.Sprintf("http://localhost:%v/repo/readmes", port))
+	host := os.Getenv("REPO_HOST")
+	u, err := url.Parse(fmt.Sprintf("http://%v:%v/repo/readmes", host, port))
 	if err != nil {
 		return err
 	}
