@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/wrapper"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -32,7 +33,11 @@ var statusCmd = &cobra.Command{
 			go func(pluginName string, bundleVersion string) {
 				defer wg.Done()
 
-				plugin, err := wrapper.GetPluginApi(pluginName)
+				req := &api.Plugin{
+					Name: pluginName,
+				}
+
+				plugin, err := wrapper.GetPluginApi(req)
 				if err != nil {
 					panic(err)
 				}

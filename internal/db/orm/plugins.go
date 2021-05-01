@@ -20,7 +20,7 @@ func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("main").Collection("plugins")
+	collection := session.Client.Database("plugins").Collection("plugins")
 
 	newPlugin := marshallBsonClean(plugin)
 	newPlugin = append(newPlugin, bson.E{"lastUpdated", time.Now().Unix()})
@@ -34,7 +34,7 @@ func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 
 }
 
-func (p *PluginsOrm) Update(req *api.UpdatePluginRequest) error {
+func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 	session, err := getMongoSession()
 	if err != nil {
@@ -42,9 +42,9 @@ func (p *PluginsOrm) Update(req *api.UpdatePluginRequest) error {
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("main").Collection("plugins")
+	collection := session.Client.Database("plugins").Collection("plugins")
 
-	updatedPlugin := marshallBsonClean(req.UpdatedPlugin)
+	updatedPlugin := marshallBsonClean(req)
 	updatedPlugin = append(updatedPlugin, bson.E{"lastUpdated", time.Now().Unix()})
 
 	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}, bson.D{{"$set", updatedPlugin}})
@@ -58,7 +58,7 @@ func (p *PluginsOrm) Update(req *api.UpdatePluginRequest) error {
 
 }
 
-func (p *PluginsOrm) Get(req *api.GetPluginRequest) (*api.Plugin, error) {
+func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	if req.Name == "" {
 		return nil, errors.New("no plugin name provided")
 	}
@@ -69,7 +69,7 @@ func (p *PluginsOrm) Get(req *api.GetPluginRequest) (*api.Plugin, error) {
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("main").Collection("plugins")
+	collection := session.Client.Database("plugins").Collection("plugins")
 	decodedPluginResult := &api.Plugin{}
 
 	err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}).Decode(decodedPluginResult)
@@ -95,7 +95,7 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePlu
 	}
 	findOptions.SetLimit(10)
 
-	collection := session.Client.Database("main").Collection("plugins")
+	collection := session.Client.Database("plugins").Collection("plugins")
 
 	cur, err := collection.Find(session.Ctx, bson.D{}, findOptions)
 	if err != nil {

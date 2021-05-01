@@ -27,20 +27,22 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		name := r.FormValue("name")
-		version := r.FormValue("version")
+		req := &api.Plugin{
+			Name:    r.FormValue("name"),
+			Version: r.FormValue("version"),
+		}
 
-		plugin, err := wrapper.GetPluginApi(name)
+		plugin, err := wrapper.GetPluginApi(req)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if version != "latest" {
-			plugin.Version = version
+		if req.Version != "latest" {
+			plugin.Version = req.Version
 		}
 
-		pl, err := downloadPluginFromRepo(plugin.Name, plugin.Version, plugin.Author)
+		pl, err := downloadPluginFromRepo(req)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -51,20 +53,22 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 
-		fmt.Println("GOT HERE")
-
 		pluginJSON := r.Header.Get("Resource")
 
 		plugin := &api.Plugin{}
-		json.Unmarshal([]byte(pluginJSON), plugin)
-
-		err := updateOrInsertPlugin(plugin)
+		err := json.Unmarshal([]byte(pluginJSON), plugin)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		loc, err := uploadPluginToRepo(plugin.Name, plugin.Version, plugin.Author, r.Body)
+		err = updateOrInsertPlugin(plugin)
+		if err != nil {
+			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		loc, err := uploadPluginToRepo(plugin, r.Body)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -75,28 +79,27 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateOrInsertPlugin(plugin *api.Plugin) error {
-	dbPlugin, err := wrapper.GetPluginApi(plugin.Name)
+	dbPlugin, err := wrapper.GetPluginApi(plugin)
 
 	if err == nil {
-		err = wrapper.UpdatePluginApi(dbPlugin.Name, plugin)
+		err = wrapper.UpdatePluginApi(plugin)
 		if err != nil {
 			return err
 		}
+		plugin.Id = dbPlugin.Id
 	} else {
-
 		err = wrapper.InsertPluginApi(plugin)
 		if err != nil {
 			return err
 		}
-		return nil
 	}
 	return nil
 }
 
-func uploadPluginToRepo(name string, version string, author string, body io.Reader) (string, error) {
+func uploadPluginToRepo(plugin *api.Plugin, body io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fp := filepath.Join(author, name, version, name+".jar")
+	fp := filepath.Join(plugin.Author, plugin.Id, plugin.Version, plugin.Id+".jar")
 
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.Upload(&s3manager.UploadInput{
@@ -110,11 +113,11 @@ func uploadPluginToRepo(name string, version string, author string, body io.Read
 	return result.Location, nil
 }
 
-func downloadPluginFromRepo(name string, version string, author string) ([]byte, error) {
+func downloadPluginFromRepo(plugin *api.Plugin) ([]byte, error) {
 
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fn := filepath.Join(author, name, version, name+".jar")
+	fn := filepath.Join(plugin.Author, plugin.Id, plugin.Version, plugin.Id+".jar")
 	buf := aws.NewWriteAtBuffer([]byte{})
 	downloader := s3manager.NewDownloader(sess)
 	_, err := downloader.Download(buf, &s3.GetObjectInput{

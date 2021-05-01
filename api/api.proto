@@ -8,21 +8,13 @@ package api;
 // USERS ------------------------------------------------------------------ ||
 
 service UsersService {
-    rpc Get (GetUserRequest) returns (User){}
+    rpc Get (User) returns (User){}
     rpc Insert (User) returns (Empty) {}
-    rpc Update (UpdateUserRequest) returns (Empty) {}
+    rpc Update (User) returns (Empty) {}
 }
 
 
-message GetUserRequest {
-    string username = 1;
-    string email = 2;
-}
 
-message UpdateUserRequest {
-    string username = 1;
-    User updatedUser = 2;
-}
 
 message User {
     string id = 1;
@@ -37,21 +29,10 @@ message User {
 // PLUGINS --------------------------------------------------------------------- ||
 
 service PluginsService {
-    rpc Get (GetPluginRequest) returns (Plugin){}
+    rpc Get (Plugin) returns (Plugin){}
     rpc Insert (Plugin) returns (Empty) {}
-    rpc Update (UpdatePluginRequest) returns (Empty) {}
+    rpc Update (Plugin) returns (Empty) {}
     rpc Paginate (PaginatePluginsRequest) returns (PaginatePluginsResponse) {}
-}
-
-
-message GetPluginRequest {
-    string name = 1;
-}
-
-
-message UpdatePluginRequest {
-    string name = 1;
-    Plugin updatedPlugin = 2;
 }
 
 message PaginatePluginsRequest {

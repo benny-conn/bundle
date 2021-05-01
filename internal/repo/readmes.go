@@ -27,15 +27,17 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		name := r.FormValue("name")
+		req := &api.Plugin{
+			Name: r.FormValue("name"),
+		}
 
-		plugin, err := wrapper.GetPluginApi(name)
+		plugin, err := wrapper.GetPluginApi(req)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		pl, err := downloadReadmeFromRepo(plugin.Name, plugin.Author)
+		pl, err := downloadReadmeFromRepo(plugin)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -51,7 +53,7 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		plugin := &api.Plugin{}
 		json.Unmarshal([]byte(pluginJSON), plugin)
 
-		loc, err := uploadReadmeToRepo(plugin.Name, plugin.Author, r.Body)
+		loc, err := uploadReadmeToRepo(plugin, r.Body)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -61,10 +63,10 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func uploadReadmeToRepo(name string, author string, body io.Reader) (string, error) {
+func uploadReadmeToRepo(plugin *api.Plugin, body io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fp := filepath.Join(author, name, "README.md")
+	fp := filepath.Join(plugin.Author, plugin.Id, "README.md")
 
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.Upload(&s3manager.UploadInput{
@@ -78,11 +80,11 @@ func uploadReadmeToRepo(name string, author string, body io.Reader) (string, err
 	return result.Location, nil
 }
 
-func downloadReadmeFromRepo(name string, author string) ([]byte, error) {
+func downloadReadmeFromRepo(plugin *api.Plugin) ([]byte, error) {
 
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fp := filepath.Join(author, name, "README.md")
+	fp := filepath.Join(plugin.Author, plugin.Id, "README.md")
 
 	buf := aws.NewWriteAtBuffer([]byte{})
 	downloader := s3manager.NewDownloader(sess)

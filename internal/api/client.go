@@ -15,7 +15,7 @@ type pluginGrpcService struct{}
 
 func newUserClient() *userGrpcService     { return &userGrpcService{} }
 func newPluginClient() *pluginGrpcService { return &pluginGrpcService{} }
-func (u *userGrpcService) Get(req *api.GetUserRequest) (*api.User, error) {
+func (u *userGrpcService) Get(req *api.User) (*api.User, error) {
 	creds, err := getCert()
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (u *userGrpcService) Get(req *api.GetUserRequest) (*api.User, error) {
 	return user, nil
 }
 
-func (u *userGrpcService) Update(req *api.UpdateUserRequest) error {
+func (u *userGrpcService) Update(req *api.User) error {
 	creds, err := getCert()
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (u *userGrpcService) Insert(user *api.User) error {
 
 }
 
-func (p *pluginGrpcService) Get(req *api.GetPluginRequest) (*api.Plugin, error) {
+func (p *pluginGrpcService) Get(req *api.Plugin) (*api.Plugin, error) {
 	creds, err := getCert()
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (p *pluginGrpcService) Insert(plugin *api.Plugin) error {
 	}
 	return nil
 }
-func (p *pluginGrpcService) Update(req *api.UpdatePluginRequest) error {
+func (p *pluginGrpcService) Update(req *api.Plugin) error {
 	creds, err := getCert()
 	if err != nil {
 		return err

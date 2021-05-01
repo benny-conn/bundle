@@ -29,7 +29,7 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			Tag:      newTag,
 		}
 
-		err = wrapper.UpdateUserApi(user.Username, updatedUser)
+		err = wrapper.UpdateUserApi(updatedUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

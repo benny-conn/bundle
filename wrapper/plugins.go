@@ -45,7 +45,7 @@ func PaginatePluginsApi(page int, count int) ([]*api.Plugin, error) {
 
 }
 
-func GetPluginApi(name string) (*api.Plugin, error) {
+func GetPluginApi(plugin *api.Plugin) (*api.Plugin, error) {
 	port := os.Getenv("API_PORT")
 	host := os.Getenv("API_HOST")
 	addr := fmt.Sprintf("http://%v:%v/api/plugins", host, port)
@@ -55,7 +55,8 @@ func GetPluginApi(name string) (*api.Plugin, error) {
 	}
 
 	q := u.Query()
-	q.Set("name", name)
+	q.Set("name", plugin.Name)
+	q.Set("id", plugin.Id)
 	u.RawQuery = q.Encode()
 
 	resp, err := http.Get(u.String())
@@ -105,7 +106,7 @@ func InsertPluginApi(plugin *api.Plugin) error {
 	return nil
 }
 
-func UpdatePluginApi(pluginName string, updatedPlugin *api.Plugin) error {
+func UpdatePluginApi(updatedPlugin *api.Plugin) error {
 	port := os.Getenv("API_PORT")
 	host := os.Getenv("API_HOST")
 	addr := fmt.Sprintf("http://%v:%v/api/plugins", host, port)
@@ -114,12 +115,7 @@ func UpdatePluginApi(pluginName string, updatedPlugin *api.Plugin) error {
 		return err
 	}
 
-	up := &api.UpdatePluginRequest{
-		Name:          pluginName,
-		UpdatedPlugin: updatedPlugin,
-	}
-
-	bs, err := json.Marshal(up)
+	bs, err := json.Marshal(updatedPlugin)
 	if err != nil {
 		return err
 	}
@@ -139,4 +135,71 @@ func UpdatePluginApi(pluginName string, updatedPlugin *api.Plugin) error {
 	defer resp.Body.Close()
 
 	return nil
+}
+
+func UploadReadmeApi(user *api.User, plugin *api.Plugin, data io.Reader) error {
+	port := os.Getenv("REPO_PORT")
+	host := os.Getenv("REPO_HOST")
+	if port == "" {
+		port = "8060"
+	}
+	if host == "" {
+		host = "localhost"
+	}
+	u, err := url.Parse(fmt.Sprintf("http://%v:%v/repo/readmes", host, port))
+	if err != nil {
+		return err
+	}
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+	pluginJSON, err := json.Marshal(plugin)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), data)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("User", string(userJSON))
+	req.Header.Add("Resource", string(pluginJSON))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	return nil
+}
+
+func DownloadReadmeApi(plugin *api.Plugin) ([]byte, error) {
+	port := os.Getenv("REPO_PORT")
+	host := os.Getenv("REPO_HOST")
+	if port == "" {
+		port = "8060"
+	}
+	if host == "" {
+		host = "localhost"
+	}
+	u, err := url.Parse(fmt.Sprintf("http://%v:%v/repo/readmes", host, port))
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	q.Add("name", plugin.Name)
+	q.Add("id", plugin.Id)
+	u.RawQuery = q.Encode()
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
 }

@@ -12,7 +12,7 @@ type pluginsServer struct {
 	api.UnimplementedPluginsServiceServer
 }
 
-func (s *pluginsServer) Get(ctx context.Context, req *api.GetPluginRequest) (*api.Plugin, error) {
+func (s *pluginsServer) Get(ctx context.Context, req *api.Plugin) (*api.Plugin, error) {
 
 	pl, err := s.orm.Get(req)
 	if err != nil {
@@ -23,7 +23,7 @@ func (s *pluginsServer) Get(ctx context.Context, req *api.GetPluginRequest) (*ap
 
 }
 
-func (s *pluginsServer) Update(ctx context.Context, req *api.UpdatePluginRequest) (*api.Empty, error) {
+func (s *pluginsServer) Update(ctx context.Context, req *api.Plugin) (*api.Empty, error) {
 	err := s.orm.Update(req)
 	if err != nil {
 		return &api.Empty{}, err

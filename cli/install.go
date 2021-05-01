@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/wrapper"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
@@ -74,24 +75,27 @@ func init() {
 
 func installPlugin(pluginName string, bundleVersion string) (string, error) {
 
-	version := bundleVersion
+	req := &api.Plugin{
+		Name:    pluginName,
+		Version: bundleVersion,
+	}
 
-	if Force && version != "latest" {
-		plugin, err := wrapper.GetPluginApi(pluginName)
+	if Force && req.Version != "latest" {
+		plugin, err := wrapper.GetPluginApi(req)
 		if err != nil {
 			return "", err
 		}
-		version = plugin.Version
+		req.Version = plugin.Version
 	}
 
-	fmt.Printf("Installing Jar %s with version %s\n", pluginName, version)
+	fmt.Printf("Installing Jar %s with version %s\n", req.Name, req.Version)
 
-	pl, err := wrapper.DownloadPluginApi(pluginName, version)
+	pl, err := wrapper.DownloadPluginApi(req)
 	if err != nil {
 		return "", err
 	}
 
-	fp := filepath.Join("plugins", pluginName+".jar")
+	fp := filepath.Join("plugins", req.Name+".jar")
 
 	file, err := os.OpenFile(fp, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -106,5 +110,5 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 	file.Write(pl)
 
 	fmt.Printf("Successfully downloaded the plugin %s with version %s at file path: %s \n", pluginName, bundleVersion, file.Name())
-	return version, nil
+	return req.Version, nil
 }

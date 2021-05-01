@@ -21,7 +21,7 @@ func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		userName := req.FormValue("username")
 		email := req.FormValue("email")
 
-		r := &api.GetUserRequest{
+		r := &api.User{
 			Username: userName,
 			Email:    email,
 		}
@@ -61,7 +61,7 @@ func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		newUser := &api.UpdateUserRequest{}
+		newUser := &api.User{}
 		err = json.Unmarshal(bs, newUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -94,7 +94,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		if pluginName != "" {
 
-			req := &api.GetPluginRequest{
+			req := &api.Plugin{
 				Name: pluginName,
 			}
 			plugin, err := client.Get(req)
@@ -163,7 +163,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		req := &api.UpdatePluginRequest{}
+		req := &api.Plugin{}
 
 		err = json.Unmarshal(bs, req)
 		if err != nil {
@@ -177,4 +177,8 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+}
+
+func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	// TODO
 }

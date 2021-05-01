@@ -59,7 +59,7 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 	SigningMethod: jwt.SigningMethodRS256,
 })
 
-func simpleAuth(next http.Handler) http.Handler {
+func SimpleAuth(next http.Handler) http.Handler {
 	return jwtMiddleware.Handler(next)
 }
 
@@ -112,6 +112,7 @@ func GetAccessToken() (string, error) {
 
 	u := "https://bundle.us.auth0.com/oauth/token"
 
+	// TODO turn these into os variables and add them to env
 	id := viper.GetString("Auth0ID")
 	secret := viper.GetString("Auth0Secret")
 	aud := viper.GetString("Auth0Api")

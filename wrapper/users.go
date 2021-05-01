@@ -13,7 +13,7 @@ import (
 	auth "github.com/bennycio/bundle/internal/api"
 )
 
-func UpdateUserApi(username string, updatedUser *api.User) error {
+func UpdateUserApi(updatedUser *api.User) error {
 	port := os.Getenv("API_PORT")
 	host := os.Getenv("API_HOST")
 	addr := fmt.Sprintf("http://%v:%v/api/users", host, port)
@@ -22,12 +22,7 @@ func UpdateUserApi(username string, updatedUser *api.User) error {
 		return err
 	}
 
-	up := &api.UpdateUserRequest{
-		Username:    username,
-		UpdatedUser: updatedUser,
-	}
-
-	updatedBs, err := json.Marshal(up)
+	updatedBs, err := json.Marshal(updatedUser)
 	if err != nil {
 		return err
 	}

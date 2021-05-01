@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/wrapper"
 	"github.com/russross/blackfriday/v2"
 )
@@ -54,13 +55,16 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		}
 
 	} else {
-		plugin, err := wrapper.GetPluginApi(pluginName)
+		req := &api.Plugin{
+			Name: pluginName,
+		}
+		plugin, err := wrapper.GetPluginApi(req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
-		readme, err := wrapper.DownloadReadmeApi(pluginName)
+		readme, err := wrapper.DownloadReadmeApi(req)
 
 		if err == nil {
 			output := blackfriday.Run(readme)

@@ -68,6 +68,7 @@ var uploadCmd = &cobra.Command{
 
 			plugin.Name = result.Name
 			plugin.Version = result.Version
+			plugin.Description = result.Description
 
 		}
 
@@ -80,9 +81,9 @@ var uploadCmd = &cobra.Command{
 		defer file.Close()
 
 		if isReadme {
-			err = wrapper.UploadReadmeApi(user, plugin.Name, file)
+			err = wrapper.UploadReadmeApi(user, plugin, file)
 		} else {
-			err = wrapper.UploadPluginApi(user, plugin.Name, plugin.Version, file)
+			err = wrapper.UploadPluginApi(user, plugin, file)
 		}
 		if err != nil {
 			panic(err)

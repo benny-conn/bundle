@@ -35,7 +35,7 @@ func (u *UsersOrm) Insert(user *api.User) error {
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("main").Collection("users")
+	collection := session.Client.Database("users").Collection("users")
 
 	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", caseInsensitive(user.Username)}})
 
@@ -67,14 +67,14 @@ func (u *UsersOrm) Insert(user *api.User) error {
 	return nil
 }
 
-func (u *UsersOrm) Get(req *api.GetUserRequest) (*api.User, error) {
+func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
 	session, err := getMongoSession()
 	if err != nil {
 		return nil, err
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("main").Collection("users")
+	collection := session.Client.Database("users").Collection("users")
 
 	decodedUser := &api.User{}
 
@@ -92,16 +92,16 @@ func (u *UsersOrm) Get(req *api.GetUserRequest) (*api.User, error) {
 	return decodedUser, nil
 }
 
-func (u *UsersOrm) Update(req *api.UpdateUserRequest) error {
+func (u *UsersOrm) Update(req *api.User) error {
 	session, err := getMongoSession()
 	if err != nil {
 		return err
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("main").Collection("users")
+	collection := session.Client.Database("users").Collection("users")
 
-	updatedUser := marshallBsonClean(req.UpdatedUser)
+	updatedUser := marshallBsonClean(req)
 
 	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"username", caseInsensitive(req.Username)}}, bson.D{{"$set", updatedUser}})
 	if err != nil {
