@@ -16,9 +16,9 @@ services:
     build:
       context: .
       dockerfile: ./images/repo/Dockerfile
-      environment:
-        AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     ports:
       - 8060:8060
   db:
@@ -29,6 +29,7 @@ services:
       - 8040:8040
   mongo:
     image: mongo:latest
-      ports:
-        - "27017:27017"
-    volumes: /data/bundle/db
+    ports:
+      - "27017:27017"
+    volumes:
+      - /data/db
