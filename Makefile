@@ -6,6 +6,7 @@ all: docker-run
 
 
 docker-build:
+	go mod vendor
 	docker-compose build
 
 docker-run: docker-build
