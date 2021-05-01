@@ -59,9 +59,7 @@ func (u *UsersOrm) Insert(user *api.User) error {
 		return err
 	}
 
-	userToInsert := marshallBsonClean(user)
-
-	_, err = collection.InsertOne(session.Ctx, userToInsert)
+	_, err = collection.InsertOne(session.Ctx, user)
 
 	if err != nil {
 		return err
