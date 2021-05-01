@@ -91,7 +91,7 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePlu
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{"lastUpdated", -1}})
 	if req.Page > 1 {
-		findOptions.SetSkip(int64(req.Page*10 - 10))
+		findOptions.SetSkip(int64(req.Page*req.Count - req.Count))
 	}
 	findOptions.SetLimit(10)
 

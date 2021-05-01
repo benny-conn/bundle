@@ -22,12 +22,6 @@ func init() {
 
 func main() {
 
-	id := viper.GetString("AWSID")
-	secret := viper.GetString("AWSSecret")
-
-	os.Setenv("AWS_SECRET_ACCESS_KEY", secret)
-	os.Setenv("AWS_ACCESS_KEY_ID", id)
-
 	port := os.Getenv("REPO_PORT")
 	mux := repo.NewRepositoryMux()
 

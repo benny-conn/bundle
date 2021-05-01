@@ -90,6 +90,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		pluginName := r.FormValue("name")
 		page := r.FormValue("page")
+		count := r.FormValue("count")
 
 		if pluginName != "" {
 
@@ -114,8 +115,14 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+			convCount, err := strconv.Atoi(count)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 			req := &api.PaginatePluginsRequest{
-				Page: int32(convPage),
+				Page:  int32(convPage),
+				Count: int32(convCount),
 			}
 			plugins, err := client.Paginate(req)
 			if err != nil {

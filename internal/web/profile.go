@@ -9,16 +9,9 @@ import (
 	"github.com/bennycio/bundle/wrapper"
 )
 
-type Profile struct {
-	Username string
-	Email    string
-	Tag      string
-	Scopes   []string
-}
-
 func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
-	user, err := getProfileFromCookie(req)
+	user, err := getUserFromCookie(req)
 	if err != nil {
 		http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
 		return
@@ -53,7 +46,7 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := TemplateData{
-		Profile: user,
+		User: user,
 	}
 
 	err = tpl.ExecuteTemplate(w, "profile", data)

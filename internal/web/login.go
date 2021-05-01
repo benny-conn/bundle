@@ -52,10 +52,10 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if req.Method == http.MethodGet {
-		user, _ := getProfileFromCookie(req)
+		user, _ := getUserFromCookie(req)
 
 		td := TemplateData{
-			Profile: user,
+			User: user,
 		}
 
 		err := tpl.ExecuteTemplate(w, "login", td)

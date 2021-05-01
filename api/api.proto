@@ -55,6 +55,7 @@ message UpdatePluginRequest {
 
 message PaginatePluginsRequest {
     int32 page = 1;
+    int32 count = 2;
 }
 
 message PaginatePluginsResponse {

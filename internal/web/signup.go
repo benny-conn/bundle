@@ -37,10 +37,10 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _ := getProfileFromCookie(r)
+	user, _ := getUserFromCookie(r)
 
 	td := TemplateData{
-		Profile: user,
+		User: user,
 	}
 
 	err := tpl.ExecuteTemplate(w, "register", td)

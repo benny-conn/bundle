@@ -2,12 +2,14 @@ package web
 
 import (
 	"text/template"
+
+	"github.com/bennycio/bundle/api"
 )
 
 type TemplateData struct {
-	Profile Profile
-	Plugin  PluginInfo
-	Plugins []PluginInfo
+	User    *api.User
+	Plugin  *api.Plugin
+	Plugins []*api.Plugin
 }
 
 var tpl *template.Template

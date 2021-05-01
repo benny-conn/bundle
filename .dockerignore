@@ -1,9 +1,6 @@
 .gitignore
 images/
 README.md
-*.go
-internal/
-wrapper/
-go.mod
-go.sum
 Makefile
+docker-compose.yml
+.git

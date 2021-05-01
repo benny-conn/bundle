@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bundle MC</title>
+  <title>Bundle</title>
   <link
     rel="shortcut icon"
     href="/public/img/favicon.ico"
@@ -20,7 +20,7 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="public/css/styles.css?rnd=12" />
+  <link rel="stylesheet" href="public/css/styles.css?r=1" />
 </head>
 {{ end }}
 
@@ -65,7 +65,7 @@
           </li>
           <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
           <!-- prettier-ignore -->
-          {{with .Profile.Username}}
+          {{with .User.Username}}
           <li class="nav-item">
             <a class="btn btn-light mx-1" href="/profile"> Profile </a>
           </li>

@@ -6,9 +6,9 @@ import (
 
 func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
-	user, _ := getProfileFromCookie(r)
+	user, _ := getUserFromCookie(r)
 	data := TemplateData{
-		Profile: user,
+		User: user,
 	}
 
 	err := tpl.ExecuteTemplate(w, "index", data)

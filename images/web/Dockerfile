@@ -9,5 +9,6 @@ ENV API_HOST=api
 ENV WEB_HOST=web
 ENV REPO_HOST=repo
 ENV DATABASE_HOST=db
+RUN go install cmd/web/web.go
 EXPOSE 8080
-CMD ["./src/web"]
+CMD ["web"]

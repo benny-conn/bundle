@@ -6,4 +6,5 @@ plugins/
 config.yaml
 *.pem
 src/
-
+.env
+scripts/

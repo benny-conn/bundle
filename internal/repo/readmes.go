@@ -37,7 +37,7 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		pl, err := downloadReadmeFromRepo(plugin.Name, plugin.Author)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 

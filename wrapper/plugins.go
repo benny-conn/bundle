@@ -12,7 +12,7 @@ import (
 	"github.com/bennycio/bundle/api"
 )
 
-func PaginatePluginsApi(page int) ([]*api.Plugin, error) {
+func PaginatePluginsApi(page int, count int) ([]*api.Plugin, error) {
 	port := os.Getenv("API_PORT")
 	host := os.Getenv("API_HOST")
 	addr := fmt.Sprintf("http://%v:%v/api/plugins", host, port)
@@ -23,6 +23,7 @@ func PaginatePluginsApi(page int) ([]*api.Plugin, error) {
 
 	q := u.Query()
 	q.Set("page", fmt.Sprint(page))
+	q.Set("count", fmt.Sprint(count))
 	u.RawQuery = q.Encode()
 
 	resp, err := http.Get(u.String())
@@ -34,7 +35,6 @@ func PaginatePluginsApi(page int) ([]*api.Plugin, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(bs))
 
 	result := &api.PaginatePluginsResponse{}
 	err = json.Unmarshal(bs, result)

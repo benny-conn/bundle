@@ -26,25 +26,24 @@
     </div>
     <div class="row gx-4">
       <div class="col-sm-12 col-md-9 plugins-container">
-        <div class="card">
+        <div>
           <!-- prettier-ignore -->
           {{ range .Plugins }}
           <div class="plugin row">
-            <div class="col-sm-6 col-md-3">
+            <div class="col-6 col-md-2">
               <img
                 id="{{.Name}}-thumbnail"
                 class="img-thumbnail thumbnail"
-                src="https://via.placeholder.com/125.png"
+                src="https://via.placeholder.com/80.png"
               />
             </div>
-            <div class="col-sm-6 col-md-9">
+            <div class="col-6 col-md-10">
               <h4>{{.Name}}</h4>
               <h6>Author: {{.Author}}</h6>
               <p>{{.Description}}</p>
             </div>
             <a class="stretched-link" href="?plugin={{.Name}}"></a>
           </div>
-
           {{ end }}
         </div>
       </div>
@@ -69,13 +68,6 @@
      $('#{{.Name}}-thumbnail').attr('src', objectURL)
      {{end}}
      {{end}}
-  </script>
-  <script>
-    // prettier-ignore
-    {{range .Plugins}}
-    console.log("{{.Name}}");
-    // prettier-ignore
-    {{end}}
   </script>
 </body>
 {{ end }}

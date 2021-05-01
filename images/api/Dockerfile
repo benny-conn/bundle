@@ -9,5 +9,6 @@ ENV API_HOST=api
 ENV WEB_HOST=web
 ENV REPO_HOST=repo
 ENV DATABASE_HOST=db
+RUN go install cmd/api/api.go
 EXPOSE 8020
-CMD ["./src/api"]
+CMD ["api"]

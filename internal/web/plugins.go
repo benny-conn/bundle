@@ -5,17 +5,9 @@ import (
 	"strconv"
 
 	"github.com/bennycio/bundle/wrapper"
-	"github.com/russross/blackfriday/v2"
 )
 
-type PluginInfo struct {
-	Name        string
-	Author      string
-	Version     string
-	Description string
-	Readme      string
-	Thumbnail   []byte
-}
+const perPageCount = 15
 
 func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
@@ -25,7 +17,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, _ := getProfileFromCookie(req)
+	user, _ := getUserFromCookie(req)
 
 	pluginName := req.FormValue("plugin")
 
@@ -42,17 +34,15 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		plugins, err := wrapper.PaginatePluginsApi(pageNumber)
+		plugins, err := wrapper.PaginatePluginsApi(pageNumber, perPageCount)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
-		infos := pluginsToInfos(plugins)
-
 		data := TemplateData{
-			Plugins: infos,
-			Profile: user,
+			Plugins: plugins,
+			User:    user,
 		}
 
 		err = tpl.ExecuteTemplate(w, "plugins", data)
@@ -69,18 +59,16 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	pluginInfo := pluginToInfo(plugin)
+	// readme, err := wrapper.DownloadReadmeApi(pluginName)
 
-	readme, err := wrapper.DownloadReadmeApi(pluginName)
-
-	if err == nil {
-		output := blackfriday.Run(readme)
-		pluginInfo.Readme = string(output)
-	}
+	// if err == nil {
+	// 	output := blackfriday.Run(readme)
+	// 	pluginInfo.Readme = string(output)
+	// }
 
 	data := TemplateData{
-		Profile: user,
-		Plugin:  pluginInfo,
+		User:   user,
+		Plugin: plugin,
 	}
 
 	err = tpl.ExecuteTemplate(w, "plugins", data)

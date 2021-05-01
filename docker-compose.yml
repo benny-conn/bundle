@@ -1,18 +1,29 @@
 version: "3.9"
 services:
   web:
-    image: bundle/web:1.0
+    build:
+      context: .
+      dockerfile: ./images/web/Dockerfile
     ports:
       - 8080:8080
   api:
-    image: bundle/api:1.0
+    build:
+      context: .
+      dockerfile: ./images/api/Dockerfile
     ports:
       - 8020:8020
   repo:
-    image: bundle/repo:1.0
+    build:
+      context: .
+      dockerfile: ./images/repo/Dockerfile
+      args:
+        awsid: ${AWS_ACCESS_KEY_ID}
+        awssecret: ${AWS_SECRET_ACCESS_KEY}
     ports:
       - 8060:8060
   db:
-    image: bundle/db:1.0
+    build:
+      context: .
+      dockerfile: ./images/db/Dockerfile
     ports:
       - 8040:8040
