@@ -7,7 +7,7 @@ all: docker-run
 
 docker-build:
 	go mod vendor
-	docker-compose build
+	docker-compose build --no-cache
 
 docker-run: docker-build
 	docker-compose up -d

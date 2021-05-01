@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/bennycio/bundle/wrapper"
+	"github.com/russross/blackfriday/v2"
 )
 
 const perPageCount = 15
@@ -17,7 +18,12 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, _ := getUserFromCookie(req)
+	user, err := getUserFromCookie(req)
+
+	data := TemplateData{}
+	if err == nil {
+		data.User = user
+	}
 
 	pluginName := req.FormValue("plugin")
 
@@ -40,39 +46,32 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		data := TemplateData{
-			Plugins: plugins,
-			User:    user,
-		}
+		data.Plugins = plugins
 
 		err = tpl.ExecuteTemplate(w, "plugins", data)
 		if err != nil {
 			panic(err)
 		}
-		return
 
-	}
+	} else {
+		plugin, err := wrapper.GetPluginApi(pluginName)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
 
-	plugin, err := wrapper.GetPluginApi(pluginName)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
+		readme, err := wrapper.DownloadReadmeApi(pluginName)
 
-	// readme, err := wrapper.DownloadReadmeApi(pluginName)
+		if err == nil {
+			output := blackfriday.Run(readme)
+			plugin.Readme = string(output)
+		}
 
-	// if err == nil {
-	// 	output := blackfriday.Run(readme)
-	// 	pluginInfo.Readme = string(output)
-	// }
+		data.Plugin = plugin
 
-	data := TemplateData{
-		User:   user,
-		Plugin: plugin,
-	}
-
-	err = tpl.ExecuteTemplate(w, "plugins", data)
-	if err != nil {
-		panic(err)
+		err = tpl.ExecuteTemplate(w, "plugins", data)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

@@ -13,7 +13,7 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	user, err := getUserFromCookie(req)
 	if err != nil {
-		http.Redirect(w, req, "/login", http.StatusTemporaryRedirect)
+		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
 	}
 

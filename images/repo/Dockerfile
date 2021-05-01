@@ -9,10 +9,6 @@ ENV API_HOST=api
 ENV WEB_HOST=web
 ENV REPO_HOST=repo
 ENV DATABASE_HOST=db
-ARG awsid
-ARG awssecret
-ENV AWS_ACCESS_KEY_ID=$awsid
-ENV AWS_SECRET_ACCESS_KEY=$awssecret
 RUN go install cmd/repo/repo.go
 EXPOSE 8060
 CMD ["repo"]

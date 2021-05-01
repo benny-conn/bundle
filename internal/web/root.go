@@ -6,12 +6,13 @@ import (
 
 func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
-	user, _ := getUserFromCookie(r)
-	data := TemplateData{
-		User: user,
+	user, err := getUserFromCookie(r)
+	data := TemplateData{}
+	if err == nil {
+		data.User = user
 	}
 
-	err := tpl.ExecuteTemplate(w, "index", data)
+	err = tpl.ExecuteTemplate(w, "index", data)
 	if err != nil {
 		panic(err)
 	}

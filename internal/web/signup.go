@@ -37,13 +37,15 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, _ := getUserFromCookie(r)
+	user, err := getUserFromCookie(r)
 
-	td := TemplateData{
-		User: user,
+	td := TemplateData{}
+
+	if err == nil {
+		td.User = user
 	}
 
-	err := tpl.ExecuteTemplate(w, "register", td)
+	err = tpl.ExecuteTemplate(w, "register", td)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -3,7 +3,7 @@
 <html>
   {{template "head" .}}
   {{template "header" .}}
-  {{if and .Plugin.Name }}
+  {{if .Plugin }}
   {{ template "plugin-page" .}}
   {{else}}
   {{template "plugins-home" .}}
@@ -61,14 +61,6 @@
       </div>
     </div>
   </div>
-  <script>
-    {{range .Plugins}}
-    {{if .Thumbnail}}
-     var objectURL = URL.createObjectURL({{.Thumbnail}});
-     $('#{{.Name}}-thumbnail').attr('src', objectURL)
-     {{end}}
-     {{end}}
-  </script>
 </body>
 {{ end }}
 
