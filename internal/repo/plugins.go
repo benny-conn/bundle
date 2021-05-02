@@ -19,8 +19,8 @@ import (
 
 func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method == http.MethodGet {
-
+	switch r.Method {
+	case http.MethodGet:
 		err := r.ParseForm()
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
@@ -35,7 +35,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		gs := gate.NewGateService("", "")
 		plugin, err := gs.GetPlugin(req)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+			bundle.WriteResponse(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
@@ -50,10 +50,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Write(pl)
-	}
-
-	if r.Method == http.MethodPost {
-
+	case http.MethodPost:
 		pluginJSON := r.Header.Get("Resource")
 
 		plugin := &api.Plugin{}
@@ -62,11 +59,28 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		gs := gate.NewGateService("", "")
 
-		err = updateOrInsertPlugin(plugin)
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-			return
+		dbPlugin, err := gs.GetPlugin(plugin)
+
+		if err == nil {
+			if plugin.Id == "" {
+				plugin.Id = dbPlugin.Id
+			}
+			if plugin.Author == "" {
+				plugin.Author = dbPlugin.Author
+			}
+			err = gs.UpdatePlugin(plugin)
+			if err != nil {
+				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			err = gs.InsertPlugin(plugin)
+			if err != nil {
+				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		loc, err := uploadPluginToRepo(plugin, r.Body)
@@ -77,25 +91,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("Successfully uploaded to " + loc)
 	}
-}
 
-func updateOrInsertPlugin(plugin *api.Plugin) error {
-	gs := gate.NewGateService("", "")
-	dbPlugin, err := gs.GetPlugin(plugin)
-
-	if err == nil {
-		err = gs.UpdatePlugin(plugin)
-		if err != nil {
-			return err
-		}
-		plugin.Id = dbPlugin.Id
-	} else {
-		err = gs.InsertPlugin(plugin)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func uploadPluginToRepo(plugin *api.Plugin, body io.Reader) (string, error) {

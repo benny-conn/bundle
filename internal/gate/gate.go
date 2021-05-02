@@ -23,7 +23,7 @@ type gateService interface {
 	InsertReadme(user *api.User, readme *api.Readme) error
 	UpdateReadme(user *api.User, readme *api.Readme) error
 	UpdateUser(updatedUser *api.User) error
-	GetUser(username string, email string) (*api.User, error)
+	GetUser(user *api.User) (*api.User, error)
 	InsertUser(user *api.User) error
 }
 type gateServiceImpl struct {
@@ -364,7 +364,7 @@ func (g *gateServiceImpl) UpdateUser(updatedUser *api.User) error {
 	return nil
 }
 
-func (g *gateServiceImpl) GetUser(username string, email string) (*api.User, error) {
+func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
 
 	addr := fmt.Sprintf("http://%v:%v/api/users", g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -373,8 +373,9 @@ func (g *gateServiceImpl) GetUser(username string, email string) (*api.User, err
 	}
 
 	q := u.Query()
-	q.Set("username", username)
-	q.Set("email", email)
+	q.Set("id", user.Id)
+	q.Set("username", user.Username)
+	q.Set("email", user.Email)
 	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)

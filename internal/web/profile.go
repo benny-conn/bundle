@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal/gate"
 )
 
 func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -29,13 +28,14 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			Tag:      newTag,
 		}
 
-		err = wrapper.UpdateUserApi(updatedUser)
+		gs := gate.NewGateService("", "")
+		err = gs.UpdateUser(updatedUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		dbUpdatedUser, _ := wrapper.GetUserApi(updatedUser.Username, updatedUser.Email)
+		dbUpdatedUser, _ := gs.GetUser(updatedUser)
 
 		fmt.Println(dbUpdatedUser)
 

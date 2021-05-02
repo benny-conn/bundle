@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal/gate"
 )
 
 func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +18,8 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Password: r.FormValue("password"),
 		}
 
-		err := wrapper.InsertUserApi(user)
+		gs := gate.NewGateService("", "")
+		err := gs.InsertUser(user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

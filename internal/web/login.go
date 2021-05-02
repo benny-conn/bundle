@@ -5,8 +5,8 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/gate"
 
-	"github.com/bennycio/bundle/wrapper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,7 +27,8 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		dbUser, err := wrapper.GetUserApi(user.Username, user.Email)
+		gs := gate.NewGateService("", "")
+		dbUser, err := gs.GetUser(user)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

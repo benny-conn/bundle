@@ -20,8 +20,10 @@ func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		userName := req.FormValue("username")
 		email := req.FormValue("email")
+		id := req.FormValue("id")
 
 		r := &api.User{
+			Id:       id,
 			Username: userName,
 			Email:    email,
 		}
@@ -99,12 +101,14 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			}
 			plugin, err := client.Get(req)
 			if err != nil {
-				panic(err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
 			}
 
 			asJSON, err := json.Marshal(plugin)
 			if err != nil {
-				panic(err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
 			}
 
 			internal.WriteResponse(w, string(asJSON), http.StatusOK)
@@ -180,9 +184,133 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	client := newReadmeClient("", "")
+
+	switch r.Method {
+	case http.MethodGet:
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		pluginName := r.FormValue("name")
+		id := r.FormValue("id")
+
+		req := &api.Plugin{
+			Id:   id,
+			Name: pluginName,
+		}
+		rdme, err := client.Get(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		asJSON, err := json.Marshal(rdme)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		internal.WriteResponse(w, string(asJSON), http.StatusOK)
+		return
+
+	case http.MethodPost:
+		bs, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		pl := &api.Readme{}
+
+		err = json.Unmarshal(bs, pl)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = client.Insert(pl)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	case http.MethodPatch:
+		bs, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		req := &api.Readme{}
+
+		err = json.Unmarshal(bs, req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = client.Update(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	// TODO
+	repo := NewGateService("", "")
+
+	switch r.Method {
+	case http.MethodGet:
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		pluginName := r.FormValue("name")
+		id := r.FormValue("id")
+
+		req := &api.Plugin{
+			Id:   id,
+			Name: pluginName,
+		}
+		pl, err := repo.DownloadPlugin(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Write(pl)
+		return
+
+	case http.MethodPost:
+
+		userJSON := r.Header.Get("User")
+		pluginJSON := r.Header.Get("Resource")
+
+		if userJSON == "" || pluginJSON == "" {
+			http.Error(w, "incomplete headers", http.StatusBadRequest)
+			return
+		}
+		user := &api.User{}
+		plugin := &api.Plugin{}
+
+		err := json.Unmarshal([]byte(userJSON), user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		err = json.Unmarshal([]byte(pluginJSON), plugin)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = repo.UploadPlugin(user, plugin, r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+
+	}
 }

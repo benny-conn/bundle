@@ -70,7 +70,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		if err == nil {
 			output := blackfriday.Run([]byte(readme.Text))
-			plugin.Readme = string(output)
+			data.Readme = string(output)
 		}
 
 		data.Plugin = plugin

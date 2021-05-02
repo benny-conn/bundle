@@ -6,7 +6,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal/gate"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -29,8 +29,9 @@ func authUpload(next http.Handler) http.Handler {
 				http.Error(w, "invalid user", http.StatusBadRequest)
 				return
 			}
+			gs := gate.NewGateService("", "")
 
-			dbUser, err := wrapper.GetUserApi(user.Username, user.Email)
+			dbUser, err := gs.GetUser(user)
 
 			if err != nil {
 				http.Error(w, "invalid user", http.StatusBadRequest)

@@ -23,18 +23,9 @@ func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 
 	collection := session.Client.Database("plugins").Collection("plugins")
 
-	bs, err := bson.Marshal(plugin)
-	if err != nil {
-		return err
-	}
-	newPlugin := bson.D{}
-	err = bson.Unmarshal(bs, &newPlugin)
-	if err != nil {
-		return err
-	}
-	newPlugin = append(newPlugin, bson.E{"lastUpdated", time.Now().Unix()})
+	plugin.LastUpdated = time.Now().Unix()
 
-	_, err = collection.InsertOne(session.Ctx, newPlugin)
+	_, err = collection.InsertOne(session.Ctx, plugin)
 
 	if err != nil {
 		return err

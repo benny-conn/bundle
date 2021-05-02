@@ -50,7 +50,8 @@ message Plugin {
     string author = 3;
     string version = 4;
     string description = 5;
-    string readme = 6;
+    string thumbnail = 6;
+    int64 lastUpdated = 7;
 }
 
 

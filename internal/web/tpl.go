@@ -10,6 +10,7 @@ type TemplateData struct {
 	User    *api.User
 	Plugin  *api.Plugin
 	Plugins []*api.Plugin
+	Readme  string
 }
 
 var tpl *template.Template

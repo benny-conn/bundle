@@ -21,12 +21,23 @@ type pluginsGrpcClient interface {
 	Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error)
 }
 
+type readmesGrpcClient interface {
+	Get(req *api.Plugin) (*api.Readme, error)
+	Update(req *api.Readme) error
+	Insert(req *api.Readme) error
+}
+
 type usersGrpcClientImpl struct {
 	Host string
 	Port string
 }
 
 type pluginsGrpcClientImpl struct {
+	Host string
+	Port string
+}
+
+type readmesGrpcClientImpl struct {
 	Host string
 	Port string
 }
@@ -55,14 +66,26 @@ func newPluginClient(host string, port string) pluginsGrpcClient {
 		Port: port,
 	}
 }
+
+func newReadmeClient(host string, port string) readmesGrpcClient {
+	if host == "" {
+		host = os.Getenv("DATABASE_HOST")
+	}
+	if port == "" {
+		port = os.Getenv("DATABASE_PORT")
+	}
+	return &readmesGrpcClientImpl{
+		Host: host,
+		Port: port,
+	}
+}
+
 func (u *usersGrpcClientImpl) Get(req *api.User) (*api.User, error) {
 	creds, err := getCert()
 	if err != nil {
 		return nil, err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	host := os.Getenv("DATABASE_HOST")
-	addr := fmt.Sprintf("%v:%v", host, port)
+	addr := fmt.Sprintf("%v:%v", u.Host, u.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
@@ -81,9 +104,7 @@ func (u *usersGrpcClientImpl) Update(req *api.User) error {
 	if err != nil {
 		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	host := os.Getenv("DATABASE_HOST")
-	addr := fmt.Sprintf("%v:%v", host, port)
+	addr := fmt.Sprintf("%v:%v", u.Host, u.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -102,9 +123,7 @@ func (u *usersGrpcClientImpl) Insert(user *api.User) error {
 	if err != nil {
 		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	host := os.Getenv("DATABASE_HOST")
-	addr := fmt.Sprintf("%v:%v", host, port)
+	addr := fmt.Sprintf("%v:%v", u.Host, u.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -124,9 +143,7 @@ func (p *pluginsGrpcClientImpl) Get(req *api.Plugin) (*api.Plugin, error) {
 	if err != nil {
 		return nil, err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	host := os.Getenv("DATABASE_HOST")
-	addr := fmt.Sprintf("%v:%v", host, port)
+	addr := fmt.Sprintf("%v:%v", p.Host, p.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
@@ -144,9 +161,7 @@ func (p *pluginsGrpcClientImpl) Insert(plugin *api.Plugin) error {
 	if err != nil {
 		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	host := os.Getenv("DATABASE_HOST")
-	addr := fmt.Sprintf("%v:%v", host, port)
+	addr := fmt.Sprintf("%v:%v", p.Host, p.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -164,9 +179,7 @@ func (p *pluginsGrpcClientImpl) Update(req *api.Plugin) error {
 	if err != nil {
 		return err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	host := os.Getenv("DATABASE_HOST")
-	addr := fmt.Sprintf("%v:%v", host, port)
+	addr := fmt.Sprintf("%v:%v", p.Host, p.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
@@ -185,9 +198,7 @@ func (p *pluginsGrpcClientImpl) Paginate(req *api.PaginatePluginsRequest) (*api.
 	if err != nil {
 		return nil, err
 	}
-	port := os.Getenv("DATABASE_PORT")
-	host := os.Getenv("DATABASE_HOST")
-	addr := fmt.Sprintf("%v:%v", host, port)
+	addr := fmt.Sprintf("%v:%v", p.Host, p.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
@@ -200,4 +211,62 @@ func (p *pluginsGrpcClientImpl) Paginate(req *api.PaginatePluginsRequest) (*api.
 		return nil, err
 	}
 	return results, nil
+}
+
+func (r *readmesGrpcClientImpl) Get(req *api.Plugin) (*api.Readme, error) {
+	creds, err := getCert()
+	if err != nil {
+		return nil, err
+	}
+	addr := fmt.Sprintf("%v:%v", r.Host, r.Port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	client := api.NewReadmeServiceClient(conn)
+	rdme, err := client.Get(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return rdme, nil
+}
+
+func (r *readmesGrpcClientImpl) Update(req *api.Readme) error {
+	creds, err := getCert()
+	if err != nil {
+		return err
+	}
+	addr := fmt.Sprintf("%v:%v", r.Host, r.Port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	client := api.NewReadmeServiceClient(conn)
+	_, err = client.Update(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *readmesGrpcClientImpl) Insert(req *api.Readme) error {
+	creds, err := getCert()
+	if err != nil {
+		return err
+	}
+	addr := fmt.Sprintf("%v:%v", r.Host, r.Port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	client := api.NewReadmeServiceClient(conn)
+	_, err = client.Insert(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	return nil
+
 }
