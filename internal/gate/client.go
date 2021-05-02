@@ -119,21 +119,26 @@ func (u *usersGrpcClientImpl) Update(req *api.User) error {
 }
 
 func (u *usersGrpcClientImpl) Insert(user *api.User) error {
+
 	creds, err := getCert()
 	if err != nil {
 		return err
 	}
+
 	addr := fmt.Sprintf("%v:%v", u.Host, u.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
 	}
+
 	defer conn.Close()
 	client := api.NewUsersServiceClient(conn)
 	_, err = client.Insert(context.Background(), user)
 	if err != nil {
+		fmt.Println(err.Error())
 		return err
 	}
+
 	return nil
 
 }

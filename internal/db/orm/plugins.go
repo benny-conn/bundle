@@ -2,7 +2,6 @@ package orm
 
 import (
 	"errors"
-	"time"
 
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,11 +9,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type OrmPlugin struct {
+type Plugin struct {
 	Id          primitive.ObjectID `bson:"_id" json:"id"`
 	Name        string             `bson:"name" json:"name"`
 	Description string             `bson:"description" json:"description"`
-	Author      OrmUser            `bson:"author" json:"author"`
+	Author      User               `bson:"author" json:"author"`
 	Version     string             `bson:"version" json:"version"`
 	Thumbnail   string             `bson:"thumbnail" json:"thumbnail"`
 	LastUpdated primitive.DateTime `bson:"lastUpdated" json:"lastUpdated"`
@@ -33,9 +32,24 @@ func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 
 	collection := session.Client.Database("plugins").Collection("plugins")
 
-	plugin.LastUpdated = time.Now().Unix()
+	countName, err := collection.CountDocuments(session.Ctx, bson.D{{"name", caseInsensitive(plugin.Name)}})
 
-	_, err = collection.InsertOne(session.Ctx, plugin)
+	if err != nil {
+		return err
+	}
+
+	if countName > 0 {
+		err = errors.New("plugin already exists with given name")
+		return err
+	}
+
+	insertion := apiToOrmPl(plugin)
+	err = validatePluginInsert(insertion)
+	if err != nil {
+		return err
+	}
+
+	_, err = collection.InsertOne(session.Ctx, insertion)
 
 	if err != nil {
 		return err
@@ -54,19 +68,13 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 	collection := session.Client.Database("plugins").Collection("plugins")
 
-	updatedPlugin := marshallBsonClean(req)
-	updatedPlugin = append(updatedPlugin, bson.E{"lastUpdated", time.Now().Unix()})
-
-	if req.Id == "" {
-		plorm := NewPluginsOrm()
-		pl, err := plorm.Get(req)
-		if err != nil {
-			return err
-		}
-		req.Id = pl.Id
+	update := apiToOrmPl(req)
+	err = validatePluginUpdate(update)
+	if err != nil {
+		return err
 	}
 
-	updateResult, err := collection.UpdateByID(session.Ctx, req.Id, bson.D{{"$set", updatedPlugin}})
+	updateResult, err := collection.UpdateByID(session.Ctx, req.Id, bson.D{{"$set", update}})
 	if err != nil {
 		return err
 	}
@@ -89,40 +97,27 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	defer session.Cancel()
 
 	collection := session.Client.Database("plugins").Collection("plugins")
-	decodedPluginResult := &OrmPlugin{}
+	decodedPluginResult := &Plugin{}
 
-	if req.Id == "" {
+	get := apiToOrmPl(req)
+	err = validatePluginGet(get)
+	if err != nil {
+		return nil, err
+	}
+
+	if get.Id == primitive.NilObjectID {
 		err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}).Decode(decodedPluginResult)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		id, err := primitive.ObjectIDFromHex(req.Id)
-		if err != nil {
-			return nil, err
-		}
-		err = collection.FindOne(session.Ctx, bson.D{{"_id", id}}).Decode(decodedPluginResult)
+		err = collection.FindOne(session.Ctx, bson.D{{"_id", get.Id}}).Decode(decodedPluginResult)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &api.Plugin{
-		Id:          decodedPluginResult.Id.Hex(),
-		Name:        decodedPluginResult.Name,
-		Description: decodedPluginResult.Description,
-		Author: &api.User{
-			Id:       decodedPluginResult.Author.Id.Hex(),
-			Email:    decodedPluginResult.Author.Email,
-			Username: decodedPluginResult.Author.Username,
-			Password: decodedPluginResult.Author.Password,
-			Tag:      decodedPluginResult.Author.Tag,
-			Scopes:   decodedPluginResult.Author.Scopes,
-		},
-		Version:     decodedPluginResult.Version,
-		Thumbnail:   decodedPluginResult.Thumbnail,
-		LastUpdated: decodedPluginResult.LastUpdated.Time().Unix(),
-	}, nil
+	return ormToApiPl(*decodedPluginResult), nil
 
 }
 
@@ -150,13 +145,40 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, e
 	results := []*api.Plugin{}
 	defer cur.Close(session.Ctx)
 	for cur.Next(session.Ctx) {
-		plugin := &api.Plugin{}
+		plugin := &Plugin{}
 		if err = cur.Decode(&plugin); err != nil {
 			return nil, err
 		}
-		results = append(results, plugin)
+		results = append(results, ormToApiPl(*plugin))
 	}
 
 	return results, nil
 
+}
+
+func validatePluginUpdate(pl Plugin) error {
+	if pl.Id == primitive.NilObjectID {
+		return errors.New("id required for update")
+	}
+	return nil
+}
+
+func validatePluginInsert(pl Plugin) error {
+	if pl.Name == "" {
+		return errors.New("name required for insertion")
+	}
+	if pl.Version == "" {
+		return errors.New("version required for insertion")
+	}
+	if pl.Author.Id == primitive.NilObjectID {
+		return errors.New("author id required for insertion")
+	}
+	return nil
+}
+
+func validatePluginGet(pl Plugin) error {
+	if pl.Name == "" && pl.Id == primitive.NilObjectID {
+		return errors.New("id or name required for get")
+	}
+	return nil
 }

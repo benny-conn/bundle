@@ -3,8 +3,10 @@ package gate
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -74,22 +76,42 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return err
 	}
 
-	userJSON, err := json.Marshal(user)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	if user.Username == "" || user.Password == "" || plugin.Name == "" || plugin.Version == "" {
+		return errors.New("missing required fields")
+	}
+
+	writer.WriteField("username", user.Username)
+	writer.WriteField("password", user.Password)
+	writer.WriteField("name", plugin.Name)
+	writer.WriteField("version", plugin.Version)
+
+	part, err := writer.CreateFormFile("plugin", plugin.Name)
 	if err != nil {
 		return err
 	}
 
-	pluginJSON, err := json.Marshal(plugin)
+	bs, err := io.ReadAll(data)
+	if err != nil {
+		return err
+	}
+	_, err = part.Write(bs)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, u.String(), data)
+	err = writer.Close()
+
 	if err != nil {
 		return err
 	}
-	req.Header.Add("User", string(userJSON))
-	req.Header.Add("Resource", string(pluginJSON))
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), body)
+	if err != nil {
+		return err
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -122,7 +144,6 @@ func (g *gateServiceImpl) PaginatePlugins(page int, count int) ([]*api.Plugin, e
 		return nil, err
 	}
 
-	// FIGURE OUT WHAT THE HECK TO DO HERE
 	result := &api.PaginatePluginsResponse{}
 	err = json.Unmarshal(bs, result)
 	if err != nil {

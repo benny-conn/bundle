@@ -2,11 +2,12 @@ package web
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/rs/cors"
 )
 
-func NewWebMux() http.Handler {
+func NewWebServer() *http.Server {
 
 	mux := http.NewServeMux()
 	rootHandler := http.HandlerFunc(rootHandlerFunc)
@@ -25,7 +26,7 @@ func NewWebMux() http.Handler {
 	mux.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("assets/public"))))
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:8080", "https://bundlemc.io/"},
+		AllowedOrigins: []string{"localhost:8080", "bundlemc.io"},
 		AllowedMethods: []string{
 			http.MethodHead,
 			http.MethodGet,
@@ -39,5 +40,17 @@ func NewWebMux() http.Handler {
 	})
 
 	handler := c.Handler(mux)
-	return handler
+
+	return makeServerFromMux(handler)
+}
+
+func makeServerFromMux(mux http.Handler) *http.Server {
+	// set timeouts so that a slow or malicious client doesn't
+	// hold resources forever
+	return &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      mux,
+	}
 }

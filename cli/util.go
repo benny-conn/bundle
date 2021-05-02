@@ -39,22 +39,16 @@ func isPluginDirectory() bool {
 
 func credentialsPrompt() *api.User {
 
-	fmt.Println("Enter your username or email: ")
-	var userOrEmail string
-	fmt.Scanln(&userOrEmail)
+	fmt.Println("Enter your username: ")
+	var username string
+	fmt.Scanln(&username)
 	fmt.Println("Enter your password: ")
 	var password string
 	fmt.Scanln(&password)
 
-	isEmail := emailRegex.MatchString(userOrEmail)
-
 	user := &api.User{}
 	user.Password = password
-	if isEmail {
-		user.Email = userOrEmail
-	} else {
-		user.Username = userOrEmail
-	}
+	user.Username = username
 
 	return user
 }

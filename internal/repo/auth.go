@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/bennycio/bundle/internal"
 	"github.com/form3tech-oss/jwt-go"
-	"github.com/spf13/viper"
 )
 
 type CustomClaims struct {
@@ -113,9 +113,9 @@ func getAccessToken() (string, error) {
 	u := "https://bundle.us.auth0.com/oauth/token"
 
 	// TODO turn these into os variables and add them to env
-	id := viper.GetString("Auth0ID")
-	secret := viper.GetString("Auth0Secret")
-	aud := viper.GetString("Auth0Api")
+	id := os.Getenv("AUTH0_ID")
+	secret := os.Getenv("AUTH0_SECRET")
+	aud := os.Getenv("AUTH0_AUD")
 
 	form := url.Values{}
 

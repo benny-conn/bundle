@@ -2,10 +2,10 @@ package orm
 
 import (
 	"context"
+	"os"
 	"reflect"
 	"time"
 
-	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -21,8 +21,10 @@ type Mongo struct {
 func getMongoSession() (*Mongo, error) {
 	mg := &Mongo{}
 
+	url := os.Getenv("MONGO_URL")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("MongoURL")))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
 	mg.Cancel = cancel
 	mg.Client = client
 	mg.Ctx = ctx

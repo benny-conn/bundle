@@ -1,9 +1,11 @@
 package repo
 
 import (
-	"encoding/json"
+	"bytes"
+	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -41,7 +43,8 @@ func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 		return nil, err
 	}
 	q := u.Query()
-	q.Add("name", plugin.Name)
+	q.Add("id", plugin.Id)
+	q.Add("author", plugin.Author.Id)
 	q.Add("version", plugin.Version)
 	u.RawQuery = q.Encode()
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -71,20 +74,38 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	if err != nil {
 		return err
 	}
-	fmt.Println(u.String())
 
-	fmt.Println("WE UPLOADING")
-	userJSON, err := json.Marshal(user)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	if plugin.Id == "" || plugin.Version == "" || plugin.Author.Id == "" {
+		return errors.New("missing required fields")
+	}
+
+	writer.WriteField("id", plugin.Id)
+	writer.WriteField("version", plugin.Version)
+	writer.WriteField("author", plugin.Author.Id)
+
+	part, err := writer.CreateFormFile("plugin", plugin.Name)
 	if err != nil {
 		return err
 	}
-	pluginJSON, err := json.Marshal(plugin)
+	bs, err := io.ReadAll(data)
 	if err != nil {
 		return err
 	}
-	fmt.Println("WE DOIN IT NOW")
+	_, err = part.Write(bs)
+	if err != nil {
+		return err
+	}
 
-	req, err := http.NewRequest(http.MethodPost, u.String(), data)
+	err = writer.Close()
+
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), body)
 	if err != nil {
 		return err
 	}
@@ -92,10 +113,7 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	if err != nil {
 		return err
 	}
-	fmt.Println("GOT THAT TOKEN")
 	req.Header.Add("authorization", "Bearer "+access)
-	req.Header.Add("User", string(userJSON))
-	req.Header.Add("Resource", string(pluginJSON))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

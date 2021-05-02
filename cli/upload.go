@@ -81,6 +81,7 @@ var uploadCmd = &cobra.Command{
 			if err != nil {
 				panic(err)
 			}
+			// possibly let gateway handle this part
 			dbPlugin, err := gservice.GetPlugin(plugin)
 			if err != nil {
 				panic(err)

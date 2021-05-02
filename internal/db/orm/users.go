@@ -2,6 +2,7 @@ package orm
 
 import (
 	"errors"
+	"regexp"
 
 	"github.com/bennycio/bundle/api"
 
@@ -10,7 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type OrmUser struct {
+type User struct {
 	Id       primitive.ObjectID `bson:"_id" json:"id"`
 	Username string             `bson:"username" json:"username"`
 	Email    string             `bson:"email" json:"email"`
@@ -24,11 +25,6 @@ type UsersOrm struct{}
 func NewUsersOrm() *UsersOrm { return &UsersOrm{} }
 
 func (u *UsersOrm) Insert(user *api.User) error {
-	isValid := isUserValid(user)
-
-	if !isValid {
-		return errors.New("invalid user")
-	}
 
 	bcryptPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
@@ -68,7 +64,13 @@ func (u *UsersOrm) Insert(user *api.User) error {
 		return err
 	}
 
-	_, err = collection.InsertOne(session.Ctx, user)
+	insertion := apiToOrmUser(user)
+	err = validateUserInsert(insertion)
+	if err != nil {
+		return err
+	}
+
+	_, err = collection.InsertOne(session.Ctx, insertion)
 
 	if err != nil {
 		return err
@@ -85,35 +87,30 @@ func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
 
 	collection := session.Client.Database("users").Collection("users")
 
-	decodedUser := &OrmUser{}
+	decodedUser := &User{}
+
+	get := apiToOrmUser(req)
+	err = validateUserGet(get)
+	if err != nil {
+		return nil, err
+	}
 
 	switch {
-	case req.Id != "":
-		id, err := primitive.ObjectIDFromHex(req.Id)
-		if err != nil {
-			return nil, err
-		}
-		err = collection.FindOne(session.Ctx, bson.D{{"_id", id}}).Decode(decodedUser)
+	case get.Id != primitive.NilObjectID:
+		err = collection.FindOne(session.Ctx, bson.D{{"_id", get.Id}}).Decode(decodedUser)
 	case req.Email == "":
-		err = collection.FindOne(session.Ctx, bson.D{{"username", req.Username}}).Decode(decodedUser)
+		err = collection.FindOne(session.Ctx, bson.D{{"username", get.Username}}).Decode(decodedUser)
 	case req.Username == "":
-		err = collection.FindOne(session.Ctx, bson.D{{"email", caseInsensitive(req.Email)}}).Decode(decodedUser)
+		err = collection.FindOne(session.Ctx, bson.D{{"email", caseInsensitive(get.Email)}}).Decode(decodedUser)
 	default:
-		err = collection.FindOne(session.Ctx, bson.D{{"username", req.Username}, {"email", caseInsensitive(req.Email)}}).Decode(decodedUser)
+		err = collection.FindOne(session.Ctx, bson.D{{"username", get.Username}, {"email", caseInsensitive(get.Email)}}).Decode(decodedUser)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &api.User{
-		Id:       decodedUser.Id.Hex(),
-		Email:    decodedUser.Email,
-		Username: decodedUser.Username,
-		Password: decodedUser.Password,
-		Tag:      decodedUser.Tag,
-		Scopes:   decodedUser.Scopes,
-	}, nil
+	return ormToApiUser(*decodedUser), nil
 }
 
 func (u *UsersOrm) Update(req *api.User) error {
@@ -125,27 +122,54 @@ func (u *UsersOrm) Update(req *api.User) error {
 
 	collection := session.Client.Database("users").Collection("users")
 
-	updatedUser := marshallBsonClean(req)
-
-	if req.Id == "" {
-		user, err := u.Get(req)
-		if err != nil {
-			return err
-		}
-		req.Id = user.Id
-	}
-
-	id, err := primitive.ObjectIDFromHex(req.Id)
+	update := apiToOrmUser(req)
+	err = validateUserUpdate(update)
 	if err != nil {
 		return err
 	}
 
-	updateResult, err := collection.UpdateByID(session.Ctx, id, bson.D{{"$set", updatedUser}})
+	updateResult, err := collection.UpdateByID(session.Ctx, update.Id, bson.D{{"$set", update}})
 	if err != nil {
 		return err
 	}
 	if updateResult.MatchedCount < 1 {
 		return errors.New("no user found")
+	}
+	return nil
+}
+
+func validateUserGet(user User) error {
+	if user.Id == primitive.NilObjectID && user.Email == "" && user.Username == "" {
+		return errors.New("id, email, or username is required for get")
+	}
+	return nil
+}
+
+func validateUserInsert(user User) error {
+
+	if user.Username == "" {
+		return errors.New("username required for insert")
+	}
+
+	if user.Password == "" {
+		return errors.New("password required for insert")
+	}
+
+	rxEmail := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
+	if user.Email != "" {
+		if len(user.Email) > 254 || !rxEmail.MatchString(user.Email) {
+			return errors.New("invalid email")
+		}
+	}
+
+	return nil
+
+}
+
+func validateUserUpdate(user User) error {
+	if user.Id == primitive.NilObjectID {
+		return errors.New("id required for update")
 	}
 	return nil
 }

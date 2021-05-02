@@ -24,7 +24,7 @@ func RunServer() error {
 	if err != nil {
 		return err
 	}
-	creds, err := credentials.NewServerTLSFromFile("tls/server-cert.pem", "tls/server-key.pem")
+	creds, err := credentials.NewServerTLSFromFile("bundlemc.io/cert.pem", "bundlemc.io/key.pem")
 	if err != nil {
 		return err
 	}

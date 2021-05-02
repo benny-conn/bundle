@@ -6,14 +6,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
-	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/form3tech-oss/jwt-go"
-	"github.com/spf13/viper"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type CustomClaims struct {
@@ -115,9 +113,9 @@ func getAccessToken() (string, error) {
 	u := "https://bundle.us.auth0.com/oauth/token"
 
 	// TODO turn these into os variables and add them to env
-	id := viper.GetString("Auth0ID")
-	secret := viper.GetString("Auth0Secret")
-	aud := viper.GetString("Auth0Api")
+	id := os.Getenv("AUTH0_ID")
+	secret := os.Getenv("AUTH0_SECRET")
+	aud := os.Getenv("AUTH0_AUD")
 
 	form := url.Values{}
 
@@ -176,32 +174,33 @@ func checkScope(tokenString string, scopes ...string) bool {
 
 func authUpload(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
+		// MAKE THIS READ FORM VALUES
+		// if r.Method == http.MethodPost {
 
-			userJSON := r.Header.Get("User")
-			user := &api.User{}
+		// 	userJSON := r.Header.Get("User")
+		// 	user := &api.User{}
 
-			err := json.Unmarshal([]byte(userJSON), user)
-			if err != nil {
-				http.Error(w, "invalid user", http.StatusBadRequest)
-				return
-			}
-			gs := NewGateService("", "")
+		// 	err := json.Unmarshal([]byte(userJSON), user)
+		// 	if err != nil {
+		// 		http.Error(w, "invalid user", http.StatusBadRequest)
+		// 		return
+		// 	}
+		// 	gs := NewGateService("", "")
 
-			dbUser, err := gs.GetUser(user)
+		// 	dbUser, err := gs.GetUser(user)
 
-			if err != nil {
-				http.Error(w, "invalid user", http.StatusBadRequest)
-				return
-			}
+		// 	if err != nil {
+		// 		http.Error(w, "invalid user", http.StatusBadRequest)
+		// 		return
+		// 	}
 
-			err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
+		// 	err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
 
-			if err != nil {
-				http.Error(w, "incorrect password", http.StatusUnauthorized)
-				return
-			}
-		}
+		// 	if err != nil {
+		// 		http.Error(w, "incorrect password", http.StatusUnauthorized)
+		// 		return
+		// 	}
+		// }
 		next.ServeHTTP(w, r)
 	})
 }

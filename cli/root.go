@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"regexp"
-
 	"github.com/spf13/cobra"
 
 	_ "embed"
@@ -17,8 +15,6 @@ type PluginYML struct {
 	Version     string `yaml:"version"`
 	Description string `yaml:"description,omitempty"`
 }
-
-var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 //go:embed bundle.yml
 var BundleYml string

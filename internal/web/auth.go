@@ -3,12 +3,12 @@ package web
 import (
 	"errors"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/form3tech-oss/jwt-go"
-	"github.com/spf13/viper"
 )
 
 type CustomClaims struct {
@@ -18,7 +18,7 @@ type CustomClaims struct {
 
 func newAuthToken(user *api.User) (string, error) {
 
-	secret := viper.GetString("ClientSecret")
+	secret := os.Getenv("AUTH0_SECRET")
 
 	claims := CustomClaims{
 		User: user,
@@ -53,7 +53,7 @@ func checkScope(tokenString string, scopes ...string) bool {
 
 func getUserFromToken(tokenString string) (*api.User, error) {
 
-	secret := viper.GetString("ClientSecret")
+	secret := os.Getenv("AUTH0_SECRET")
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&CustomClaims{},
@@ -76,7 +76,7 @@ func getUserFromToken(tokenString string) (*api.User, error) {
 }
 
 func validateToken(tokenString string) error {
-	secret := viper.GetString("ClientSecret")
+	secret := os.Getenv("AUTH0_SECRET")
 
 	token, err := jwt.ParseWithClaims(
 		tokenString,

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bennycio/bundle/api"
-	"github.com/spf13/viper"
 )
 
 func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -50,14 +50,14 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadThumbnailToRepo(plugin *api.Plugin, body io.Reader) (string, error) {
-	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
+	sess, _ := session.NewSession(&aws.Config{Region: aws.String(os.Getenv("AWS_REGION"))})
 
 	fp := filepath.Join(plugin.Author.Id, plugin.Id, "THUMBNAIL.webp")
 
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.Upload(&s3manager.UploadInput{
 		Body:   body,
-		Bucket: aws.String("bundle-repository"),
+		Bucket: aws.String(os.Getenv("AWS_BUCKET")),
 		Key:    aws.String(fp),
 		ACL:    aws.String("public-read"),
 	})

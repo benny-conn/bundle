@@ -41,11 +41,13 @@ func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		w.Write(bs)
 	case http.MethodPost:
+
 		bs, err := io.ReadAll(req.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		newUser := &api.User{}
 		err = json.Unmarshal(bs, newUser)
 		if err != nil {
@@ -58,6 +60,7 @@ func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 	case http.MethodPatch:
 		bs, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -271,13 +274,21 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		pluginName := r.FormValue("name")
-		id := r.FormValue("id")
+		version := r.FormValue("version")
 
 		req := &api.Plugin{
-			Id:   id,
 			Name: pluginName,
 		}
-		pl, err := repo.DownloadPlugin(req)
+
+		dbPl, err := gs.GetPlugin(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		}
+
+		if version != "latest" {
+			dbPl.Version = version
+		}
+		pl, err := repo.DownloadPlugin(dbPl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -287,25 +298,17 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 
-		userJSON := r.Header.Get("User")
-		pluginJSON := r.Header.Get("Resource")
-
-		if userJSON == "" || pluginJSON == "" {
-			http.Error(w, "incomplete headers", http.StatusBadRequest)
-			return
-		}
-		user := &api.User{}
-		plugin := &api.Plugin{}
-
-		err := json.Unmarshal([]byte(userJSON), user)
+		err := r.ParseMultipartForm(32 << 20)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
 		}
-		err = json.Unmarshal([]byte(pluginJSON), plugin)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+		user := &api.User{
+			Username: r.FormValue("username"),
+			Password: r.FormValue("password"),
+		}
+		plugin := &api.Plugin{
+			Name:    r.FormValue("name"),
+			Version: r.FormValue("version"),
 		}
 
 		dbUser, err := gs.GetUser(user)
@@ -314,7 +317,7 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		plugin.Author = dbUser
-		dbPlugin, err := gs.GetPlugin(plugin)
+		_, err = gs.GetPlugin(plugin)
 		if err == nil {
 			gs.UpdatePlugin(plugin)
 		} else {
@@ -323,16 +326,14 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			dbPlugin, err = gs.GetPlugin(plugin)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
+		}
+		dbPlugin, err := gs.GetPlugin(plugin)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		plugin.Id = dbPlugin.Id
-
-		err = repo.UploadPlugin(user, plugin, r.Body)
+		err = repo.UploadPlugin(dbUser, dbPlugin, r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
 			return
