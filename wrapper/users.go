@@ -10,12 +10,12 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
-	auth "github.com/bennycio/bundle/internal/api"
+	"github.com/bennycio/bundle/internal/gate"
 )
 
 func UpdateUserApi(updatedUser *api.User) error {
-	port := os.Getenv("API_PORT")
-	host := os.Getenv("API_HOST")
+	port := os.Getenv("GATE_PORT")
+	host := os.Getenv("GATE_HOST")
 	addr := fmt.Sprintf("http://%v:%v/api/users", host, port)
 	u, err := url.Parse(addr)
 	if err != nil {
@@ -35,7 +35,7 @@ func UpdateUserApi(updatedUser *api.User) error {
 		return err
 	}
 
-	access, err := auth.GetAccessToken()
+	access, err := gate.GetAccessToken()
 	if err != nil {
 		return err
 	}
@@ -51,8 +51,8 @@ func UpdateUserApi(updatedUser *api.User) error {
 }
 
 func GetUserApi(username string, email string) (*api.User, error) {
-	port := os.Getenv("API_PORT")
-	host := os.Getenv("API_HOST")
+	port := os.Getenv("GATE_PORT")
+	host := os.Getenv("GATE_HOST")
 	addr := fmt.Sprintf("http://%v:%v/api/users", host, port)
 	u, err := url.Parse(addr)
 	if err != nil {
@@ -68,7 +68,7 @@ func GetUserApi(username string, email string) (*api.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	access, err := auth.GetAccessToken()
+	access, err := gate.GetAccessToken()
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +95,8 @@ func GetUserApi(username string, email string) (*api.User, error) {
 }
 
 func InsertUserApi(user *api.User) error {
-	port := os.Getenv("API_PORT")
-	host := os.Getenv("API_HOST")
+	port := os.Getenv("GATE_PORT")
+	host := os.Getenv("GATE_HOST")
 	addr := fmt.Sprintf("http://%v:%v/api/users", host, port)
 	u, err := url.Parse(addr)
 	if err != nil {
@@ -115,7 +115,7 @@ func InsertUserApi(user *api.User) error {
 	if err != nil {
 		return err
 	}
-	access, err := auth.GetAccessToken()
+	access, err := gate.GetAccessToken()
 	if err != nil {
 		return err
 	}

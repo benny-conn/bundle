@@ -365,3 +365,161 @@ var PluginsService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/api.proto",
 }
+
+// ReadmeServiceClient is the client API for ReadmeService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ReadmeServiceClient interface {
+	Get(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*Readme, error)
+	Insert(ctx context.Context, in *Readme, opts ...grpc.CallOption) (*Empty, error)
+	Update(ctx context.Context, in *Readme, opts ...grpc.CallOption) (*Empty, error)
+}
+
+type readmeServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewReadmeServiceClient(cc grpc.ClientConnInterface) ReadmeServiceClient {
+	return &readmeServiceClient{cc}
+}
+
+func (c *readmeServiceClient) Get(ctx context.Context, in *Plugin, opts ...grpc.CallOption) (*Readme, error) {
+	out := new(Readme)
+	err := c.cc.Invoke(ctx, "/api.ReadmeService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *readmeServiceClient) Insert(ctx context.Context, in *Readme, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.ReadmeService/Insert", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *readmeServiceClient) Update(ctx context.Context, in *Readme, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.ReadmeService/Update", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ReadmeServiceServer is the server API for ReadmeService service.
+// All implementations must embed UnimplementedReadmeServiceServer
+// for forward compatibility
+type ReadmeServiceServer interface {
+	Get(context.Context, *Plugin) (*Readme, error)
+	Insert(context.Context, *Readme) (*Empty, error)
+	Update(context.Context, *Readme) (*Empty, error)
+	mustEmbedUnimplementedReadmeServiceServer()
+}
+
+// UnimplementedReadmeServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedReadmeServiceServer struct {
+}
+
+func (UnimplementedReadmeServiceServer) Get(context.Context, *Plugin) (*Readme, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedReadmeServiceServer) Insert(context.Context, *Readme) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Insert not implemented")
+}
+func (UnimplementedReadmeServiceServer) Update(context.Context, *Readme) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+}
+func (UnimplementedReadmeServiceServer) mustEmbedUnimplementedReadmeServiceServer() {}
+
+// UnsafeReadmeServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ReadmeServiceServer will
+// result in compilation errors.
+type UnsafeReadmeServiceServer interface {
+	mustEmbedUnimplementedReadmeServiceServer()
+}
+
+func RegisterReadmeServiceServer(s grpc.ServiceRegistrar, srv ReadmeServiceServer) {
+	s.RegisterService(&ReadmeService_ServiceDesc, srv)
+}
+
+func _ReadmeService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Plugin)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReadmeServiceServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.ReadmeService/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReadmeServiceServer).Get(ctx, req.(*Plugin))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReadmeService_Insert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Readme)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReadmeServiceServer).Insert(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.ReadmeService/Insert",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReadmeServiceServer).Insert(ctx, req.(*Readme))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReadmeService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Readme)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReadmeServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.ReadmeService/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReadmeServiceServer).Update(ctx, req.(*Readme))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ReadmeService_ServiceDesc is the grpc.ServiceDesc for ReadmeService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ReadmeService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.ReadmeService",
+	HandlerType: (*ReadmeServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Get",
+			Handler:    _ReadmeService_Get_Handler,
+		},
+		{
+			MethodName: "Insert",
+			Handler:    _ReadmeService_Insert_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _ReadmeService_Update_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/api.proto",
+}

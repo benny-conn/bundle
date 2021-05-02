@@ -1,4 +1,4 @@
-package api
+package gate
 
 import "google.golang.org/grpc/credentials"
 

@@ -8,10 +8,10 @@ services:
       - 8080:8080
     env_file:
       - ".env"
-  api:
+  gate:
     build:
       context: .
-      dockerfile: ./images/api/Dockerfile
+      dockerfile: ./images/gate/Dockerfile
     ports:
       - 8020:8020
     env_file:

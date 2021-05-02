@@ -1,4 +1,4 @@
-package api
+package gate
 
 import (
 	"context"
@@ -9,13 +9,53 @@ import (
 	"google.golang.org/grpc"
 )
 
-type userGrpcService struct{}
+type usersGrpcClient interface {
+	Get(req *api.User) (*api.User, error)
+	Update(req *api.User) error
+	Insert(req *api.User) error
+}
+type pluginsGrpcClient interface {
+	Get(req *api.Plugin) (*api.Plugin, error)
+	Update(req *api.Plugin) error
+	Insert(req *api.Plugin) error
+	Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error)
+}
 
-type pluginGrpcService struct{}
+type usersGrpcClientImpl struct {
+	Host string
+	Port string
+}
 
-func newUserClient() *userGrpcService     { return &userGrpcService{} }
-func newPluginClient() *pluginGrpcService { return &pluginGrpcService{} }
-func (u *userGrpcService) Get(req *api.User) (*api.User, error) {
+type pluginsGrpcClientImpl struct {
+	Host string
+	Port string
+}
+
+func newUserClient(host string, port string) usersGrpcClient {
+	if host == "" {
+		host = os.Getenv("DATABASE_HOST")
+	}
+	if port == "" {
+		port = os.Getenv("DATABASE_PORT")
+	}
+	return &usersGrpcClientImpl{
+		Host: host,
+		Port: port,
+	}
+}
+func newPluginClient(host string, port string) pluginsGrpcClient {
+	if host == "" {
+		host = os.Getenv("DATABASE_HOST")
+	}
+	if port == "" {
+		port = os.Getenv("DATABASE_PORT")
+	}
+	return &pluginsGrpcClientImpl{
+		Host: host,
+		Port: port,
+	}
+}
+func (u *usersGrpcClientImpl) Get(req *api.User) (*api.User, error) {
 	creds, err := getCert()
 	if err != nil {
 		return nil, err
@@ -36,7 +76,7 @@ func (u *userGrpcService) Get(req *api.User) (*api.User, error) {
 	return user, nil
 }
 
-func (u *userGrpcService) Update(req *api.User) error {
+func (u *usersGrpcClientImpl) Update(req *api.User) error {
 	creds, err := getCert()
 	if err != nil {
 		return err
@@ -57,7 +97,7 @@ func (u *userGrpcService) Update(req *api.User) error {
 	return nil
 }
 
-func (u *userGrpcService) Insert(user *api.User) error {
+func (u *usersGrpcClientImpl) Insert(user *api.User) error {
 	creds, err := getCert()
 	if err != nil {
 		return err
@@ -79,7 +119,7 @@ func (u *userGrpcService) Insert(user *api.User) error {
 
 }
 
-func (p *pluginGrpcService) Get(req *api.Plugin) (*api.Plugin, error) {
+func (p *pluginsGrpcClientImpl) Get(req *api.Plugin) (*api.Plugin, error) {
 	creds, err := getCert()
 	if err != nil {
 		return nil, err
@@ -99,7 +139,7 @@ func (p *pluginGrpcService) Get(req *api.Plugin) (*api.Plugin, error) {
 	}
 	return pl, nil
 }
-func (p *pluginGrpcService) Insert(plugin *api.Plugin) error {
+func (p *pluginsGrpcClientImpl) Insert(plugin *api.Plugin) error {
 	creds, err := getCert()
 	if err != nil {
 		return err
@@ -119,7 +159,7 @@ func (p *pluginGrpcService) Insert(plugin *api.Plugin) error {
 	}
 	return nil
 }
-func (p *pluginGrpcService) Update(req *api.Plugin) error {
+func (p *pluginsGrpcClientImpl) Update(req *api.Plugin) error {
 	creds, err := getCert()
 	if err != nil {
 		return err
@@ -140,7 +180,7 @@ func (p *pluginGrpcService) Update(req *api.Plugin) error {
 	}
 	return nil
 }
-func (p *pluginGrpcService) Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
+func (p *pluginsGrpcClientImpl) Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
 	creds, err := getCert()
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-package api
+package gate
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
-	client := newUserClient()
+	client := newUserClient("", "")
 
 	switch req.Method {
 	case http.MethodGet:
@@ -79,7 +79,7 @@ func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
-	client := newPluginClient()
+	client := newPluginClient("", "")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -177,6 +177,10 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+}
+
+func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	// TODO
 }
 
 func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {

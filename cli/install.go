@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal/gate"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
@@ -80,8 +80,10 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 		Version: bundleVersion,
 	}
 
+	gservice := gate.NewGateService("localhost", "8020")
+
 	if Force && req.Version != "latest" {
-		plugin, err := wrapper.GetPluginApi(req)
+		plugin, err := gservice.GetPlugin(req)
 		if err != nil {
 			return "", err
 		}
@@ -90,7 +92,7 @@ func installPlugin(pluginName string, bundleVersion string) (string, error) {
 
 	fmt.Printf("Installing Jar %s with version %s\n", req.Name, req.Version)
 
-	pl, err := wrapper.DownloadPluginApi(req)
+	pl, err := gservice.DownloadPlugin(req)
 	if err != nil {
 		return "", err
 	}

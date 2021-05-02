@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/viper"
 )
 
@@ -33,7 +33,8 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Name: name,
 		}
 
-		plugin, err := wrapper.GetPluginApi(req)
+		gs := gate.NewGateService("", "")
+		plugin, err := gs.GetPlugin(req)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return

@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/bennycio/bundle/api"
-	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -24,7 +24,7 @@ var uploadCmd = &cobra.Command{
 	to your plugin. Version must be unique per upload and name must be unique globally for the initial upload`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if !bundle.IsValidPath(args[0]) {
+		if !internal.IsValidPath(args[0]) {
 			log.Fatal(errors.New("invalid path").Error())
 		}
 
@@ -74,19 +74,32 @@ var uploadCmd = &cobra.Command{
 
 		fmt.Printf("Uploading to Bundle Repository From: %s\n", path)
 
-		file, err := os.Open(path)
-		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
+		gservice := gate.NewGateService("localhost", "8020")
 
 		if isReadme {
-			err = wrapper.UploadReadmeApi(user, plugin, file)
+			file, err := os.ReadFile(path)
+			if err != nil {
+				panic(err)
+			}
+			dbPlugin, err := gservice.GetPlugin(plugin)
+			if err != nil {
+				panic(err)
+			}
+			readme := &api.Readme{
+				Plugin: dbPlugin.Id,
+				Text:   string(file),
+			}
+			err = gservice.InsertReadme(user, readme)
 		} else {
-			err = wrapper.UploadPluginApi(user, plugin, file)
-		}
-		if err != nil {
-			panic(err)
+			file, err := os.Open(path)
+			if err != nil {
+				panic(err)
+			}
+			defer file.Close()
+			err = gservice.UploadPlugin(user, plugin, file)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 	},

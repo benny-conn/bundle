@@ -1,4 +1,4 @@
-package api
+package gate
 
 import (
 	"encoding/json"

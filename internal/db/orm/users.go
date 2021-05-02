@@ -7,6 +7,7 @@ import (
 	"github.com/bennycio/bundle/internal"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -78,13 +79,21 @@ func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
 
 	decodedUser := &api.User{}
 
-	if req.Email == "" {
+	switch {
+	case req.Id != "":
+		id, err := primitive.ObjectIDFromHex(req.Id)
+		if err != nil {
+			return nil, err
+		}
+		err = collection.FindOne(session.Ctx, bson.D{{"_id", id}}).Decode(decodedUser)
+	case req.Email == "":
 		err = collection.FindOne(session.Ctx, bson.D{{"username", req.Username}}).Decode(decodedUser)
-	} else if req.Username == "" {
+	case req.Username == "":
 		err = collection.FindOne(session.Ctx, bson.D{{"email", caseInsensitive(req.Email)}}).Decode(decodedUser)
-	} else {
+	default:
 		err = collection.FindOne(session.Ctx, bson.D{{"username", req.Username}, {"email", caseInsensitive(req.Email)}}).Decode(decodedUser)
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +112,20 @@ func (u *UsersOrm) Update(req *api.User) error {
 
 	updatedUser := marshallBsonClean(req)
 
-	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"username", caseInsensitive(req.Username)}}, bson.D{{"$set", updatedUser}})
+	if req.Id == "" {
+		user, err := u.Get(req)
+		if err != nil {
+			return err
+		}
+		req.Id = user.Id
+	}
+
+	id, err := primitive.ObjectIDFromHex(req.Id)
+	if err != nil {
+		return err
+	}
+
+	updateResult, err := collection.UpdateByID(session.Ctx, id, bson.D{{"$set", updatedUser}})
 	if err != nil {
 		return err
 	}

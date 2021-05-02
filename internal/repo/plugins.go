@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bennycio/bundle/api"
 	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/viper"
 )
 
@@ -32,7 +32,8 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Version: r.FormValue("version"),
 		}
 
-		plugin, err := wrapper.GetPluginApi(req)
+		gs := gate.NewGateService("", "")
+		plugin, err := gs.GetPlugin(req)
 		if err != nil {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -79,16 +80,17 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateOrInsertPlugin(plugin *api.Plugin) error {
-	dbPlugin, err := wrapper.GetPluginApi(plugin)
+	gs := gate.NewGateService("", "")
+	dbPlugin, err := gs.GetPlugin(plugin)
 
 	if err == nil {
-		err = wrapper.UpdatePluginApi(plugin)
+		err = gs.UpdatePlugin(plugin)
 		if err != nil {
 			return err
 		}
 		plugin.Id = dbPlugin.Id
 	} else {
-		err = wrapper.InsertPluginApi(plugin)
+		err = gs.InsertPlugin(plugin)
 		if err != nil {
 			return err
 		}
@@ -100,7 +102,6 @@ func uploadPluginToRepo(plugin *api.Plugin, body io.Reader) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
 	fp := filepath.Join(plugin.Author, plugin.Id, plugin.Version, plugin.Id+".jar")
-
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.Upload(&s3manager.UploadInput{
 		Body:   body,

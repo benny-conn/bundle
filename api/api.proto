@@ -22,7 +22,6 @@ message User {
     string email = 3;
     string password = 4;
     repeated string scopes = 5;
-    repeated string plugins = 6;
     string tag = 7;
 }
 
@@ -34,6 +33,7 @@ service PluginsService {
     rpc Update (Plugin) returns (Empty) {}
     rpc Paginate (PaginatePluginsRequest) returns (PaginatePluginsResponse) {}
 }
+
 
 message PaginatePluginsRequest {
     int32 page = 1;
@@ -51,7 +51,23 @@ message Plugin {
     string version = 4;
     string description = 5;
     string readme = 6;
-    int64 lastUpdated = 7;
+}
+
+
+// READMEs --------------------------------------------------------------- ||
+
+
+service ReadmeService {
+    rpc Get (Plugin) returns (Readme){}
+    rpc Insert (Readme) returns (Empty) {}
+    rpc Update (Readme) returns (Empty) {}
+}
+
+
+message Readme {
+    string id = 1;
+    string plugin = 2;
+    string text = 3;
 }
 
 

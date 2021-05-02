@@ -6,6 +6,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -22,7 +23,15 @@ func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 
 	collection := session.Client.Database("plugins").Collection("plugins")
 
-	newPlugin := marshallBsonClean(plugin)
+	bs, err := bson.Marshal(plugin)
+	if err != nil {
+		return err
+	}
+	newPlugin := bson.D{}
+	err = bson.Unmarshal(bs, &newPlugin)
+	if err != nil {
+		return err
+	}
 	newPlugin = append(newPlugin, bson.E{"lastUpdated", time.Now().Unix()})
 
 	_, err = collection.InsertOne(session.Ctx, newPlugin)
@@ -47,7 +56,21 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 	updatedPlugin := marshallBsonClean(req)
 	updatedPlugin = append(updatedPlugin, bson.E{"lastUpdated", time.Now().Unix()})
 
-	updateResult, err := collection.UpdateOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}, bson.D{{"$set", updatedPlugin}})
+	if req.Id == "" {
+		plorm := NewPluginsOrm()
+		pl, err := plorm.Get(req)
+		if err != nil {
+			return err
+		}
+		req.Id = pl.Id
+	}
+
+	id, err := primitive.ObjectIDFromHex(req.Id)
+	if err != nil {
+		return err
+	}
+
+	updateResult, err := collection.UpdateByID(session.Ctx, id, bson.D{{"$set", updatedPlugin}})
 	if err != nil {
 		return err
 	}
@@ -72,9 +95,16 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	collection := session.Client.Database("plugins").Collection("plugins")
 	decodedPluginResult := &api.Plugin{}
 
-	err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}).Decode(decodedPluginResult)
-	if err != nil {
-		return nil, err
+	if req.Id == "" {
+		err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}).Decode(decodedPluginResult)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = collection.FindOne(session.Ctx, bson.D{{"_id", req.Id}}).Decode(decodedPluginResult)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return decodedPluginResult, nil
@@ -93,7 +123,7 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePlu
 	if req.Page > 1 {
 		findOptions.SetSkip(int64(req.Page*req.Count - req.Count))
 	}
-	findOptions.SetLimit(10)
+	findOptions.SetLimit(int64(req.Count))
 
 	collection := session.Client.Database("plugins").Collection("plugins")
 

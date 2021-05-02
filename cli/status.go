@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -36,8 +36,9 @@ var statusCmd = &cobra.Command{
 				req := &api.Plugin{
 					Name: pluginName,
 				}
+				gs := gate.NewGateService("localhost", "8020")
 
-				plugin, err := wrapper.GetPluginApi(req)
+				plugin, err := gs.GetPlugin(req)
 				if err != nil {
 					panic(err)
 				}

@@ -25,6 +25,7 @@ func RunServer() error {
 	grpcServer := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterUsersServiceServer(grpcServer, newUsersServer())
 	api.RegisterPluginsServiceServer(grpcServer, newPluginsServer())
+	api.RegisterReadmeServiceServer(grpcServer, newReadmesServer())
 	fmt.Printf("Started Database Server on port %v\n", port)
 
 	grpcServer.Serve(lis)

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/wrapper"
+	"github.com/bennycio/bundle/internal/gate"
 	"github.com/russross/blackfriday/v2"
 )
 
@@ -26,6 +26,8 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		data.User = user
 	}
 
+	gs := gate.NewGateService("", "")
+
 	pluginName := req.FormValue("plugin")
 
 	if pluginName == "" {
@@ -41,7 +43,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		plugins, err := wrapper.PaginatePluginsApi(pageNumber, perPageCount)
+		plugins, err := gs.PaginatePlugins(pageNumber, perPageCount)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -58,16 +60,16 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		req := &api.Plugin{
 			Name: pluginName,
 		}
-		plugin, err := wrapper.GetPluginApi(req)
+		plugin, err := gs.GetPlugin(req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
-		readme, err := wrapper.DownloadReadmeApi(req)
+		readme, err := gs.GetReadme(req)
 
 		if err == nil {
-			output := blackfriday.Run(readme)
+			output := blackfriday.Run([]byte(readme.Text))
 			plugin.Readme = string(output)
 		}
 
