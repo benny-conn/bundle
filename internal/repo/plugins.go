@@ -59,17 +59,11 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		gs := gate.NewGateService("", "")
 
-		dbPlugin, err := gs.GetPlugin(plugin)
+		gs := gate.NewGateService("", "")
+		err = cleanPlugin(plugin)
 
 		if err == nil {
-			if plugin.Id == "" {
-				plugin.Id = dbPlugin.Id
-			}
-			if plugin.Author == "" {
-				plugin.Author = dbPlugin.Author
-			}
 			err = gs.UpdatePlugin(plugin)
 			if err != nil {
 				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
