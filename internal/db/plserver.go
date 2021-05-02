@@ -44,7 +44,9 @@ func (s *pluginsServer) Paginate(ctx context.Context, req *api.PaginatePluginsRe
 	if err != nil {
 		return nil, err
 	}
-	return pls, nil
+	return &api.PaginatePluginsResponse{
+		Plugins: pls,
+	}, nil
 }
 
 func newPluginsServer() *pluginsServer {

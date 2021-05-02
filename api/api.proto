@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/bennycio/bundle/api";
+option go_package = "api";
 
 package api;
 
@@ -13,16 +13,13 @@ service UsersService {
     rpc Update (User) returns (Empty) {}
 }
 
-
-
-
 message User {
     string id = 1;
     string username = 2;
     string email = 3;
     string password = 4;
     repeated string scopes = 5;
-    string tag = 7;
+    string tag = 6;
 }
 
 // PLUGINS --------------------------------------------------------------------- ||
@@ -47,7 +44,7 @@ message PaginatePluginsResponse {
 message Plugin {
     string id = 1;
     string name = 2;
-    string author = 3;
+    User author = 3;
     string version = 4;
     string description = 5;
     string thumbnail = 6;
@@ -67,7 +64,7 @@ service ReadmeService {
 
 message Readme {
     string id = 1;
-    string plugin = 2;
+    Plugin plugin = 2;
     string text = 3;
 }
 

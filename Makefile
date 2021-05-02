@@ -2,12 +2,12 @@
 version = 1.0
 
 
-all: docker-run
+all: clean docker-run
 
 
 docker-build:
 	go mod vendor
-	docker-compose build --no-cache
+	docker-compose build 
 
 docker-run: docker-build
 	docker-compose up -d

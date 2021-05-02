@@ -51,11 +51,6 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		data.Plugins = plugins
 
-		err = tpl.ExecuteTemplate(w, "plugins", data)
-		if err != nil {
-			panic(err)
-		}
-
 	} else {
 		req := &api.Plugin{
 			Name: pluginName,
@@ -75,9 +70,9 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		data.Plugin = plugin
 
-		err = tpl.ExecuteTemplate(w, "plugins", data)
-		if err != nil {
-			panic(err)
-		}
+	}
+	err = tpl.ExecuteTemplate(w, "plugins", data)
+	if err != nil {
+		panic(err)
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/gate"
 
 	"golang.org/x/crypto/bcrypt"
@@ -18,13 +17,6 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		user := &api.User{
 			Username: req.FormValue("username"),
 			Password: req.FormValue("password"),
-		}
-
-		isValid := internal.IsUserValid(user)
-
-		if !isValid {
-			http.Error(w, "invalid request format", http.StatusBadRequest)
-			return
 		}
 
 		gs := gate.NewGateService("", "")
@@ -53,13 +45,14 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if req.Method == http.MethodGet {
-		user, _ := getUserFromCookie(req)
+		_, err := getUserFromCookie(req)
 
-		td := TemplateData{
-			User: user,
+		if err == nil {
+			http.Redirect(w, req, "/", http.StatusSeeOther)
+			return
 		}
 
-		err := tpl.ExecuteTemplate(w, "login", td)
+		err = tpl.ExecuteTemplate(w, "login", nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

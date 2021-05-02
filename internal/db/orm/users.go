@@ -4,19 +4,27 @@ import (
 	"errors"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
+type OrmUser struct {
+	Id       primitive.ObjectID `bson:"_id" json:"id"`
+	Username string             `bson:"username" json:"username"`
+	Email    string             `bson:"email" json:"email"`
+	Password string             `bson:"password" json:"password"`
+	Tag      string             `bson:"tag" json:"tag"`
+	Scopes   []string           `bson:"scopes" json:"scopes"`
+}
+
 type UsersOrm struct{}
 
 func NewUsersOrm() *UsersOrm { return &UsersOrm{} }
 
 func (u *UsersOrm) Insert(user *api.User) error {
-	isValid := internal.IsUserValid(user)
+	isValid := isUserValid(user)
 
 	if !isValid {
 		return errors.New("invalid user")
@@ -77,7 +85,7 @@ func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
 
 	collection := session.Client.Database("users").Collection("users")
 
-	decodedUser := &api.User{}
+	decodedUser := &OrmUser{}
 
 	switch {
 	case req.Id != "":
@@ -98,7 +106,14 @@ func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
 		return nil, err
 	}
 
-	return decodedUser, nil
+	return &api.User{
+		Id:       decodedUser.Id.Hex(),
+		Email:    decodedUser.Email,
+		Username: decodedUser.Username,
+		Password: decodedUser.Password,
+		Tag:      decodedUser.Tag,
+		Scopes:   decodedUser.Scopes,
+	}, nil
 }
 
 func (u *UsersOrm) Update(req *api.User) error {

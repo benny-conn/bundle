@@ -10,6 +10,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type OrmPlugin struct {
+	Id          primitive.ObjectID `bson:"_id" json:"id"`
+	Name        string             `bson:"name" json:"name"`
+	Description string             `bson:"description" json:"description"`
+	Author      OrmUser            `bson:"author" json:"author"`
+	Version     string             `bson:"version" json:"version"`
+	Thumbnail   string             `bson:"thumbnail" json:"thumbnail"`
+	LastUpdated primitive.DateTime `bson:"lastUpdated" json:"lastUpdated"`
+}
+
 type PluginsOrm struct{}
 
 func NewPluginsOrm() *PluginsOrm { return &PluginsOrm{} }
@@ -56,12 +66,7 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 		req.Id = pl.Id
 	}
 
-	id, err := primitive.ObjectIDFromHex(req.Id)
-	if err != nil {
-		return err
-	}
-
-	updateResult, err := collection.UpdateByID(session.Ctx, id, bson.D{{"$set", updatedPlugin}})
+	updateResult, err := collection.UpdateByID(session.Ctx, req.Id, bson.D{{"$set", updatedPlugin}})
 	if err != nil {
 		return err
 	}
@@ -84,7 +89,7 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	defer session.Cancel()
 
 	collection := session.Client.Database("plugins").Collection("plugins")
-	decodedPluginResult := &api.Plugin{}
+	decodedPluginResult := &OrmPlugin{}
 
 	if req.Id == "" {
 		err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}).Decode(decodedPluginResult)
@@ -92,17 +97,36 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 			return nil, err
 		}
 	} else {
-		err = collection.FindOne(session.Ctx, bson.D{{"_id", req.Id}}).Decode(decodedPluginResult)
+		id, err := primitive.ObjectIDFromHex(req.Id)
+		if err != nil {
+			return nil, err
+		}
+		err = collection.FindOne(session.Ctx, bson.D{{"_id", id}}).Decode(decodedPluginResult)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return decodedPluginResult, nil
+	return &api.Plugin{
+		Id:          decodedPluginResult.Id.Hex(),
+		Name:        decodedPluginResult.Name,
+		Description: decodedPluginResult.Description,
+		Author: &api.User{
+			Id:       decodedPluginResult.Author.Id.Hex(),
+			Email:    decodedPluginResult.Author.Email,
+			Username: decodedPluginResult.Author.Username,
+			Password: decodedPluginResult.Author.Password,
+			Tag:      decodedPluginResult.Author.Tag,
+			Scopes:   decodedPluginResult.Author.Scopes,
+		},
+		Version:     decodedPluginResult.Version,
+		Thumbnail:   decodedPluginResult.Thumbnail,
+		LastUpdated: decodedPluginResult.LastUpdated.Time().Unix(),
+	}, nil
 
 }
 
-func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
+func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, error) {
 	session, err := getMongoSession()
 	if err != nil {
 		return nil, err
@@ -133,8 +157,6 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) (*api.PaginatePlu
 		results = append(results, plugin)
 	}
 
-	return &api.PaginatePluginsResponse{
-		Plugins: results,
-	}, nil
+	return results, nil
 
 }

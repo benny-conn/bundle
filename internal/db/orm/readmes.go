@@ -5,9 +5,11 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type OrmReadme struct {
+	//TODO
+}
 type ReadmesOrm struct{}
 
 func NewReadmesOrm() *ReadmesOrm { return &ReadmesOrm{} }
@@ -47,11 +49,7 @@ func (p *ReadmesOrm) Update(req *api.Readme) error {
 
 	updatedReadme := marshallBsonClean(req)
 
-	id, err := primitive.ObjectIDFromHex(req.Id)
-	if err != nil {
-		return err
-	}
-	updateResult, err := collection.UpdateByID(session.Ctx, id, bson.D{{"$set", updatedReadme}})
+	updateResult, err := collection.UpdateByID(session.Ctx, req.Id, bson.D{{"$set", updatedReadme}})
 	if err != nil {
 		return err
 	}
@@ -85,7 +83,7 @@ func (p *ReadmesOrm) Get(req *api.Plugin) (*api.Readme, error) {
 		req.Id = pl.Id
 	}
 
-	err = collection.FindOne(session.Ctx, bson.D{{"plugin", req.Id}}).Decode(decodedReadmeResult)
+	err = collection.FindOne(session.Ctx, bson.D{{"plugin", req}}).Decode(&decodedReadmeResult)
 	if err != nil {
 		return nil, err
 	}

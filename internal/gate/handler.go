@@ -8,6 +8,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/repo"
 )
 
 func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -258,7 +259,8 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	repo := NewGateService("", "")
+	repo := repo.NewRepoService("", "")
+	gs := NewGateService("", "")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -305,6 +307,30 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		dbUser, err := gs.GetUser(user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		plugin.Author = dbUser
+		dbPlugin, err := gs.GetPlugin(plugin)
+		if err == nil {
+			gs.UpdatePlugin(plugin)
+		} else {
+			err = gs.InsertPlugin(plugin)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			dbPlugin, err = gs.GetPlugin(plugin)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
+
+		plugin.Id = dbPlugin.Id
 
 		err = repo.UploadPlugin(user, plugin, r.Body)
 		if err != nil {

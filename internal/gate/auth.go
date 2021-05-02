@@ -9,9 +9,11 @@ import (
 	"strings"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type CustomClaims struct {
@@ -59,7 +61,7 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 	SigningMethod: jwt.SigningMethodRS256,
 })
 
-func SimpleAuth(next http.Handler) http.Handler {
+func simpleAuth(next http.Handler) http.Handler {
 	return jwtMiddleware.Handler(next)
 }
 
@@ -108,7 +110,7 @@ func getPemCert(token *jwt.Token) (string, error) {
 	return cert, nil
 }
 
-func GetAccessToken() (string, error) {
+func getAccessToken() (string, error) {
 
 	u := "https://bundle.us.auth0.com/oauth/token"
 
@@ -170,4 +172,36 @@ func checkScope(tokenString string, scopes ...string) bool {
 	}
 
 	return hasScope
+}
+
+func authUpload(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+
+			userJSON := r.Header.Get("User")
+			user := &api.User{}
+
+			err := json.Unmarshal([]byte(userJSON), user)
+			if err != nil {
+				http.Error(w, "invalid user", http.StatusBadRequest)
+				return
+			}
+			gs := NewGateService("", "")
+
+			dbUser, err := gs.GetUser(user)
+
+			if err != nil {
+				http.Error(w, "invalid user", http.StatusBadRequest)
+				return
+			}
+
+			err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
+
+			if err != nil {
+				http.Error(w, "incorrect password", http.StatusUnauthorized)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }

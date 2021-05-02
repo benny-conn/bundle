@@ -86,10 +86,13 @@ var uploadCmd = &cobra.Command{
 				panic(err)
 			}
 			readme := &api.Readme{
-				Plugin: dbPlugin.Id,
+				Plugin: dbPlugin,
 				Text:   string(file),
 			}
 			err = gservice.InsertReadme(user, readme)
+			if err != nil {
+				panic(err)
+			}
 		} else {
 			file, err := os.Open(path)
 			if err != nil {
@@ -98,7 +101,7 @@ var uploadCmd = &cobra.Command{
 			defer file.Close()
 			err = gservice.UploadPlugin(user, plugin, file)
 			if err != nil {
-				panic(err)
+				fmt.Println(err.Error())
 			}
 		}
 

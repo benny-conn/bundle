@@ -12,8 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bennycio/bundle/api"
-	bundle "github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/viper"
 )
 
@@ -23,29 +21,31 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		err := r.ParseForm()
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		// we cant be usin no names no more
 		req := &api.Plugin{
 			Name:    r.FormValue("name"),
 			Version: r.FormValue("version"),
 		}
 
-		gs := gate.NewGateService("", "")
-		plugin, err := gs.GetPlugin(req)
-		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusNotFound)
-			return
-		}
+		// make gate handle all db stuff
+		// gs := gate.NewGateService("", "")
+		// plugin, err := gs.GetPlugin(req)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusNotFound)
+		// 	return
+		// }
 
-		if req.Version != "latest" {
-			plugin.Version = req.Version
-		}
+		// if req.Version != "latest" {
+		// 	plugin.Version = req.Version
+		// }
 
 		pl, err := downloadPluginFromRepo(req)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 
@@ -54,32 +54,16 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		pluginJSON := r.Header.Get("Resource")
 
 		plugin := &api.Plugin{}
+
 		err := json.Unmarshal([]byte(pluginJSON), plugin)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-		}
-
-		gs := gate.NewGateService("", "")
-		err = cleanPlugin(plugin)
-
-		if err == nil {
-			err = gs.UpdatePlugin(plugin)
-			if err != nil {
-				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		} else {
-			err = gs.InsertPlugin(plugin)
-			if err != nil {
-				bundle.WriteResponse(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
 		}
 
 		loc, err := uploadPluginToRepo(plugin, r.Body)
 		if err != nil {
-			bundle.WriteResponse(w, err.Error(), http.StatusServiceUnavailable)
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 
@@ -89,9 +73,12 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadPluginToRepo(plugin *api.Plugin, body io.Reader) (string, error) {
-	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
+	sess, err := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
+	if err != nil {
+		return "", err
+	}
 
-	fp := filepath.Join(plugin.Author, plugin.Id, plugin.Version, plugin.Id+".jar")
+	fp := filepath.Join(plugin.Author.Id, plugin.Id, plugin.Version, plugin.Id+".jar")
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.Upload(&s3manager.UploadInput{
 		Body:   body,
@@ -108,7 +95,7 @@ func downloadPluginFromRepo(plugin *api.Plugin) ([]byte, error) {
 
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String(viper.GetString("AWSRegion"))})
 
-	fn := filepath.Join(plugin.Author, plugin.Id, plugin.Version, plugin.Id+".jar")
+	fn := filepath.Join(plugin.Author.Id, plugin.Id, plugin.Version, plugin.Id+".jar")
 	buf := aws.NewWriteAtBuffer([]byte{})
 	downloader := s3manager.NewDownloader(sess)
 	_, err := downloader.Download(buf, &s3.GetObjectInput{
