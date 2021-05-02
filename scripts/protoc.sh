@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# protoc --go_out=. --go_opt=paths=source_relative \
-#     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-#     api/api.proto
-
-protoc --gofast_out=plugins=grpc:. ./api/api.proto
