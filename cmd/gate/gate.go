@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/bennycio/bundle/internal/gate"
@@ -14,5 +13,6 @@ func main() {
 
 	fmt.Printf("Started Api Server on port %v\n", port)
 
-	http.ListenAndServe(fmt.Sprintf(":%v", port), mux)
+	mux.Addr = fmt.Sprintf(":%v", port)
+	mux.ListenAndServeTLS("bundlemc.io/cert.pem", "bundlemc.io/key.pem")
 }

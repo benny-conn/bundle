@@ -2,6 +2,7 @@ package internal
 
 import (
 	"net/http"
+	"time"
 )
 
 func WriteResponse(w http.ResponseWriter, message string, status int) {
@@ -17,4 +18,15 @@ func Contains(s []string, str string) bool {
 	}
 
 	return false
+}
+
+func MakeServerFromMux(mux http.Handler) *http.Server {
+	// set timeouts so that a slow or malicious client doesn't
+	// hold resources forever
+	return &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      mux,
+	}
 }

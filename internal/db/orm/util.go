@@ -22,9 +22,21 @@ func getMongoSession() (*Mongo, error) {
 	mg := &Mongo{}
 
 	url := os.Getenv("MONGO_URL")
+	mode := os.Getenv("MODE")
 
+	opts := options.Client().ApplyURI(url)
+	if mode == "DOCKER" {
+		user := os.Getenv("MONGO_INITDB_ROOT_USERNAME")
+		pass := os.Getenv("MONGO_INITDB_ROOT_PASSWORD")
+
+		credentials := options.Credential{
+			Username: user,
+			Password: pass,
+		}
+		opts.SetAuth(credentials)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
+	client, err := mongo.Connect(ctx, opts)
 	mg.Cancel = cancel
 	mg.Client = client
 	mg.Ctx = ctx

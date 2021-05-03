@@ -1,9 +1,10 @@
 package web
 
 import (
+	"crypto/tls"
 	"net/http"
-	"time"
 
+	"github.com/bennycio/bundle/internal"
 	"github.com/rs/cors"
 )
 
@@ -41,16 +42,20 @@ func NewWebServer() *http.Server {
 
 	handler := c.Handler(mux)
 
-	return makeServerFromMux(handler)
+	return internal.MakeServerFromMux(handler)
 }
 
-func makeServerFromMux(mux http.Handler) *http.Server {
-	// set timeouts so that a slow or malicious client doesn't
-	// hold resources forever
-	return &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		IdleTimeout:  120 * time.Second,
-		Handler:      mux,
+func NewWebClient() http.Client {
+
+	clientCert, _ := tls.LoadX509KeyPair("bundlemc.io/cert.pem", "bundlemc.io/key.pem")
+	tlsConfig := tls.Config{
+		Certificates: []tls.Certificate{clientCert},
 	}
+	transport := http.Transport{
+		TLSClientConfig: &tlsConfig,
+	}
+	client := http.Client{
+		Transport: &transport,
+	}
+	return client
 }

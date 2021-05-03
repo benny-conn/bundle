@@ -2,9 +2,11 @@ package gate
 
 import (
 	"net/http"
+
+	"github.com/bennycio/bundle/internal"
 )
 
-func NewGateMux() http.Handler {
+func NewGateMux() *http.Server {
 	mux := http.NewServeMux()
 
 	pluginsHandler := http.HandlerFunc(pluginsHandlerFunc)
@@ -17,5 +19,5 @@ func NewGateMux() http.Handler {
 	mux.Handle("/api/readmes", readmesHandler)
 	mux.Handle("/api/repo/plugins", authUpload(repoPluginsHandler))
 
-	return mux
+	return internal.MakeServerFromMux(mux)
 }

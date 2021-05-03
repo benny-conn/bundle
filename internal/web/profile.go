@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/bennycio/bundle/api"
@@ -24,6 +23,7 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		newTag := req.FormValue("tag")
 
 		updatedUser := &api.User{
+			Id:       user.Id,
 			Username: newUsername,
 			Tag:      newTag,
 		}
@@ -35,14 +35,14 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		dbUpdatedUser, _ := gs.GetUser(updatedUser)
+		// NOW PROPOGATE THOSE CHANGE BOYO!!!
 
-		fmt.Println(dbUpdatedUser)
+		dbUpdatedUser, _ := gs.GetUser(updatedUser)
 
 		token, _ := newAuthToken(dbUpdatedUser)
 		c := newAccessCookie(token)
 		http.SetCookie(w, c)
-
+		user = dbUpdatedUser
 	}
 
 	data := TemplateData{
