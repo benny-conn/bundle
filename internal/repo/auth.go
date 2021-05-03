@@ -35,7 +35,7 @@ type jsonWebKey struct {
 var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 	ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
 		// Verify 'aud' claim
-		aud := "https://bundlemc.io/auth"
+		aud := os.Getenv("AUTH0_AUD")
 		checkAud := token.Claims.(jwt.MapClaims).VerifyAudience(aud, false)
 		if !checkAud {
 			return token, errors.New("invalid audience")
@@ -52,7 +52,10 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 			panic(err.Error())
 		}
 
-		result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
+		result, err := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
+		if err != nil {
+			panic(err.Error())
+		}
 
 		return result, nil
 	},
@@ -126,13 +129,13 @@ func getAccessToken() (string, error) {
 
 	res, err := http.PostForm(u, form)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	defer res.Body.Close()
 	bs, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	j := &struct {
@@ -141,7 +144,7 @@ func getAccessToken() (string, error) {
 
 	err = json.Unmarshal(bs, j)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return j.AccessToken, nil

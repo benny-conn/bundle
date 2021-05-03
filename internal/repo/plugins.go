@@ -43,6 +43,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		err := r.ParseMultipartForm(32 << 20)
 		if err != nil {
+
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -57,6 +58,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		f, h, err := r.FormFile("plugin")
 		if err != nil {
+			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -78,6 +80,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadPluginToRepo(plugin *api.Plugin, file io.Reader) (string, error) {
+
 	sess, err := session.NewSession(&aws.Config{Region: aws.String(os.Getenv("AWS_REGION"))})
 	if err != nil {
 		return "", err

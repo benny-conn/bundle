@@ -46,9 +46,10 @@ func credentialsPrompt() *api.User {
 	var password string
 	fmt.Scanln(&password)
 
-	user := &api.User{}
-	user.Password = password
-	user.Username = username
+	user := &api.User{
+		Username: username,
+		Password: password,
+	}
 
 	return user
 }

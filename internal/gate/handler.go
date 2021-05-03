@@ -2,6 +2,7 @@ package gate
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -17,7 +18,10 @@ func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case http.MethodGet:
-		req.ParseForm()
+		err := req.ParseForm()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 
 		userName := req.FormValue("username")
 		email := req.FormValue("email")
@@ -298,17 +302,22 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 
-		err := r.ParseMultipartForm(32 << 20)
+		err := r.ParseMultipartForm(64 << 20)
 		if err != nil {
+			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
+
+		values := r.MultipartForm.Value
+
 		user := &api.User{
-			Username: r.FormValue("username"),
-			Password: r.FormValue("password"),
+			Username: values["username"][0],
+			Password: values["password"][0],
 		}
 		plugin := &api.Plugin{
-			Name:    r.FormValue("name"),
-			Version: r.FormValue("version"),
+			Name:    values["name"][0],
+			Version: values["version"][0],
 		}
 
 		dbUser, err := gs.GetUser(user)
@@ -316,7 +325,9 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
 		plugin.Author = dbUser
+
 		_, err = gs.GetPlugin(plugin)
 		if err == nil {
 			gs.UpdatePlugin(plugin)
@@ -333,7 +344,12 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = repo.UploadPlugin(dbUser, dbPlugin, r.Body)
+		file, _, err := r.FormFile("plugin")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		err = repo.UploadPlugin(dbUser, dbPlugin, file)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
 			return

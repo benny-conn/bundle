@@ -9,9 +9,9 @@ import (
 )
 
 type Readme struct {
-	Id     primitive.ObjectID `bson:"_id" json:"id"`
-	Plugin Plugin             `bson:"plugin" json:"plugin"`
-	Text   string             `bson:"text" json:"text"`
+	Id     primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Plugin Plugin             `bson:"plugin,omitempty" json:"plugin"`
+	Text   string             `bson:"text,omitempty" json:"text"`
 }
 type ReadmesOrm struct{}
 

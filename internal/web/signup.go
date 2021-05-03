@@ -25,7 +25,8 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		token, err := newAuthToken(user)
+		dbUser, _ := gs.GetUser(user)
+		token, err := newAuthToken(dbUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

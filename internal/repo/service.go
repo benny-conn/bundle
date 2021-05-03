@@ -77,6 +77,7 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
+	writer.SetBoundary("XXX")
 
 	if plugin.Id == "" || plugin.Version == "" || plugin.Author.Id == "" {
 		return errors.New("missing required fields")
@@ -86,7 +87,7 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	writer.WriteField("version", plugin.Version)
 	writer.WriteField("author", plugin.Author.Id)
 
-	part, err := writer.CreateFormFile("plugin", plugin.Name)
+	part, err := writer.CreateFormFile("plugin", plugin.Id)
 	if err != nil {
 		return err
 	}
@@ -111,14 +112,20 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	}
 	access, err := getAccessToken()
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+
+	req.Header.Add("Authorization", "Bearer "+access)
+	req.Header.Add("Content-Type", "multipart/form-data; boundary=XXX")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
+
+	b, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(b))
 
 	defer resp.Body.Close()
 	return nil

@@ -12,7 +12,7 @@ import (
 )
 
 type Plugin struct {
-	Id          primitive.ObjectID `bson:"_id" json:"id"`
+	Id          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	LastUpdated int64              `bson:"lastUpdated" json:"lastUpdated"`
 	api.Plugin
 }

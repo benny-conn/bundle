@@ -78,6 +78,7 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
+	writer.SetBoundary("XXX")
 
 	if user.Username == "" || user.Password == "" || plugin.Name == "" || plugin.Version == "" {
 		return errors.New("missing required fields")
@@ -108,12 +109,7 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, u.String(), body)
-	if err != nil {
-		return err
-	}
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.Post(u.String(), "multipart/form-data; boundary=XXX", body)
 	if err != nil {
 		return err
 	}
@@ -410,6 +406,7 @@ func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
 	err = json.Unmarshal(bs, result)
 
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 

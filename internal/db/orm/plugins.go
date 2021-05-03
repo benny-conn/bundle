@@ -10,13 +10,13 @@ import (
 )
 
 type Plugin struct {
-	Id          primitive.ObjectID `bson:"_id" json:"id"`
-	Name        string             `bson:"name" json:"name"`
-	Description string             `bson:"description" json:"description"`
-	Author      User               `bson:"author" json:"author"`
-	Version     string             `bson:"version" json:"version"`
-	Thumbnail   string             `bson:"thumbnail" json:"thumbnail"`
-	LastUpdated primitive.DateTime `bson:"lastUpdated" json:"lastUpdated"`
+	Id          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Name        string             `bson:"name,omitempty" json:"name"`
+	Description string             `bson:"description,omitempty" json:"description"`
+	Author      User               `bson:"author,omitempty" json:"author"`
+	Version     string             `bson:"version,omitempty" json:"version"`
+	Thumbnail   string             `bson:"thumbnail,omitempty" json:"thumbnail"`
+	LastUpdated primitive.DateTime `bson:"lastUpdated,omitempty" json:"lastUpdated"`
 }
 
 type PluginsOrm struct{}

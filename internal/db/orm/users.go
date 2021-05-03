@@ -12,12 +12,12 @@ import (
 )
 
 type User struct {
-	Id       primitive.ObjectID `bson:"_id" json:"id"`
-	Username string             `bson:"username" json:"username"`
-	Email    string             `bson:"email" json:"email"`
-	Password string             `bson:"password" json:"password"`
-	Tag      string             `bson:"tag" json:"tag"`
-	Scopes   []string           `bson:"scopes" json:"scopes"`
+	Id       primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Username string             `bson:"username,omitempty" json:"username"`
+	Email    string             `bson:"email,omitempty" json:"email"`
+	Password string             `bson:"password,omitempty" json:"password"`
+	Tag      string             `bson:"tag,omitempty" json:"tag"`
+	Scopes   []string           `bson:"scopes,omitempty" json:"scopes"`
 }
 
 type UsersOrm struct{}
@@ -139,6 +139,7 @@ func (u *UsersOrm) Update(req *api.User) error {
 }
 
 func validateUserGet(user User) error {
+
 	if user.Id == primitive.NilObjectID && user.Email == "" && user.Username == "" {
 		return errors.New("id, email, or username is required for get")
 	}
