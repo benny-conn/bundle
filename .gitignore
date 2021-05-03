@@ -11,3 +11,4 @@ scripts/
 *.sh
 tls/
 bundlemc.io/
+.temp
