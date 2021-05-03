@@ -45,7 +45,7 @@ type Update struct {
 // Upsert contains the information for an upsert in an Update operation.
 type Upsert struct {
 	Index int64
-	ID    interface{} `bson:"_id,omitempty"`
+	ID    interface{} `bson:"_id"`
 }
 
 // UpdateResult contains information for the result of an Update operation.

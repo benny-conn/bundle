@@ -14,5 +14,6 @@ func main() {
 	fmt.Printf("Started Api Server on port %v\n", port)
 
 	mux.Addr = fmt.Sprintf(":%v", port)
-	mux.ListenAndServeTLS("bundlemc.io/cert.pem", "bundlemc.io/key.pem")
+	mux.ListenAndServe()
+	// mux.ListenAndServeTLS("bundlemc.io/cert.pem", "bundlemc.io/key.pem")
 }

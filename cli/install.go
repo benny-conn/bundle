@@ -33,15 +33,16 @@ var installCmd = &cobra.Command{
 			bundlePlugins = make(map[string]string)
 		}
 
-		if args[0] != "" {
-			_, err = installPlugin(args[0], SpecifiedVersion)
-			if err != nil {
-				panic(err)
-			}
-			bundlePlugins[args[0]] = SpecifiedVersion
-			writePluginsToBundle(bundlePlugins)
-			return
-		}
+		// fmt.Println("ASKJDHKS ", args)
+		// if args[0] != "" {
+		// 	_, err = installPlugin(args[0], SpecifiedVersion)
+		// 	if err != nil {
+		// 		panic(err)
+		// 	}
+		// 	bundlePlugins[args[0]] = SpecifiedVersion
+		// 	writePluginsToBundle(bundlePlugins)
+		// 	return
+		// }
 
 		var wg sync.WaitGroup
 		length := len(bundlePlugins)

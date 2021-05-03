@@ -2,8 +2,7 @@
 version = 1.0
 
 
-all: clean docker-run
-
+all: docker-run
 
 docker-build:
 	go mod vendor

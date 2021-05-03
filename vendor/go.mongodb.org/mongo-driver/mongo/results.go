@@ -128,7 +128,7 @@ func (result *UpdateResult) UnmarshalBSON(b []byte) error {
 					break
 				}
 				var d struct {
-					ID interface{} `bson:"_id,omitempty"`
+					ID interface{} `bson:"_id"`
 				}
 				err = bson.Unmarshal(e.Value().Document(), &d)
 				if err != nil {
