@@ -2,9 +2,11 @@ package repo
 
 import (
 	"net/http"
+
+	"github.com/bennycio/bundle/internal"
 )
 
-func NewRepositoryMux() http.Handler {
+func NewRepoServer() *http.Server {
 	mux := http.NewServeMux()
 	pluginsHandler := http.HandlerFunc(pluginsHandlerFunc)
 	thumbnailsHandler := http.HandlerFunc(thumbnailsHandlerFunc)
@@ -12,5 +14,5 @@ func NewRepositoryMux() http.Handler {
 	mux.Handle("/repo/plugins", simpleAuth(pluginsHandler))
 	mux.Handle("/repo/thumbnails", simpleAuth(thumbnailsHandler))
 
-	return mux
+	return internal.MakeServerFromMux(mux)
 }

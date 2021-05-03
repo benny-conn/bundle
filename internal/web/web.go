@@ -1,7 +1,6 @@
 package web
 
 import (
-	"crypto/tls"
 	"net/http"
 
 	"github.com/bennycio/bundle/internal"
@@ -43,19 +42,4 @@ func NewWebServer() *http.Server {
 	handler := c.Handler(mux)
 
 	return internal.MakeServerFromMux(handler)
-}
-
-func NewWebClient() http.Client {
-
-	clientCert, _ := tls.LoadX509KeyPair("bundlemc.io/cert.pem", "bundlemc.io/key.pem")
-	tlsConfig := tls.Config{
-		Certificates: []tls.Certificate{clientCert},
-	}
-	transport := http.Transport{
-		TLSClientConfig: &tlsConfig,
-	}
-	client := http.Client{
-		Transport: &transport,
-	}
-	return client
 }

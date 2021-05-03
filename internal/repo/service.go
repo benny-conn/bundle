@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal"
 )
 
 type repoService interface {
@@ -38,7 +39,8 @@ func NewRepoService(host string, port string) repoService {
 
 func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 
-	u, err := url.Parse(fmt.Sprintf("http://%v:%v/repo/plugins", r.Host, r.Port))
+	scheme := internal.GetScheme()
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/repo/plugins", scheme, r.Host, r.Port))
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +72,9 @@ func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 
 func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error {
 
-	u, err := url.Parse(fmt.Sprintf("http://%v:%v/repo/plugins", r.Host, r.Port))
+	scheme := internal.GetScheme()
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/repo/plugins", scheme, r.Host, r.Port))
 	if err != nil {
 		return err
 	}

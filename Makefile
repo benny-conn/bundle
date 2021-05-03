@@ -18,5 +18,5 @@ dev:
 
 .PHONY: clean
 clean:
-	scripts/docker-kill.sh
+	scripts/kill.sh
 

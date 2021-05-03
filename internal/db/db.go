@@ -6,16 +6,9 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
-
-type Plugin struct {
-	Id          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	LastUpdated int64              `bson:"lastUpdated" json:"lastUpdated"`
-	api.Plugin
-}
 
 func RunServer() error {
 	port := os.Getenv("DATABASE_PORT")
@@ -24,7 +17,7 @@ func RunServer() error {
 	if err != nil {
 		return err
 	}
-	creds, err := credentials.NewServerTLSFromFile("bundlemc.io/cert.pem", "bundlemc.io/key.pem")
+	creds, err := credentials.NewServerTLSFromFile("tls/server-cert.pem", "tls/server-key.pem")
 	if err != nil {
 		return err
 	}
