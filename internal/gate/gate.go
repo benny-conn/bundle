@@ -26,7 +26,7 @@ func NewGateServer() *http.Server {
 
 func newGateHttpClient() http.Client {
 
-	clientCert, _ := tls.LoadX509KeyPair("tls/server-cert.pem", "tls/server-key.pem")
+	clientCert, _ := tls.LoadX509KeyPair("tls/service.pem", "tls/service.key")
 	tlsConfig := tls.Config{
 		Certificates: []tls.Certificate{clientCert},
 	}

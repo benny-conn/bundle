@@ -8,6 +8,7 @@ require (
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible
 	github.com/golang/protobuf v1.5.2
 	github.com/gopherjs/gopherjs v0.0.0-20210420193930-a4630ec28c79 // indirect
+	github.com/johanbrandhorst/certify v1.8.1
 	github.com/klauspost/compress v1.12.1 // indirect
 	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/rs/cors v1.7.0

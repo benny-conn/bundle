@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -48,7 +48,7 @@ func RunWebServer(srv *http.Server, addr string, service string) {
 			Cache:      autocert.DirCache(dataDir),
 		}
 		srv.Addr = ":443"
-		srv.TLSConfig = &tls.Config{GetCertificate: m.GetCertificate}
+		srv.TLSConfig = m.TLSConfig()
 
 		go func() {
 			err := srv.ListenAndServeTLS("", "")
@@ -61,13 +61,15 @@ func RunWebServer(srv *http.Server, addr string, service string) {
 		}
 		srv.Addr = addr
 		srv.Handler = m.HTTPHandler(srv.Handler)
+		fmt.Printf("Started %s server on %s\n", service, addr)
 		err := srv.ListenAndServe()
 		if err != nil {
 			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
 		}
 	} else {
 		srv.Addr = addr
-		err := srv.ListenAndServeTLS("tls/server-cert.pem", "tls/server-key.pem")
+		fmt.Printf("Started %s server on %s\n", service, addr)
+		err := srv.ListenAndServeTLS("tls/service.pem", "tls/service.key")
 		if err != nil {
 			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
 		}
@@ -76,19 +78,27 @@ func RunWebServer(srv *http.Server, addr string, service string) {
 
 func RunInternalServer(srv *http.Server, addr string, service string) {
 	srv.Addr = addr
-	err := srv.ListenAndServeTLS("tls/server-cert.pem", "tls/server-key.pem")
-	if err != nil {
-		log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+	fmt.Printf("Started %s server on %s\n", service, addr)
+	if os.Getenv("MODE") == "PROD" {
+		err := srv.ListenAndServeTLS("tls/service.pem", "tls/service.key")
+		if err != nil {
+			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+		}
+	} else {
+		err := srv.ListenAndServe()
+		if err != nil {
+			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+		}
 	}
 }
 
 func GetScheme() string {
-	// mode := os.Getenv("MODE")
+	mode := os.Getenv("MODE")
 
-	// if mode == "PROD" {
-	// 	return "https://"
-	// } else {
-	// 	return "http://"
-	// }
-	return "https://"
+	if mode == "PROD" {
+		return "https://"
+	} else {
+		return "http://"
+	}
+
 }

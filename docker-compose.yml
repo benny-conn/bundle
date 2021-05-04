@@ -40,3 +40,11 @@ services:
       - /data/db
     env_file:
       - ".env"
+  vault:
+    image: vault:latest
+    ports:
+      - "8200:8200"
+    volumes:
+      - /vault/file
+    env_file:
+      - ".env"
