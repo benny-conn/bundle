@@ -40,7 +40,7 @@ func RunServer() error {
 	if mode == "PROD" {
 		creds, err = vaultCert()
 	} else {
-		creds, err = credentials.NewServerTLSFromFile("tls/service.pem", "tls/service.key")
+		creds, err = credentials.NewServerTLSFromFile("out/grpc/service.pem", "out/grpc/service.key")
 	}
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func RunServer() error {
 
 // TODO make this work with kubernetes... after learning kubernetes
 func vaultCert() (credentials.TransportCredentials, error) {
-	b, err := ioutil.ReadFile("tls/ca.cert")
+	b, err := ioutil.ReadFile("out/grpc/ca.cert")
 	if err != nil {
 		return nil, fmt.Errorf("vaultCert: problem with input file")
 	}

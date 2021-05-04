@@ -39,7 +39,7 @@ func NewRepoService(host string, port string) repoService {
 
 func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 
-	scheme := internal.GetScheme()
+	scheme := "https://"
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/repo/plugins", scheme, r.Host, r.Port))
 	if err != nil {
 		return nil, err
@@ -49,6 +49,9 @@ func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 	q.Add("author", plugin.Author.Id)
 	q.Add("version", plugin.Version)
 	u.RawQuery = q.Encode()
+
+	client := internal.NewTlsClient()
+
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, err
@@ -58,7 +61,7 @@ func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 		return nil, err
 	}
 	req.Header.Add("authorization", "Bearer "+access)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +75,7 @@ func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 
 func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error {
 
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/repo/plugins", scheme, r.Host, r.Port))
 	if err != nil {
@@ -110,6 +113,8 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return err
 	}
 
+	client := internal.NewTlsClient()
+
 	req, err := http.NewRequest(http.MethodPost, u.String(), body)
 	if err != nil {
 		return err
@@ -123,7 +128,7 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	req.Header.Add("Authorization", "Bearer "+access)
 	req.Header.Add("Content-Type", "multipart/form-data; boundary=XXX")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

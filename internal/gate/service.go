@@ -49,7 +49,7 @@ func NewGateService(host string, port string) gateService {
 
 func (g *gateServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 
-	scheme := internal.GetScheme()
+	scheme := "https://"
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/repo/plugins", scheme, g.Host, g.Port))
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (g *gateServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 	q.Add("version", plugin.Version)
 	u.RawQuery = q.Encode()
 
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	resp, err := client.Get(u.String())
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (g *gateServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 }
 
 func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/repo/plugins", scheme, g.Host, g.Port))
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return err
 	}
 
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	resp, err := client.Post(u.String(), "multipart/form-data; boundary=XXX", body)
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 }
 
 func (g *gateServiceImpl) PaginatePlugins(page int, count int) ([]*api.Plugin, error) {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 	addr := fmt.Sprintf("%s%s:%s/api/plugins", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
 	if err != nil {
@@ -135,7 +135,7 @@ func (g *gateServiceImpl) PaginatePlugins(page int, count int) ([]*api.Plugin, e
 	q.Set("count", fmt.Sprint(count))
 	u.RawQuery = q.Encode()
 
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	resp, err := client.Get(u.String())
 	if err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func (g *gateServiceImpl) PaginatePlugins(page int, count int) ([]*api.Plugin, e
 }
 
 func (g *gateServiceImpl) GetPlugin(plugin *api.Plugin) (*api.Plugin, error) {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	addr := fmt.Sprintf("%s%s:%s/api/plugins", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -169,7 +169,7 @@ func (g *gateServiceImpl) GetPlugin(plugin *api.Plugin) (*api.Plugin, error) {
 	q.Set("id", plugin.Id)
 	u.RawQuery = q.Encode()
 
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	resp, err := client.Get(u.String())
 	if err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (g *gateServiceImpl) GetPlugin(plugin *api.Plugin) (*api.Plugin, error) {
 }
 
 func (g *gateServiceImpl) InsertPlugin(plugin *api.Plugin) error {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	addr := fmt.Sprintf("%s%s:%s/api/plugins", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -208,7 +208,7 @@ func (g *gateServiceImpl) InsertPlugin(plugin *api.Plugin) error {
 	buf := &bytes.Buffer{}
 	buf.Write(bs)
 
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	resp, err := client.Post(u.String(), "application/json", buf)
 	if err != nil {
 		return err
@@ -219,7 +219,7 @@ func (g *gateServiceImpl) InsertPlugin(plugin *api.Plugin) error {
 }
 
 func (g *gateServiceImpl) UpdatePlugin(updatedPlugin *api.Plugin) error {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	addr := fmt.Sprintf("%s%s:%s/api/plugins", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -235,7 +235,7 @@ func (g *gateServiceImpl) UpdatePlugin(updatedPlugin *api.Plugin) error {
 	buf := &bytes.Buffer{}
 	buf.Write(bs)
 
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	req, err := http.NewRequest(http.MethodPatch, u.String(), buf)
 	if err != nil {
 		return err
@@ -251,7 +251,7 @@ func (g *gateServiceImpl) UpdatePlugin(updatedPlugin *api.Plugin) error {
 }
 
 func (g *gateServiceImpl) InsertReadme(user *api.User, readme *api.Readme) error {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/readmes", scheme, g.Host, g.Port))
 	if err != nil {
@@ -266,7 +266,7 @@ func (g *gateServiceImpl) InsertReadme(user *api.User, readme *api.Readme) error
 		return err
 	}
 	buf := bytes.NewBuffer([]byte(readmeJSON))
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
 	if err != nil {
 		return err
@@ -284,7 +284,7 @@ func (g *gateServiceImpl) InsertReadme(user *api.User, readme *api.Readme) error
 }
 
 func (g *gateServiceImpl) GetReadme(plugin *api.Plugin) (*api.Readme, error) {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/readmes", scheme, g.Host, g.Port))
 	if err != nil {
@@ -294,7 +294,7 @@ func (g *gateServiceImpl) GetReadme(plugin *api.Plugin) (*api.Readme, error) {
 	q.Add("name", plugin.Name)
 	q.Add("id", plugin.Id)
 	u.RawQuery = q.Encode()
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	resp, err := client.Get(u.String())
 	if err != nil {
 		return nil, err
@@ -314,7 +314,7 @@ func (g *gateServiceImpl) GetReadme(plugin *api.Plugin) (*api.Readme, error) {
 }
 
 func (g *gateServiceImpl) UpdateReadme(user *api.User, readme *api.Readme) error {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/readmes", scheme, g.Host, g.Port))
 	if err != nil {
@@ -329,7 +329,7 @@ func (g *gateServiceImpl) UpdateReadme(user *api.User, readme *api.Readme) error
 		return err
 	}
 	buf := bytes.NewBuffer([]byte(readmeJSON))
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	req, err := http.NewRequest(http.MethodPatch, u.String(), buf)
 	if err != nil {
 		return err
@@ -347,7 +347,7 @@ func (g *gateServiceImpl) UpdateReadme(user *api.User, readme *api.Readme) error
 }
 
 func (g *gateServiceImpl) UpdateUser(updatedUser *api.User) error {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	addr := fmt.Sprintf("%s%s:%s/api/users", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -362,7 +362,7 @@ func (g *gateServiceImpl) UpdateUser(updatedUser *api.User) error {
 
 	buf := &bytes.Buffer{}
 	buf.Write(updatedBs)
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	req, err := http.NewRequest(http.MethodPatch, u.String(), buf)
 	if err != nil {
 		return err
@@ -384,7 +384,7 @@ func (g *gateServiceImpl) UpdateUser(updatedUser *api.User) error {
 }
 
 func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	addr := fmt.Sprintf("%s%s:%s/api/users", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -398,7 +398,7 @@ func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
 	q.Set("email", user.Email)
 	u.RawQuery = q.Encode()
 
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, err
@@ -433,7 +433,7 @@ func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
 }
 
 func (g *gateServiceImpl) InsertUser(user *api.User) error {
-	scheme := internal.GetScheme()
+	scheme := "https://"
 
 	addr := fmt.Sprintf("%s%s:%s/api/users", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -449,7 +449,7 @@ func (g *gateServiceImpl) InsertUser(user *api.User) error {
 	buf := &bytes.Buffer{}
 	buf.Write(bs)
 
-	client := newGateHttpClient()
+	client := internal.NewBasicClient()
 	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
 	if err != nil {
 		return err

@@ -74,6 +74,8 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// UPDATE PLUGIN DB WITH THE LOCATION TO THE FILE POSSIBLY DELETE IF FAILURE :)(
+
 		fmt.Println("Successfully uploaded to " + loc)
 	}
 

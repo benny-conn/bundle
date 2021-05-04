@@ -14,6 +14,6 @@ func main() {
 	port := os.Getenv("WEB_PORT")
 
 	addr := fmt.Sprintf(":%v", port)
-	internal.RunWebServer(srv, addr, "web")
+	internal.RunPublicServer(srv, addr, "web")
 
 }

@@ -22,10 +22,10 @@ func getMongoSession() (*Mongo, error) {
 	mg := &Mongo{}
 
 	url := os.Getenv("MONGO_URL")
-	mode := os.Getenv("MODE")
+	mode := os.Getenv("MONGO_AUTH")
 
 	opts := options.Client().ApplyURI(url)
-	if mode == "DOCKER" {
+	if mode == "TRUE" {
 		user := os.Getenv("MONGO_INITDB_ROOT_USERNAME")
 		pass := os.Getenv("MONGO_INITDB_ROOT_PASSWORD")
 

@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/bennycio/bundle/api"
@@ -27,43 +29,58 @@ var installCmd = &cobra.Command{
 
 		bundlePlugins, err := getBundleFilePlugins()
 		if err != nil {
-			panic(err)
+			log.Fatalf("error: %s\n", err.Error())
 		}
 		if bundlePlugins == nil {
 			bundlePlugins = make(map[string]string)
 		}
 
-		// fmt.Println("ASKJDHKS ", args)
-		// if args[0] != "" {
-		// 	_, err = installPlugin(args[0], SpecifiedVersion)
-		// 	if err != nil {
-		// 		panic(err)
-		// 	}
-		// 	bundlePlugins[args[0]] = SpecifiedVersion
-		// 	writePluginsToBundle(bundlePlugins)
-		// 	return
-		// }
-
 		var wg sync.WaitGroup
-		length := len(bundlePlugins)
+		var length int
+		if len(args) > 0 {
+			length = len(args)
+		} else {
+			length = len(bundlePlugins)
+		}
 		wg.Add(length)
 		totalProgressBar := progressbar.Default(int64(length))
-		for k, v := range bundlePlugins {
-			go func(pluginName string, bundleVersion string) {
-				defer wg.Done()
-				defer totalProgressBar.Add(1)
-				finalVersion, err := installPlugin(pluginName, bundleVersion)
-				if finalVersion != v && v != "latest" {
-					bundlePlugins[k] = finalVersion
+		if len(args) > 0 {
+			for _, v := range args {
+				version := "latest"
+				spl := strings.Split(v, ":")
+				if len(spl) > 0 {
+					version = spl[1]
 				}
-				if err != nil {
-					panic(err)
-				}
-			}(k, v)
+				go func(pluginName string, bundleVersion string) {
+					defer wg.Done()
+					defer totalProgressBar.Add(1)
+					finalVersion, err := installPlugin(pluginName, bundleVersion)
+					if finalVersion != bundleVersion && bundleVersion != "latest" {
+						bundlePlugins[pluginName] = finalVersion
+					}
+					if err != nil {
+						fmt.Printf("error: %s\n", err.Error())
+					}
+				}(v, version)
+			}
+		} else {
+			for k, v := range bundlePlugins {
+				go func(pluginName string, bundleVersion string) {
+					defer wg.Done()
+					defer totalProgressBar.Add(1)
+					finalVersion, err := installPlugin(pluginName, bundleVersion)
+					if finalVersion != bundleVersion && bundleVersion != "latest" {
+						bundlePlugins[pluginName] = finalVersion
+					}
+					if err != nil {
+						fmt.Printf("error: %s\n", err.Error())
+					}
+				}(k, v)
+			}
 		}
 		err = writePluginsToBundle(bundlePlugins)
 		if err != nil {
-			panic(err)
+			log.Fatalf("error: %s\n", err.Error())
 		}
 		wg.Wait()
 	},
@@ -71,7 +88,6 @@ var installCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(installCmd)
-	installCmd.PersistentFlags().StringVarP(&SpecifiedVersion, "version", "v", "latest", "Specify version for installing")
 }
 
 func installPlugin(pluginName string, bundleVersion string) (string, error) {

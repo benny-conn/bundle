@@ -32,25 +32,25 @@ func MakeServerFromMux(mux http.Handler) *http.Server {
 	// set timeouts so that a slow or malicious client doesn't
 	// hold resources forever
 	return &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      mux,
 	}
 }
 
-func RunWebServer(srv *http.Server, addr string, service string) {
-
+func RunPublicServer(srv *http.Server, addr string, service string) {
+	srv.Addr = addr
 	if os.Getenv("MODE") == "PROD" {
 
-		dataDir := "./tls/" + service
+		dataDir := "./tls/"
 
 		m := &autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist("bundlemc.io", "*.bundlemc.io"),
 			Cache:      autocert.DirCache(dataDir),
 		}
-		srv.Addr = ":443"
+
 		srv.TLSConfig = m.TLSConfig()
 
 		go func() {
@@ -59,20 +59,21 @@ func RunWebServer(srv *http.Server, addr string, service string) {
 				log.Fatalf("httpsSrv.ListendAndServeTLS() failed with %s", err)
 			}
 		}()
-		if m != nil {
+		if service == "web" {
+			srv.Addr = ":80"
+			if m != nil {
+				srv.Handler = m.HTTPHandler(srv.Handler)
+			}
 			srv.Handler = m.HTTPHandler(srv.Handler)
-		}
-		srv.Addr = addr
-		srv.Handler = m.HTTPHandler(srv.Handler)
-		fmt.Printf("Started %s server on %s\n", service, addr)
-		err := srv.ListenAndServe()
-		if err != nil {
-			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+			fmt.Printf("Started %s server on %s\n", service, addr)
+			err := srv.ListenAndServe()
+			if err != nil {
+				log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+			}
 		}
 	} else {
-		srv.Addr = addr
 		fmt.Printf("Started %s server on %s\n", service, addr)
-		err := srv.ListenAndServe()
+		err := srv.ListenAndServeTLS("out/server.crt", "out/server.key")
 		if err != nil {
 			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
 		}
@@ -94,6 +95,7 @@ func RunInternalServer(srv *http.Server, addr string, service string) {
 		ClientCAs:  certPool,
 		MinVersion: tls.VersionTLS12,
 	}
+
 	fmt.Printf("Started %s server on %s\n", service, addr)
 
 	err = srv.ListenAndServeTLS("out/server.crt", "out/server.key")
@@ -103,14 +105,38 @@ func RunInternalServer(srv *http.Server, addr string, service string) {
 
 }
 
-func GetScheme() string {
-	// mode := os.Getenv("MODE")
+func NewTlsClient() http.Client {
 
-	// if mode == "PROD" {
-	// 	return "https://"
-	// } else {
-	// 	return "http://"
-	// }
-	return "https://"
+	cert, err := ioutil.ReadFile("out/Bundle.crt")
+	if err != nil {
+		log.Fatalf("could not open certificate file: %v", err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(cert)
 
+	clientCert, err := tls.LoadX509KeyPair("out/client.crt", "out/client.key")
+	if err != nil {
+		log.Fatalf("could not load certificate: %v", err)
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs:      caCertPool,
+		Certificates: []tls.Certificate{clientCert},
+	}
+	transport := &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
+	client := http.Client{
+		Transport: transport,
+		Timeout:   1 * time.Minute,
+	}
+	return client
+}
+
+func NewBasicClient() http.Client {
+
+	client := http.Client{
+		Timeout: 1 * time.Minute,
+	}
+	return client
 }

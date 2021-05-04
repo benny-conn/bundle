@@ -1,6 +1,41 @@
 
 version = 1.0
 
+define dev-script = 
+	export DATABASE_PORT=8040
+	export REPO_PORT=8060
+	export WEB_PORT=8080
+	export GATE_PORT=8020
+	export GATE_HOST=localhost
+	export WEB_HOST=localhost
+	export REPO_HOST=localhost
+	export DATABASE_HOST=localhost
+	export MODE=DEV
+	export AUTH0_ID=MpOxXFrk5XhR7gKcWIhYVZTNDDinx4ZT
+	export AUTH0_SECRET=jdksX1I0hZ8vej4M6LW-VRxtIiRFVXr2MMVYK0K9FvD8EtsiiRfATnKszcb2SvrG
+	export AUTH0_AUD=https://bundlemc.io/auth
+	export MONGO_URL="mongodb+srv://benny-bundle:thisismypassword1@bundle.mveuj.mongodb.net/main?retryWrites=true&w=majority"
+	export MONGO_AUTH="FALSE"
+	export AWS_REGION=us-east-1
+	export AWS_BUCKET=bundle-repository
+	go run cmd/gate/gate.go &
+	go run cmd/db/db.go &
+	go run cmd/repo/repo.go & 
+	go run cmd/web/web.go && fg
+endef
+
+define clean-script =
+	docker-compose down
+	docker rm -f $(docker ps -a -q)
+	docker volume rm $(docker volume ls -q)
+	fuser -k 8020/tcp 
+	fuser -k 8040/tcp 
+	fuser -k 8060/tcp 
+	fuser -k 8080/tcp 
+endef
+
+
+
 
 all: docker-run
 
@@ -12,31 +47,25 @@ docker-run: docker-build
 	docker-compose up -d
 
 dev:
-	scripts/run.sh
+	$(value dev-script)
+
+
+.ONESHELL: dev clean cert
 
 cert:
-	rm -r out/
-	mkdir out
-	certstrap init --common-name "Bundle" 
-	certstrap request-cert -domain "localhost,bundlemc.io,*.bundlemc.io,web,db,mongo,gate,repo" -ip "127.0.0.1,::1" --common-name "server"
-	certstrap sign server --CA Bundle
-	certstrap request-cert -domain "localhost,bundlemc.io,*.bundlemc.io,web,db,mongo,gate,repo" -ip "127.0.0.1,::1" --common-name "client"
-	certstrap sign client --CA Bundle
-	rm tls/*.cert
-	rm tls/*.key
-	rm tls/*.srl
-	rm tls/*.csr
-	rm tls/*.pem    
-	openssl genrsa -out tls/ca.key 4096
-	openssl req -new -x509 -key tls/ca.key -sha256 -subj "/C=US/ST=California/O=BundleMC" -days 1825 -out tls/ca.cert
-	openssl genrsa -out tls/service.key 4096
-	openssl req -new -key tls/service.key -out tls/service.csr -config tls/cert.conf
-	openssl x509 -req -in tls/service.csr -CA tls/ca.cert -CAkey tls/ca.key -CAcreateserial \
-		-out tls/service.pem -days 1825 -sha256 -extfile tls/cert.conf -extensions req_ext
+	./cert.sh
 
 
-.PHONY: clean help
+proto:
+	protoc --gofast_out=plugins=grpc:. ./api/api.proto
+
+
+.PHONY: clean
 clean:
-	scripts/kill.sh
+	$(value clean-script)
+
+full-clean:
+	$(value clean-script)
+	docker system prune -a --volumes
 
 

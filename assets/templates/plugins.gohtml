@@ -78,7 +78,7 @@
     {{if .Readme}}
     <div class="my-4">
       <h2>{{.Plugin.Name}}</h2>
-      <h4>{{.Plugin.Author}}</h4>
+      <h4>{{.Plugin.Author.Username}}</h4>
     </div>
     <div class="card">
       {{.Readme}}
@@ -86,7 +86,7 @@
     {{else}}
     <div class="my-4">
       <h2>{{.Plugin.Name}}</h2>
-      <h4>{{.Plugin.Author}}</h4>
+      <h4>{{.Plugin.Author.Username}}</h4>
     </div>
     {{ end }}
   </div>
