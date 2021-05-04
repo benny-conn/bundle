@@ -13,3 +13,5 @@ tls/
 bundlemc.io/
 .temp
 out/
+cert/
+localhost/

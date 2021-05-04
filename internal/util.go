@@ -1,7 +1,10 @@
 package internal
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -69,22 +72,6 @@ func RunWebServer(srv *http.Server, addr string, service string) {
 	} else {
 		srv.Addr = addr
 		fmt.Printf("Started %s server on %s\n", service, addr)
-		err := srv.ListenAndServeTLS("tls/service.pem", "tls/service.key")
-		if err != nil {
-			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
-		}
-	}
-}
-
-func RunInternalServer(srv *http.Server, addr string, service string) {
-	srv.Addr = addr
-	fmt.Printf("Started %s server on %s\n", service, addr)
-	if os.Getenv("MODE") == "PROD" {
-		err := srv.ListenAndServeTLS("tls/service.pem", "tls/service.key")
-		if err != nil {
-			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
-		}
-	} else {
 		err := srv.ListenAndServe()
 		if err != nil {
 			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
@@ -92,13 +79,38 @@ func RunInternalServer(srv *http.Server, addr string, service string) {
 	}
 }
 
-func GetScheme() string {
-	mode := os.Getenv("MODE")
+func RunInternalServer(srv *http.Server, addr string, service string) {
 
-	if mode == "PROD" {
-		return "https://"
-	} else {
-		return "http://"
+	caCertFile, err := ioutil.ReadFile("out/Bundle.crt")
+	if err != nil {
+		log.Fatalf("error reading CA certificate: %v", err)
 	}
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(caCertFile)
+
+	srv.Addr = addr
+	srv.TLSConfig = &tls.Config{
+		ClientAuth: tls.RequireAndVerifyClientCert,
+		ClientCAs:  certPool,
+		MinVersion: tls.VersionTLS12,
+	}
+	fmt.Printf("Started %s server on %s\n", service, addr)
+
+	err = srv.ListenAndServeTLS("out/server.crt", "out/server.key")
+	if err != nil {
+		log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+	}
+
+}
+
+func GetScheme() string {
+	// mode := os.Getenv("MODE")
+
+	// if mode == "PROD" {
+	// 	return "https://"
+	// } else {
+	// 	return "http://"
+	// }
+	return "https://"
 
 }

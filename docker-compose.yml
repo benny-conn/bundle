@@ -38,13 +38,7 @@ services:
       - "27017:27017"
     volumes:
       - /data/db
-    env_file:
-      - ".env"
-  vault:
-    image: vault:latest
-    ports:
-      - "8200:8200"
-    volumes:
-      - /vault/file
+      - /home/mongodb
+      - /docker-entrypoint-initdb.d
     env_file:
       - ".env"

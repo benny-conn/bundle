@@ -2,6 +2,9 @@ package gate
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
@@ -26,16 +29,28 @@ func NewGateServer() *http.Server {
 
 func newGateHttpClient() http.Client {
 
-	clientCert, _ := tls.LoadX509KeyPair("tls/service.pem", "tls/service.key")
-	tlsConfig := tls.Config{
+	cert, err := ioutil.ReadFile("out/Bundle.crt")
+	if err != nil {
+		log.Fatalf("could not open certificate file: %v", err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(cert)
+
+	clientCert, err := tls.LoadX509KeyPair("out/client.crt", "out/client.key")
+	if err != nil {
+		log.Fatalf("could not load certificate: %v", err)
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs:      caCertPool,
 		Certificates: []tls.Certificate{clientCert},
 	}
-	transport := http.Transport{
-		TLSClientConfig: &tlsConfig,
+	transport := &http.Transport{
+		TLSClientConfig: tlsConfig,
 	}
 	client := http.Client{
-		Transport: &transport,
-		Timeout:   20 * time.Second,
+		Transport: transport,
+		Timeout:   1 * time.Minute,
 	}
 	return client
 }
