@@ -35,13 +35,13 @@
               <img
                 id="{{.Name}}-thumbnail"
                 class="img-thumbnail thumbnail"
-                src="https://via.placeholder.com/80.png"
+                src="{{.Thumbnail}}"
               />
               {{else}}
               <img
                 id="{{.Name}}-thumbnail"
                 class="img-thumbnail thumbnail"
-                src="{{.Thumbnail}}"
+                src="https://via.placeholder.com/80.png"
               />
               {{ end }}
             </div>
@@ -77,16 +77,62 @@
   <div class="container">
     {{if .Readme}}
     <div class="my-4">
+      {{if .User}}
+      {{if eq .User.Id .Author.Id}}
+      <div class="row justify-content-between">
+        <div class="col-8">
+          <h2>{{.Plugin.Name}}</h2>
+          <h4>{{.Plugin.Author.Username}}</h4>
+        </div>
+        <div class="col-4">
+          <form action="/plugins">
+            <input
+              type="hidden"
+              id="plugin-id"
+              name="plugin-id"
+              value="{{.Plugin.Id}}"
+            />
+            <input type="file" id="thumbnail-upload" name="thumbnail" />
+            <input type="submit" />
+          </form>
+        </div>
+      </div>
+      {{ end }}
+      {{ else }}
       <h2>{{.Plugin.Name}}</h2>
       <h4>{{.Plugin.Author.Username}}</h4>
+      {{ end }}
     </div>
     <div class="card">
       {{.Readme}}
     </div>
     {{else}}
     <div class="my-4">
+      {{if .User}}
+      {{if eq .User.Id .Plugin.Author.Id}}
+      <div class="row justify-content-between">
+        <div class="col-8">
+          <h2>{{.Plugin.Name}}</h2>
+          <h4>{{.Plugin.Author.Username}}</h4>
+        </div>
+        <div class="col-4">
+          <form action="/plugins">
+            <input
+              type="hidden"
+              id="plugin-id"
+              name="plugin-id"
+              value="{{.Plugin.Id}}"
+            />
+            <input type="file" id="thumbnail-upload" name="thumbnail" />
+            <input type="submit" />
+          </form>
+        </div>
+      </div>
+      {{ end }}
+      {{ else }}
       <h2>{{.Plugin.Name}}</h2>
       <h4>{{.Plugin.Author.Username}}</h4>
+      {{ end }}
     </div>
     {{ end }}
   </div>
