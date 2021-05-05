@@ -29,29 +29,28 @@
         <div>
           <!-- prettier-ignore -->
           {{ range .Plugins }}
-          <div class="plugin row">
-            <div class="col-6 col-md-2">
-              {{if .Thumbnail}}
-              <img
-                id="{{.Name}}-thumbnail"
-                class="img-thumbnail thumbnail"
-                src="{{.Thumbnail}}"
-              />
-              {{else}}
-              <img
-                id="{{.Name}}-thumbnail"
-                class="img-thumbnail thumbnail"
-                src="https://via.placeholder.com/80.png"
-              />
-              {{ end }}
+          <a href="?plugin={{.Name}}">
+            <div class="plugin row">
+              <div class="col-6 col-md-2">
+                {{if .Thumbnail}}
+                <img
+                  class="plugins-thumbnail img-thumbnail thumbnail"
+                  src="{{.Thumbnail}}"
+                />
+                {{else}}
+                <img
+                  class="plugins-thumbnail img-thumbnail thumbnail"
+                  src="https://via.placeholder.com/80.png"
+                />
+                {{ end }}
+              </div>
+              <div class="col-6 col-md-10">
+                <h4>{{.Name}}</h4>
+                <h6>Author: {{.Author.Username}}</h6>
+                <p>{{.Description}}</p>
+              </div>
             </div>
-            <div class="col-6 col-md-10">
-              <h4>{{.Name}}</h4>
-              <h6>Author: {{.Author.Username}}</h6>
-              <p>{{.Description}}</p>
-            </div>
-            <a class="stretched-link" href="?plugin={{.Name}}"></a>
-          </div>
+          </a>
           {{ end }}
         </div>
       </div>
@@ -75,66 +74,95 @@
 {{define "plugin-page"}}
 <body>
   <div class="container">
+    {{template "plugin-header" .}}
     {{if .Readme}}
-    <div class="my-4">
-      {{if .User}}
-      {{if eq .User.Id .Author.Id}}
-      <div class="row justify-content-between">
-        <div class="col-8">
-          <h2>{{.Plugin.Name}}</h2>
-          <h4>{{.Plugin.Author.Username}}</h4>
-        </div>
-        <div class="col-4">
-          <form action="/plugins">
-            <input
-              type="hidden"
-              id="plugin-id"
-              name="plugin-id"
-              value="{{.Plugin.Id}}"
-            />
-            <input type="file" id="thumbnail-upload" name="thumbnail" />
-            <input type="submit" />
-          </form>
-        </div>
-      </div>
-      {{ end }}
-      {{ else }}
-      <h2>{{.Plugin.Name}}</h2>
-      <h4>{{.Plugin.Author.Username}}</h4>
-      {{ end }}
-    </div>
     <div class="card">
       {{.Readme}}
     </div>
     {{else}}
-    <div class="my-4">
-      {{if .User}}
-      {{if eq .User.Id .Plugin.Author.Id}}
-      <div class="row justify-content-between">
-        <div class="col-8">
-          <h2>{{.Plugin.Name}}</h2>
-          <h4>{{.Plugin.Author.Username}}</h4>
-        </div>
-        <div class="col-4">
-          <form action="/plugins">
-            <input
-              type="hidden"
-              id="plugin-id"
-              name="plugin-id"
-              value="{{.Plugin.Id}}"
-            />
-            <input type="file" id="thumbnail-upload" name="thumbnail" />
-            <input type="submit" />
-          </form>
-        </div>
-      </div>
-      {{ end }}
-      {{ else }}
-      <h2>{{.Plugin.Name}}</h2>
-      <h4>{{.Plugin.Author.Username}}</h4>
-      {{ end }}
-    </div>
     {{ end }}
   </div>
 </body>
+{{ end }}
+
+{{define "plugin-header"}}
+<div class="my-4">
+  {{if .User}}
+  {{if eq .User.Id .Plugin.Author.Id}}
+  <div class="row justify-content-between">
+    <div class="plugin-info col-9">
+      {{if .Plugin.Thumbnail}}
+      <img
+        class="plugin-thumbnail img-thumbnail thumbnail"
+        src="{{.Plugin.Thumbnail}}"
+      />
+      {{else}}
+      <img
+        class="plugin-thumbnail img-thumbnail thumbnail"
+        src="https://via.placeholder.com/80.png"
+      />
+      {{ end }}
+      <div class="text">
+        <h2>{{.Plugin.Name}}</h2>
+        <h4>{{.Plugin.Author.Username}}</h4>
+      </div>
+    </div>
+    <div class="col-3">
+      <form id="thumbnail-form" action="/plugins">
+        <input
+          type="hidden"
+          id="plugin-id"
+          name="plugin-id"
+          value="{{.Plugin.Id}}"
+        />
+        <label for="thumbnail" class="form-label">Upload Thumbnail</label>
+        <input
+          type="file"
+          id="thumbnail-upload"
+          class="form-control"
+          name="thumbnail"
+          accept=".png,.jpg,.jpeg,.webp"
+        />
+        <p class="warning-text hidden" id="invalid-upload"></p>
+      </form>
+      <script>
+        $("#thumbnail-upload").on("change", function (e) {
+          var files = e.currentTarget.files; // puts all files into an array
+
+          var filesize = (files[0].size / 1024 / 1024).toFixed(4); // MB
+
+          if (
+            files[0].name != "item" &&
+            typeof files[0].name != "undefined" &&
+            filesize <= 10
+          ) {
+            $("thumbnail-form").submit();
+          } else {
+            $("invalid-upload").removeClass("hidden");
+          }
+        });
+      </script>
+    </div>
+  </div>
+  {{ end }}
+  {{ else }}
+  <div class="plugin-info">
+    {{if .Plugin.Thumbnail}}
+    <img
+      class="plugin-thumbnail img-thumbnail thumbnail"
+      src="{{.Plugin.Thumbnail}}"
+    />
+    {{else}}
+    <img
+      class="plugin-thumbnail img-thumbnail thumbnail"
+      src="https://via.placeholder.com/80.png"
+    />
+    {{ end }}
+    <div class="text">
+      <h2>{{.Plugin.Name}}</h2>
+      <h4>{{.Plugin.Author.Username}}</h4>
+    </div>
+  </div>
+  {{ end }}
+</div>
 {{ end }}

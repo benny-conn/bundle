@@ -17,8 +17,8 @@ func NewWebServer() *http.Server {
 	pluginHandler := http.HandlerFunc(pluginsHandlerFunc)
 	profileHandler := http.HandlerFunc(profileHandlerFunc)
 
-	mux.Handle("/", noGate(rootHandler))
-	mux.Handle("/plugins", noGate(pluginHandler))
+	mux.Handle("/", rootHandler)
+	mux.Handle("/plugins", pluginHandler)
 	mux.Handle("/profile", loginGate(profileHandler))
 	mux.Handle("/login", loginHandler)
 	mux.Handle("/logout", logoutHandler)
@@ -39,7 +39,7 @@ func NewWebServer() *http.Server {
 		AllowCredentials: true,
 	})
 
-	handler := c.Handler(mux)
+	handler := refresh(c.Handler(mux))
 
 	return internal.MakeServerFromMux(handler)
 }

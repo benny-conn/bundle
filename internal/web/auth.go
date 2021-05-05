@@ -23,7 +23,7 @@ func newAuthToken(user *api.User) (string, error) {
 	claims := CustomClaims{
 		User: user,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
+			ExpiresAt: time.Now().Add(10 * time.Minute).Unix(),
 			Issuer:    "bundle",
 		},
 	}
@@ -142,7 +142,7 @@ func loginGate(next http.Handler) http.Handler {
 	})
 }
 
-func noGate(next http.Handler) http.Handler {
+func refresh(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		token, err := req.Cookie("access_token")
 		if err != nil {
