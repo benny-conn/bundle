@@ -86,10 +86,6 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 }
 
 func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
-	if req.Name == "" {
-		return nil, errors.New("no plugin name provided")
-	}
-
 	session, err := getMongoSession()
 	if err != nil {
 		return nil, err

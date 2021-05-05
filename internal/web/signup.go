@@ -34,7 +34,7 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		tokenCookie := newAccessCookie(token)
 		http.SetCookie(w, tokenCookie)
 
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		w.WriteHeader(http.StatusFound)
 
 		return
 	}

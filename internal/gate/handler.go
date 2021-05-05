@@ -302,22 +302,20 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 
-		err := r.ParseMultipartForm(64 << 20)
+		err := r.ParseMultipartForm(32 << 20)
 		if err != nil {
 			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		values := r.MultipartForm.Value
-
 		user := &api.User{
-			Username: values["username"][0],
-			Password: values["password"][0],
+			Username: r.FormValue("username"),
+			Password: r.FormValue("password"),
 		}
 		plugin := &api.Plugin{
-			Name:    values["name"][0],
-			Version: values["version"][0],
+			Name:    r.FormValue("name"),
+			Version: r.FormValue("version"),
 		}
 
 		dbUser, err := gs.GetUser(user)
@@ -353,6 +351,76 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
 			return
+		}
+
+	}
+}
+
+func repoThumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	repo := repo.NewRepoService("", "")
+	gs := NewGateService("", "")
+
+	switch r.Method {
+
+	case http.MethodPost:
+
+		err := r.ParseMultipartForm(32 << 20)
+		if err != nil {
+			fmt.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		user := &api.User{
+			Id: r.FormValue("user"),
+		}
+		plugin := &api.Plugin{
+			Id: r.FormValue("plugin"),
+		}
+
+		dbUser, err := gs.GetUser(user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		file, h, err := r.FormFile("thumbnail")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if h.Size > (5 << 20) {
+			http.Error(w, "file too large", http.StatusBadRequest)
+			return
+		}
+
+		if plugin.Id == "" {
+			fmt.Println("HMM")
+			err = repo.UploadThumbnail(dbUser, nil, file)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+		} else {
+			// expected end of json input on thumbnail upload why??
+			dbPlugin, err := gs.GetPlugin(plugin)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			err = repo.UploadThumbnail(dbUser, dbPlugin, file)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+			dbPlugin.Thumbnail = fmt.Sprintf("https://bundle-repository.s3-us-east-1.amazonaws.com/%s/%s/THUMBNAIL.webp", plugin.Author, plugin.Id)
+
+			err = gs.UpdatePlugin(dbPlugin)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 	}

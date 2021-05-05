@@ -41,14 +41,14 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		}
 		tokenCookie := newAccessCookie(token)
 		http.SetCookie(w, tokenCookie)
-		http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
+		w.WriteHeader(http.StatusFound)
 	}
 
 	if req.Method == http.MethodGet {
 		_, err := getUserFromCookie(req)
 
 		if err == nil {
-			http.Redirect(w, req, "/", http.StatusSeeOther)
+			http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
 			return
 		}
 

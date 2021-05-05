@@ -105,16 +105,16 @@
       <div class="text">
         <h2>{{.Plugin.Name}}</h2>
         <h4>{{.Plugin.Author.Username}}</h4>
+        <h6>{{.Plugin.Description}}</h6>
       </div>
     </div>
     <div class="col-3">
-      <form id="thumbnail-form" action="/plugins">
-        <input
-          type="hidden"
-          id="plugin-id"
-          name="plugin-id"
-          value="{{.Plugin.Id}}"
-        />
+      <form
+        id="thumbnail-form"
+        action="/plugins"
+        method="POST"
+        enctype="multipart/form-data"
+      >
         <label for="thumbnail" class="form-label">Upload Thumbnail</label>
         <input
           type="file"
@@ -123,25 +123,16 @@
           name="thumbnail"
           accept=".png,.jpg,.jpeg,.webp"
         />
-        <p class="warning-text hidden" id="invalid-upload"></p>
+        <div class="mt-2">
+          <input
+            class="btn btn-secondary btn-sm"
+            type="submit"
+            value="Upload"
+          />
+        </div>
+        <input type="hidden" id="username" name="user" value="{{.User.Id}}" />
+        <input type="hidden" id="plugin" name="plugin" value="{{.Plugin.Id}}" />
       </form>
-      <script>
-        $("#thumbnail-upload").on("change", function (e) {
-          var files = e.currentTarget.files; // puts all files into an array
-
-          var filesize = (files[0].size / 1024 / 1024).toFixed(4); // MB
-
-          if (
-            files[0].name != "item" &&
-            typeof files[0].name != "undefined" &&
-            filesize <= 10
-          ) {
-            $("thumbnail-form").submit();
-          } else {
-            $("invalid-upload").removeClass("hidden");
-          }
-        });
-      </script>
     </div>
   </div>
   {{ end }}
@@ -161,6 +152,7 @@
     <div class="text">
       <h2>{{.Plugin.Name}}</h2>
       <h4>{{.Plugin.Author.Username}}</h4>
+      <h6>{{.Plugin.Description}}</h6>
     </div>
   </div>
   {{ end }}

@@ -88,28 +88,24 @@ func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
 	collection := session.Client.Database("users").Collection("users")
 
 	decodedUser := &User{}
-
 	get := apiToOrmUser(req)
 	err = validateUserGet(get)
 	if err != nil {
 		return nil, err
 	}
-
 	switch {
 	case get.Id != primitive.NilObjectID:
 		err = collection.FindOne(session.Ctx, bson.D{{"_id", get.Id}}).Decode(decodedUser)
-	case req.Email == "":
+	case get.Email == "":
 		err = collection.FindOne(session.Ctx, bson.D{{"username", get.Username}}).Decode(decodedUser)
-	case req.Username == "":
+	case get.Username == "":
 		err = collection.FindOne(session.Ctx, bson.D{{"email", caseInsensitive(get.Email)}}).Decode(decodedUser)
 	default:
 		err = collection.FindOne(session.Ctx, bson.D{{"username", get.Username}, {"email", caseInsensitive(get.Email)}}).Decode(decodedUser)
 	}
-
 	if err != nil {
 		return nil, err
 	}
-
 	return ormToApiUser(*decodedUser), nil
 }
 

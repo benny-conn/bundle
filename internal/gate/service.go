@@ -18,6 +18,7 @@ import (
 type gateService interface {
 	DownloadPlugin(plugin *api.Plugin) ([]byte, error)
 	UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error
+	UploadThumbnail(user *api.User, plugin *api.Plugin, data io.Reader) error
 	PaginatePlugins(page int, count int) ([]*api.Plugin, error)
 	GetPlugin(plugin *api.Plugin) (*api.Plugin, error)
 	InsertPlugin(plugin *api.Plugin) error
@@ -81,10 +82,13 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	writer.SetBoundary("XXX")
 
-	if user.Username == "" || user.Password == "" || plugin.Name == "" || plugin.Version == "" {
-		return errors.New("missing required fields")
+	if user != nil && plugin != nil {
+		if user.Username == "" || user.Password == "" || plugin.Name == "" || plugin.Version == "" {
+			return errors.New("missing required fields")
+		}
+	} else {
+		return errors.New("specify a user and plugin")
 	}
 
 	writer.WriteField("username", user.Username)
@@ -113,7 +117,64 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	}
 
 	client := internal.NewBasicClient()
-	resp, err := client.Post(u.String(), "multipart/form-data; boundary=XXX", body)
+	resp, err := client.Post(u.String(), writer.FormDataContentType(), body)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	return nil
+}
+
+func (g *gateServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, data io.Reader) error {
+	scheme := "https://"
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/repo/thumbnails", scheme, g.Host, g.Port))
+	if err != nil {
+		return err
+	}
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	if user == nil && plugin == nil {
+		return errors.New("specify a user or plugin")
+	}
+	if plugin != nil {
+		if plugin.Id == "" {
+			return errors.New("specify a plugin id")
+		}
+		writer.WriteField("plugin", plugin.Id)
+	}
+	if user != nil {
+		if user.Id == "" {
+			return errors.New("specify a user id")
+		}
+		writer.WriteField("user", user.Id)
+	}
+
+	part, err := writer.CreateFormFile("thumbnail", "THUMBNAIL.webp")
+	if err != nil {
+		return err
+	}
+
+	bs, err := io.ReadAll(data)
+	if err != nil {
+		return err
+	}
+	_, err = part.Write(bs)
+	if err != nil {
+		return err
+	}
+
+	err = writer.Close()
+
+	if err != nil {
+		return err
+	}
+
+	client := internal.NewBasicClient()
+
+	resp, err := client.Post(u.String(), writer.FormDataContentType(), body)
 	if err != nil {
 		return err
 	}
@@ -425,7 +486,6 @@ func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
 	err = json.Unmarshal(bs, result)
 
 	if err != nil {
-		fmt.Println(err.Error())
 		return nil, err
 	}
 

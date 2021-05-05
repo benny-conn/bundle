@@ -135,7 +135,6 @@ func (u *usersGrpcClientImpl) Insert(user *api.User) error {
 	client := api.NewUsersServiceClient(conn)
 	_, err = client.Insert(context.Background(), user)
 	if err != nil {
-		fmt.Println(err.Error())
 		return err
 	}
 

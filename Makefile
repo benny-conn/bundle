@@ -15,7 +15,7 @@ define dev-script =
 	export AUTH0_SECRET=jdksX1I0hZ8vej4M6LW-VRxtIiRFVXr2MMVYK0K9FvD8EtsiiRfATnKszcb2SvrG
 	export AUTH0_AUD=https://bundlemc.io/auth
 	export MONGO_URL="mongodb+srv://benny-bundle:thisismypassword1@bundle.mveuj.mongodb.net/main?retryWrites=true&w=majority"
-	export MONGO_AUTH="FALSE"
+	export MONGO_AUTH=FALSE
 	export AWS_REGION=us-east-1
 	export AWS_BUCKET=bundle-repository
 	go run cmd/gate/gate.go &
