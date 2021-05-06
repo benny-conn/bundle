@@ -41,6 +41,7 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		}
 		tokenCookie := newAccessCookie(token)
 		http.SetCookie(w, tokenCookie)
+		// TODO FIND REDIRECT AND MAKE ERRORS ACTUALLY SHOW SOMETHIN
 		w.WriteHeader(http.StatusFound)
 	}
 

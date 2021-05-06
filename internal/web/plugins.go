@@ -107,7 +107,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if h.Size > (5 << 20) {
+		if h.Size > (1 << 20) {
 			http.Error(w, "file too large", http.StatusBadRequest)
 			return
 		}

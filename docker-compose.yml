@@ -33,7 +33,10 @@ services:
     env_file:
       - ".env"
   mongo:
-    image: mongo:latest
+    # image: mongo:latest
+    build:
+      context: .
+      dockerfile: ./images/mongo/Dockerfile
     ports:
       - "27017:27017"
     volumes:
