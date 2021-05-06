@@ -46,6 +46,24 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
+			data.Page = pageNumber
+
+			math := func(i int, p int, op string) int {
+				result := 0
+				switch op {
+				case "add":
+					result = i + p
+				case "sub":
+					result = i - p
+				case "mul":
+					result = i * p
+				case "div":
+					result = i / p
+				}
+				return result
+			}
+			data.Math = math
+
 			plugins, err := gs.PaginatePlugins(pageNumber, perPageCount)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusNotFound)

@@ -10,6 +10,8 @@ type TemplateData struct {
 	User    *api.User
 	Plugin  *api.Plugin
 	Plugins []*api.Plugin
+	Page    int
+	Math    func(int, int, string) int
 	Readme  string
 }
 

@@ -26,33 +26,67 @@
     </div>
     <div class="row gx-4">
       <div class="col-sm-12 col-md-9 plugins-container">
-        <div>
-          <!-- prettier-ignore -->
-          {{ range .Plugins }}
-          <a href="?plugin={{.Name}}">
-            <div class="plugin row">
-              <div class="col-6 col-md-2">
-                {{if .Thumbnail}}
-                <img
-                  class="plugins-thumbnail img-thumbnail thumbnail"
-                  src="{{.Thumbnail}}"
-                />
-                {{else}}
-                <img
-                  class="plugins-thumbnail img-thumbnail thumbnail"
-                  src="https://via.placeholder.com/80.png"
-                />
-                {{ end }}
-              </div>
-              <div class="col-6 col-md-10">
-                <h4>{{.Name}}</h4>
-                <h6>Author: {{.Author.Username}}</h6>
-                <p>{{.Description}}</p>
-              </div>
+        <!-- prettier-ignore -->
+        {{ range .Plugins }}
+        <a href="?plugin={{.Name}}">
+          <div class="plugin row">
+            <div class="col-6 col-md-2">
+              {{if .Thumbnail}}
+              <img
+                class="plugins-thumbnail img-thumbnail thumbnail"
+                src="{{.Thumbnail}}"
+              />
+              {{else}}
+              <img
+                class="plugins-thumbnail img-thumbnail thumbnail"
+                src="https://via.placeholder.com/80.png"
+              />
+              {{ end }}
             </div>
-          </a>
-          {{ end }}
-        </div>
+            <div class="col-6 col-md-10">
+              <h4>{{.Name}}</h4>
+              <h6>Author: {{.Author.Username}}</h6>
+              <p>{{.Description}}</p>
+            </div>
+          </div>
+        </a>
+        {{ end }}
+        {{$previous := call .Math .Page 1 "sub" }}
+        {{$next := call .Math .Page 1 "add" }}
+        {{$nextNext := call .Math .Page 2 "add" }}
+        <nav aria-label="Page navigation example">
+          <ul class="pagination justify-content-center">
+            {{ if eq .Page 1}}
+            <li class="page-item disabled">
+              <a aria-disabled="true" class="page-link">Previous</a>
+            </li>
+            {{else}}
+            <li class="page-item">
+              <a class="page-link" href="/plugins?page={{ $previous }}">
+                Previous
+              </a>
+              {{ end }}
+            </li>
+            <li class="page-item disabled">
+              <a class="page-link" href="#">
+                {{.Page}}
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="/plugins?page={{ $next }}">
+                {{ $next }}
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="/plugins?page={{ $nextNext }}">
+                {{ $nextNext }}
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="/plugins?page={{ $next }}">Next</a>
+            </li>
+          </ul>
+        </nav>
       </div>
       <div class="col-sm-12 col-md-3 options-container">
         <div class="card">
