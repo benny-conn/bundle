@@ -11,8 +11,8 @@ func NewRepoServer() *http.Server {
 	pluginsHandler := http.HandlerFunc(pluginsHandlerFunc)
 	thumbnailsHandler := http.HandlerFunc(thumbnailsHandlerFunc)
 
-	mux.Handle("/repo/plugins", simpleAuth(pluginsHandler))
-	mux.Handle("/repo/thumbnails", simpleAuth(thumbnailsHandler))
+	mux.Handle("/repo/plugins", pluginsHandler)
+	mux.Handle("/repo/thumbnails", thumbnailsHandler)
 
 	return internal.MakeServerFromMux(mux)
 }

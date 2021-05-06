@@ -242,7 +242,6 @@ func (g *gateServiceImpl) GetPlugin(plugin *api.Plugin) (*api.Plugin, error) {
 	}
 
 	result := &api.Plugin{}
-
 	err = json.Unmarshal(bs, result)
 
 	if err != nil {

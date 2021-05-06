@@ -99,14 +99,17 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		pluginName := r.FormValue("name")
+		id := r.FormValue("id")
 		page := r.FormValue("page")
 		count := r.FormValue("count")
 
-		if pluginName != "" {
+		if pluginName != "" || id != "" {
 
 			req := &api.Plugin{
+				Id:   id,
 				Name: pluginName,
 			}
+
 			plugin, err := client.Get(req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
@@ -396,26 +399,26 @@ func repoThumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if plugin.Id == "" {
-			fmt.Println("HMM")
 			err = repo.UploadThumbnail(dbUser, nil, file)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadGateway)
 				return
 			}
 		} else {
-			// expected end of json input on thumbnail upload why??
+
 			dbPlugin, err := gs.GetPlugin(plugin)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+
 			err = repo.UploadThumbnail(dbUser, dbPlugin, file)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadGateway)
 				return
 			}
-			dbPlugin.Thumbnail = fmt.Sprintf("https://bundle-repository.s3-us-east-1.amazonaws.com/%s/%s/THUMBNAIL.webp", plugin.Author, plugin.Id)
 
+			dbPlugin.Thumbnail = fmt.Sprintf("https://bundle-repository.s3.amazonaws.com/%s/%s/THUMBNAIL.webp", dbPlugin.Author.Id, dbPlugin.Id)
 			err = gs.UpdatePlugin(dbPlugin)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

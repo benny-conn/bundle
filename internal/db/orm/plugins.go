@@ -2,6 +2,7 @@ package orm
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
@@ -73,12 +74,13 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("UPDATING %v\n", update)
 
-	updateResult, err := collection.UpdateByID(session.Ctx, req.Id, bson.D{{"$set", update}})
+	updateResult, err := collection.UpdateByID(session.Ctx, update.Id, bson.D{{"$set", update}})
 	if err != nil {
 		return err
 	}
-	if updateResult.MatchedCount < 1 {
+	if updateResult.MatchedCount < 1 || updateResult.ModifiedCount < 1 {
 		return errors.New("no plugin found")
 	}
 	return nil
@@ -102,15 +104,17 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	}
 
 	if get.Id == primitive.NilObjectID {
-		err = collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}}).Decode(decodedPluginResult)
-		if err != nil {
-			return nil, err
+		res := collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}})
+		if res.Err() != nil {
+			return nil, res.Err()
 		}
+		res.Decode(decodedPluginResult)
 	} else {
-		err = collection.FindOne(session.Ctx, bson.D{{"_id", get.Id}}).Decode(decodedPluginResult)
-		if err != nil {
-			return nil, err
+		res := collection.FindOne(session.Ctx, bson.D{{"_id", get.Id}})
+		if res.Err() != nil {
+			return nil, res.Err()
 		}
+		res.Decode(decodedPluginResult)
 	}
 
 	return ormToApiPl(*decodedPluginResult), nil

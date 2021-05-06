@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/db/orm"
@@ -16,7 +15,6 @@ type usersServer struct {
 func (s *usersServer) Get(ctx context.Context, req *api.User) (*api.User, error) {
 	user, err := s.orm.Get(req)
 	if err != nil {
-		fmt.Println("ERR" + err.Error())
 		return nil, err
 	}
 	return user, nil

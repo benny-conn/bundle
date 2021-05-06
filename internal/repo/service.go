@@ -57,11 +57,7 @@ func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	access, err := getAccessToken()
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("authorization", "Bearer "+access)
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -119,13 +115,6 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	if err != nil {
 		return err
 	}
-	access, err := getAccessToken()
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+access)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	resp, err := client.Do(req)
@@ -141,7 +130,7 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 }
 
 func (r *repoServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, data io.Reader) error {
-	fmt.Println("OJWO")
+
 	scheme := "https://"
 
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/repo/thumbnails", scheme, r.Host, r.Port))
@@ -151,7 +140,7 @@ func (r *repoServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	fmt.Println("OJWO")
+
 	if plugin != nil {
 		if plugin.Id == "" || plugin.Author == nil {
 			return errors.New("specify plugin ID and author")
@@ -170,7 +159,6 @@ func (r *repoServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 		return errors.New("specify a user or a plugin to upload a thumbnail")
 	}
 
-	fmt.Println("OJWO")
 	part, err := writer.CreateFormFile("thumbnail", "THUMBNAIL.webp")
 	if err != nil {
 		return err
@@ -190,27 +178,18 @@ func (r *repoServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 	}
 
 	client := internal.NewTlsClient()
-	fmt.Println("OJWO")
+
 	req, err := http.NewRequest(http.MethodPost, u.String(), body)
 	if err != nil {
 		return err
 	}
-	fmt.Println("OJWO")
-	access, err := getAccessToken()
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println("OJWO")
 
-	req.Header.Set("Authorization", "Bearer "+access)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
-	fmt.Println("OJWO")
 
 	b, _ := io.ReadAll(resp.Body)
 	fmt.Println(string(b))

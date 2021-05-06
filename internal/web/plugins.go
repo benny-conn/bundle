@@ -124,7 +124,8 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	err = tpl.ExecuteTemplate(w, "plugins", data)
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 }
