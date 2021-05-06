@@ -20,6 +20,7 @@ message User {
     string password = 4;
     repeated string scopes = 5;
     string tag = 6;
+    string thumbnail = 7;
 }
 
 // PLUGINS --------------------------------------------------------------------- ||
@@ -68,6 +69,22 @@ message Readme {
     string text = 3;
 }
 
+
+
+// SESSIONS ---------------------------------------------------------------- ||
+
+service SessionService {
+    rpc Get(Session) returns (Session) {}
+    rpc Insert(Session) returns (Empty) {}
+    rpc Delete(Session) returns (Empty) {}
+}
+
+message Session{
+    string id = 1;
+    string userId = 2;
+    int64 lastRetrieved = 3;
+    int64 createdAt = 4;
+}
 
 
 // UTIL ----------------------------------------------------------------- ||

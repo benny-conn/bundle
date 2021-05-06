@@ -99,3 +99,38 @@ func apiToOrmReadme(rdme *api.Readme) Readme {
 	}
 	return result
 }
+
+func apiToOrmSession(ses *api.Session) Session {
+	if ses == nil {
+		return Session{}
+	}
+	result := Session{}
+	if ses.Id != "" {
+		id, err := primitive.ObjectIDFromHex(ses.Id)
+		if err == nil && id != primitive.NilObjectID {
+			result.Id = id
+		}
+	}
+	if ses.UserId != "" {
+		id, err := primitive.ObjectIDFromHex(ses.UserId)
+		if err == nil && id != primitive.NilObjectID {
+			result.UserId = id
+		}
+	}
+	if ses.LastRetrieved != 0 {
+		result.LastRetrieved = primitive.DateTime(ses.LastRetrieved)
+	}
+	if ses.CreatedAt != 0 {
+		result.CreatedAt = primitive.DateTime(ses.CreatedAt)
+	}
+	return result
+}
+
+func ormToApiSession(ses Session) *api.Session {
+	return &api.Session{
+		Id:            ses.Id.Hex(),
+		UserId:        ses.UserId.Hex(),
+		LastRetrieved: ses.LastRetrieved.Time().Unix(),
+		CreatedAt:     ses.CreatedAt.Time().Unix(),
+	}
+}

@@ -17,37 +17,29 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Email:    r.FormValue("email"),
 			Password: r.FormValue("password"),
 		}
-
 		gs := gate.NewGateService("", "")
+
 		err := gs.InsertUser(user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		dbUser, _ := gs.GetUser(user)
-		token, err := newAuthToken(dbUser)
+		token, err := newSession(userToProfile(dbUser))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		tokenCookie := newAccessCookie(token)
+		tokenCookie := newAccessCookie(token.Id)
 		http.SetCookie(w, tokenCookie)
 
-		w.WriteHeader(http.StatusFound)
-
+		http.Redirect(w, r, r.FormValue("referer"), http.StatusFound)
 		return
 	}
 
-	user, err := getUserFromCookie(r)
+	referer := r.Referer()
 
-	td := TemplateData{}
-
-	if err == nil {
-		td.User = user
-	}
-
-	err = tpl.ExecuteTemplate(w, "register", td)
+	err := tpl.ExecuteTemplate(w, "register", referer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

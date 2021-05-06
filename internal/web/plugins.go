@@ -14,10 +14,10 @@ const perPageCount = 15
 func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	data := TemplateData{}
-	user, err := getUserFromCookie(req)
+	user, err := getProfFromCookie(req)
 
 	if err == nil {
-		data.User = user
+		data.Profile = user
 	}
 
 	switch req.Method {

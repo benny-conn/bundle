@@ -29,6 +29,9 @@ type gateService interface {
 	UpdateUser(updatedUser *api.User) error
 	GetUser(user *api.User) (*api.User, error)
 	InsertUser(user *api.User) error
+	InsertSession(ses *api.Session) error
+	GetSession(ses *api.Session) (*api.Session, error)
+	DeleteSession(ses *api.Session) error
 }
 type gateServiceImpl struct {
 	Host string
@@ -525,5 +528,114 @@ func (g *gateServiceImpl) InsertUser(user *api.User) error {
 
 	defer resp.Body.Close()
 
+	return nil
+}
+
+func (g *gateServiceImpl) DeleteSession(ses *api.Session) error {
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/sessions", scheme, g.Host, g.Port))
+	if err != nil {
+		return err
+	}
+	asJSON, err := json.Marshal(ses)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer([]byte(asJSON))
+	client := internal.NewBasicClient()
+	req, err := http.NewRequest(http.MethodDelete, u.String(), buf)
+	if err != nil {
+		return err
+	}
+	access, err := getAccessToken()
+	if err != nil {
+		return err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	return nil
+}
+
+func (g *gateServiceImpl) GetSession(ses *api.Session) (*api.Session, error) {
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/sessions", scheme, g.Host, g.Port))
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	q.Add("id", ses.Id)
+	q.Add("userId", ses.UserId)
+	u.RawQuery = q.Encode()
+	client := internal.NewBasicClient()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	access, err := getAccessToken()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &api.Session{}
+	err = json.Unmarshal(bs, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (g *gateServiceImpl) InsertSession(ses *api.Session) error {
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/sessions", scheme, g.Host, g.Port))
+	if err != nil {
+		return err
+	}
+
+	asJSON, err := json.Marshal(ses)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer([]byte(asJSON))
+
+	client := internal.NewBasicClient()
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
+	if err != nil {
+		return err
+	}
+	access, err := getAccessToken()
+	if err != nil {
+		return err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
 	return nil
 }

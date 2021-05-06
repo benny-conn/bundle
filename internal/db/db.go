@@ -50,6 +50,7 @@ func RunServer() error {
 	api.RegisterUsersServiceServer(grpcServer, newUsersServer())
 	api.RegisterPluginsServiceServer(grpcServer, newPluginsServer())
 	api.RegisterReadmeServiceServer(grpcServer, newReadmesServer())
+	api.RegisterSessionServiceServer(grpcServer, newSessionsServer())
 	fmt.Printf("Started Database Server on port %v\n", port)
 
 	grpcServer.Serve(lis)

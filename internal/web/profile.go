@@ -9,7 +9,7 @@ import (
 
 func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
-	user, err := getUserFromCookie(req)
+	pro, err := getProfFromCookie(req)
 	if err != nil {
 		http.Redirect(w, req, "/login", http.StatusSeeOther)
 		return
@@ -23,7 +23,7 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		newTag := req.FormValue("tag")
 
 		updatedUser := &api.User{
-			Id:       user.Id,
+			Id:       pro.Id,
 			Username: newUsername,
 			Tag:      newTag,
 		}
@@ -35,18 +35,18 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		// NOW PROPOGATE THOSE CHANGE BOYO!!!
-
 		dbUpdatedUser, _ := gs.GetUser(updatedUser)
 
-		token, _ := newAuthToken(dbUpdatedUser)
-		c := newAccessCookie(token)
+		updatedProfile := userToProfile(dbUpdatedUser)
+
+		token, _ := newSession(updatedProfile)
+		c := newAccessCookie(token.Id)
 		http.SetCookie(w, c)
-		user = dbUpdatedUser
+		pro = updatedProfile
 	}
 
 	data := TemplateData{
-		User: user,
+		Profile: pro,
 	}
 
 	err = tpl.ExecuteTemplate(w, "profile", data)

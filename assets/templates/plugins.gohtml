@@ -121,8 +121,8 @@
 
 {{define "plugin-header"}}
 <div class="my-4">
-  {{if .User}}
-  {{if eq .User.Id .Plugin.Author.Id}}
+  {{if .Profile.Id}}
+  {{if eq .Profile.Id .Plugin.Author.Id}}
   <div class="row justify-content-between">
     <div class="plugin-info col-9">
       {{if .Plugin.Thumbnail}}
@@ -164,7 +164,7 @@
             value="Upload"
           />
         </div>
-        <input type="hidden" id="username" name="user" value="{{.User.Id}}" />
+        <input type="hidden" id="username" name="user" value="{{.Profile.Id}}" />
         <input type="hidden" id="plugin" name="plugin" value="{{.Plugin.Id}}" />
       </form>
     </div>

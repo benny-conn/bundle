@@ -6,10 +6,10 @@ import (
 
 func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
-	user, err := getUserFromCookie(r)
+	prof, err := getProfFromCookie(r)
 	data := TemplateData{}
 	if err == nil {
-		data.User = user
+		data.Profile = prof
 	}
 
 	err = tpl.ExecuteTemplate(w, "index", data)

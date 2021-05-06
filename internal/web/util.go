@@ -2,19 +2,17 @@ package web
 
 import (
 	"net/http"
-
-	"github.com/bennycio/bundle/api"
 )
 
-func getUserFromCookie(r *http.Request) (*api.User, error) {
+func getProfFromCookie(r *http.Request) (Profile, error) {
 
 	c, err := r.Cookie("access_token")
 	if err != nil {
-		return nil, err
+		return Profile{}, err
 	}
-	user, err := getUserFromToken(c.Value)
+	user, err := getProfileFromToken(c.Value)
 	if err != nil {
-		return nil, err
+		return Profile{}, err
 	}
 	return user, nil
 

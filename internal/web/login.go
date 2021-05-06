@@ -34,26 +34,27 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		token, err := newAuthToken(dbUser)
+		token, err := newSession(userToProfile(dbUser))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		tokenCookie := newAccessCookie(token)
+		tokenCookie := newAccessCookie(token.Id)
 		http.SetCookie(w, tokenCookie)
-		// TODO FIND REDIRECT AND MAKE ERRORS ACTUALLY SHOW SOMETHIN
-		w.WriteHeader(http.StatusFound)
+		http.Redirect(w, req, req.FormValue("referer"), http.StatusFound)
 	}
 
 	if req.Method == http.MethodGet {
-		_, err := getUserFromCookie(req)
+		_, err := getProfFromCookie(req)
+
+		referer := req.Referer()
 
 		if err == nil {
-			http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
+			http.Redirect(w, req, referer, http.StatusFound)
 			return
 		}
 
-		err = tpl.ExecuteTemplate(w, "login", nil)
+		err = tpl.ExecuteTemplate(w, "login", referer)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
