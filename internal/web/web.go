@@ -39,7 +39,7 @@ func NewWebServer() *http.Server {
 		AllowCredentials: true,
 	})
 
-	handler := refresh(c.Handler(mux))
+	handler := c.Handler(mux)
 
 	return internal.MakeServerFromMux(handler)
 }

@@ -128,33 +128,6 @@ func loginGate(next http.Handler) http.Handler {
 	})
 }
 
-func refresh(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		token, err := req.Cookie("access_token")
-		if err != nil {
-			next.ServeHTTP(w, req)
-			return
-		}
-		tokenString := token.Value
-
-		ses := &api.Session{
-			Id: tokenString,
-		}
-
-		err = checkSession(ses)
-
-		if err != nil {
-			fmt.Println(err)
-			token.MaxAge = -1
-			gs := gate.NewGateService("", "")
-			gs.DeleteSession(ses)
-			http.SetCookie(w, token)
-		}
-
-		next.ServeHTTP(w, req)
-	})
-}
-
 func newSession(prof Profile) (*api.Session, error) {
 	gs := gate.NewGateService("", "")
 
