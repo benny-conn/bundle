@@ -8,7 +8,7 @@ config.yaml
 src/
 .env
 scripts/
-*.sh
+dev.sh
 tls/
 bundlemc.io/
 .temp
