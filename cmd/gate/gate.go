@@ -12,5 +12,5 @@ func main() {
 	port := os.Getenv("GATE_PORT")
 	srv := gate.NewGateServer()
 	addr := fmt.Sprintf(":%v", port)
-	internal.RunPublicServer(srv, addr, "repo")
+	internal.RunPublicServer(srv, addr, "gate")
 }
