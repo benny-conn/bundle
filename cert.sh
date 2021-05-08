@@ -16,9 +16,9 @@ rm -f out/grpc/*.pem
 openssl genrsa -out out/grpc/ca.key 4096
 openssl req -new -x509 -key out/grpc/ca.key -sha256 -subj "/C=US/ST=California/O=BundleMC" -days 3650 -out out/grpc/ca.cert
 openssl genrsa -out out/grpc/service.key 4096
-openssl req -new -key out/grpc/service.key -out out/grpc/service.csr -config out/grpc/cert.conf
+openssl req -new -key out/grpc/service.key -out out/grpc/service.csr -config cert.conf
 openssl x509 -req -in out/grpc/service.csr -CA out/grpc/ca.cert -CAkey out/grpc/ca.key -CAcreateserial \
-    -out out/grpc/service.pem -days 3650 -sha256 -extfile out/grpc/cert.conf -extensions req_ext
+    -out out/grpc/service.pem -days 3650 -sha256 -extfile cert.conf -extensions req_ext
 sudo rm -r /usr/share/ca-certificates/extra
 sudo mkdir /usr/share/ca-certificates/extra
 sudo cp out/Bundle.crt /usr/share/ca-certificates/extra
