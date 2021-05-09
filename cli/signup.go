@@ -16,7 +16,7 @@ var signupCmd = &cobra.Command{
 	Long:  "Sign up for Bundle MC and gain upload access to the official repository. Use flags \"-u\" \"-e\" and \"-p\" to specify username, email, and password ",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		openBrowser("http://localhost:8080/signup")
+		openBrowser("https://bundlemc.io/signup")
 		fmt.Println("Opened signup in new browser window")
 
 	},

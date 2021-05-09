@@ -2,19 +2,19 @@ package cli
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
-	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal/gate"
+	"github.com/bennycio/bundle/cli/downloader"
+	"github.com/bennycio/bundle/cli/intfile"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
 
-var SpecifiedVersion string
+func init() {
+	rootCmd.AddCommand(installCmd)
+}
 
 // installCmd represents the install command
 var installCmd = &cobra.Command{
@@ -25,11 +25,11 @@ var installCmd = &cobra.Command{
 	specified, all plugins listed in bundle.yml will be downloaded. Any arguments to this command
 	will be interpreted as plugins to fetch from the Bundle Repository, add to your bundle.yml, and 
 	download to your plugins folder`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
-		bundlePlugins, err := getBundleFilePlugins()
+		bundlePlugins, err := intfile.GetBundleFilePlugins(buFilePath)
 		if err != nil {
-			log.Fatalf("error: %s\n", err.Error())
+			return err
 		}
 		if bundlePlugins == nil {
 			bundlePlugins = make(map[string]string)
@@ -54,12 +54,12 @@ var installCmd = &cobra.Command{
 				go func(pluginName string, bundleVersion string) {
 					defer wg.Done()
 					defer totalProgressBar.Add(1)
-					finalVersion, err := installPlugin(pluginName, bundleVersion)
-					if finalVersion != bundleVersion && bundleVersion != "latest" {
-						bundlePlugins[pluginName] = finalVersion
-					}
+					ver, err := downloadAndInstall(pluginName, bundleVersion)
 					if err != nil {
-						fmt.Printf("error: %s\n", err.Error())
+						fmt.Printf("error occured: %s\n", err.Error())
+					}
+					if strings.EqualFold(bundleVersion, "latest") && force {
+						bundlePlugins[pluginName] = ver
 					}
 				}(v, version)
 			}
@@ -68,66 +68,40 @@ var installCmd = &cobra.Command{
 				go func(pluginName string, bundleVersion string) {
 					defer wg.Done()
 					defer totalProgressBar.Add(1)
-					finalVersion, err := installPlugin(pluginName, bundleVersion)
-					if finalVersion != bundleVersion && bundleVersion != "latest" {
-						bundlePlugins[pluginName] = finalVersion
-					}
+					ver, err := downloadAndInstall(pluginName, bundleVersion)
 					if err != nil {
-						fmt.Printf("error: %s\n", err.Error())
+						fmt.Printf("error occured: %s\n", err.Error())
+					}
+					if strings.EqualFold(bundleVersion, "latest") && force {
+						bundlePlugins[pluginName] = ver
 					}
 				}(k, v)
 			}
 		}
-		err = writePluginsToBundle(bundlePlugins)
+
+		err = intfile.WritePluginsToBundle(bundlePlugins, buFilePath)
 		if err != nil {
-			log.Fatalf("error: %s\n", err.Error())
+			return err
 		}
 		wg.Wait()
+		return nil
 	},
 }
 
-func init() {
-	rootCmd.AddCommand(installCmd)
-}
-
-func installPlugin(pluginName string, bundleVersion string) (string, error) {
-
-	req := &api.Plugin{
-		Name:    pluginName,
-		Version: bundleVersion,
-	}
-
-	gservice := gate.NewGateService("localhost", "8020")
-
-	if Force && req.Version != "latest" {
-		plugin, err := gservice.GetPlugin(req)
-		if err != nil {
-			return "", err
-		}
-		req.Version = plugin.Version
-	}
-
-	fmt.Printf("Installing Jar %s with version %s\n", req.Name, req.Version)
-
-	pl, err := gservice.DownloadPlugin(req)
+func downloadAndInstall(pluginName string, bundleVersion string) (string, error) {
+	fp := filepath.Join("plugins", pluginName+".jar")
+	latest := strings.EqualFold(bundleVersion, "latest")
+	dl := downloader.New(pluginName, bundleVersion).WithForce(force).WithLocation(fp).WithLatest(latest)
+	bs, err := dl.Download()
 	if err != nil {
 		return "", err
 	}
-
-	fp := filepath.Join("plugins", req.Name+".jar")
-
-	file, err := os.OpenFile(fp, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	err = dl.Install(bs)
 	if err != nil {
 		return "", err
 	}
-
-	err = file.Truncate(0)
 	if err != nil {
 		return "", err
 	}
-
-	file.Write(pl)
-
-	fmt.Printf("Successfully downloaded the plugin %s with version %s at file path: %s \n", pluginName, bundleVersion, file.Name())
-	return req.Version, nil
+	return dl.Plugin.Version, nil
 }

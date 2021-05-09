@@ -1,19 +1,16 @@
 package cli
 
 import (
-	"archive/zip"
-	"bytes"
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/cli/intfile"
+	"github.com/bennycio/bundle/cli/uploader"
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 // uploadCmd represents the upload command
@@ -22,7 +19,7 @@ var uploadCmd = &cobra.Command{
 	Short: "Upload your plugin as specified in bundle-make.yml to the official Bundle Repository",
 	Long: `Will upload the jar specified under JarPath into the official Bundle Repository, allowing public access
 	to your plugin. Version must be unique per upload and name must be unique globally for the initial upload`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
 		if !internal.IsValidPath(args[0]) {
 			log.Fatal(errors.New("invalid path").Error())
@@ -41,71 +38,26 @@ var uploadCmd = &cobra.Command{
 			plugin = pluginInfoPrompt()
 
 		} else {
-			reader, err := zip.OpenReader(path)
+			result, err := intfile.ParsePluginYml(path)
 
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
-
-			result := &PluginYML{}
-
-			for _, file := range reader.File {
-				if strings.HasSuffix(file.Name, "plugin.yml") {
-					rc, err := file.Open()
-					if err != nil {
-						log.Fatal(err)
-					}
-					buf := bytes.Buffer{}
-					buf.ReadFrom(rc)
-					err = yaml.Unmarshal(buf.Bytes(), result)
-					if err != nil {
-						log.Fatal(err)
-					}
-				}
-			}
-
-			reader.Close()
 
 			plugin.Name = result.Name
 			plugin.Version = result.Version
 			plugin.Description = result.Description
-
 		}
 
 		fmt.Printf("Uploading to Bundle Repository From: %s\n", path)
 
-		gservice := gate.NewGateService("localhost", "8020")
+		upl := uploader.New(user, path, plugin.Name, plugin.Version).WithReadme(isReadme)
 
-		if isReadme {
-			file, err := os.ReadFile(path)
-			if err != nil {
-				panic(err)
-			}
-			// possibly let gateway handle this part
-			dbPlugin, err := gservice.GetPlugin(plugin)
-			if err != nil {
-				panic(err)
-			}
-			readme := &api.Readme{
-				Plugin: dbPlugin,
-				Text:   string(file),
-			}
-			err = gservice.InsertReadme(user, readme)
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			file, err := os.Open(path)
-			if err != nil {
-				panic(err)
-			}
-			defer file.Close()
-			err = gservice.UploadPlugin(user, plugin, file)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
+		err := upl.Upload()
+		if err != nil {
+			return err
 		}
-
+		return nil
 	},
 }
 

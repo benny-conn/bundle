@@ -1,10 +1,13 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
+	"path/filepath"
 
+	"github.com/bennycio/bundle/cli/intfile"
+	"github.com/bennycio/bundle/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -12,25 +15,36 @@ import (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Setup structure for running a server with access to the official Bundle Repository",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
-		if isBundleInitialized() {
-			log.Fatal("There already exists a bundle.yml at this location")
-		}
-
-		if !isPluginDirectory() {
-			log.Fatal("There is no plugin directory in your current directory")
-		}
-
-		file, err := os.Create(BundleFileName)
+		path, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			return err
 		}
-		file.WriteString(BundleYml)
 
-		wd, _ := os.Getwd()
+		if len(args) > 0 {
+			path = args[0]
+		}
 
-		fmt.Println("Created file at path " + wd + "/" + BundleFileName)
+		valid := internal.IsValidPath(path)
+		if !valid {
+			return errors.New("invalid path")
+		}
+
+		if intfile.IsBundleInitialized(path) {
+			return errors.New("there already exists a bundle.yml at this location")
+		}
+
+		if !isPluginDirectory(path) {
+			return errors.New("there is no plugin directory in your current directory")
+		}
+
+		err = intfile.Initialize(filepath.Join(path, intfile.BuFileName))
+		if err != nil {
+			return err
+		}
+		fmt.Println("Created file at path " + path + "/" + intfile.BuFileName)
+		return nil
 	},
 }
 

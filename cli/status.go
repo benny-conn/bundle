@@ -1,24 +1,21 @@
 package cli
 
 import (
-	"archive/zip"
-	"bytes"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/cli/intfile"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check which plugins have updates.",
 	Run: func(cmd *cobra.Command, args []string) {
-		m, err := getBundleFilePlugins()
+		m, err := intfile.GetBundleFilePlugins(buFilePath)
 		if err != nil {
 			panic(err)
 		}
@@ -45,35 +42,19 @@ var statusCmd = &cobra.Command{
 
 				latestVersion := plugin.Version
 
-				fp := filepath.Join("plugins", pluginName+".jar")
+				fp := filepath.Join(buFilePath, "plugins", pluginName+".jar")
 
-				reader, err := zip.OpenReader(fp)
-
+				res, err := intfile.ParsePluginYml(fp)
 				if err != nil {
-					fmt.Printf("File %v not found\n", pluginName)
-					return
+					fmt.Printf("error occurred: %s\n", res)
 				}
-
-				for _, file := range reader.File {
-					if strings.HasSuffix(file.Name, "plugin.yml") {
-						yml := &PluginYML{}
-						rc, err := file.Open()
-						if err != nil {
-							panic(err)
-						}
-						buf := bytes.Buffer{}
-						buf.ReadFrom(rc)
-						yaml.Unmarshal(buf.Bytes(), yml)
-
-						if yml.Version != latestVersion {
-							pluginsToUpdate[pluginName] = latestVersion
-						}
-					}
+				if res.Version != latestVersion {
+					pluginsToUpdate[pluginName] = latestVersion
 				}
 			}(k, v)
 		}
 		wg.Wait()
-		if len(pluginsToUpdate) != 0 {
+		if len(pluginsToUpdate) > 0 {
 			fmt.Println("Plugins To Update:")
 			for k, v := range pluginsToUpdate {
 				fmt.Println(k, " -> ", v)
