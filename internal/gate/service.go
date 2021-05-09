@@ -94,7 +94,7 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return errors.New("specify a user and plugin")
 	}
 
-	writer.WriteField("username", user.Username)
+	writer.WriteField("author", user.Username)
 	writer.WriteField("password", user.Password)
 	writer.WriteField("name", plugin.Name)
 	writer.WriteField("version", plugin.Version)
@@ -320,24 +320,17 @@ func (g *gateServiceImpl) InsertReadme(user *api.User, readme *api.Readme) error
 	if err != nil {
 		return err
 	}
-	userJSON, err := json.Marshal(user)
-	if err != nil {
-		return err
-	}
-	readmeJSON, err := json.Marshal(readme)
-	if err != nil {
-		return err
-	}
-	buf := bytes.NewBuffer([]byte(readmeJSON))
-	client := internal.NewBasicClient()
-	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
-	if err != nil {
-		return err
-	}
-	req.Header.Add("User", string(userJSON))
-	req.Header.Add("Resource", string(readmeJSON))
 
-	resp, err := client.Do(req)
+	client := internal.NewBasicClient()
+
+	values := url.Values{}
+	values.Set("username", user.Username)
+	values.Set("password", user.Password)
+	values.Set("plugin_id", readme.Plugin.Id)
+	values.Set("plugin_name", readme.Plugin.Name)
+	values.Set("text", readme.Text)
+
+	resp, err := client.PostForm(u.String(), values)
 	if err != nil {
 		return err
 	}

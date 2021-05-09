@@ -227,20 +227,22 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		return
 
 	case http.MethodPost:
-		bs, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
 
-		pl := &api.Readme{}
-
-		err = json.Unmarshal(bs, pl)
+		err := r.ParseForm()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		err = client.Insert(pl)
+
+		readme := &api.Readme{
+			Plugin: &api.Plugin{
+				Id:   r.FormValue("plugin_id"),
+				Name: r.FormValue("plugin_name"),
+			},
+			Text: r.FormValue("text"),
+		}
+
+		err = client.Insert(readme)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

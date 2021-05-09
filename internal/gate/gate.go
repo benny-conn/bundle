@@ -18,10 +18,10 @@ func NewGateServer() *http.Server {
 
 	mux.Handle("/api/plugins", pluginsHandler)
 	mux.Handle("/api/users", simpleAuth(usersHandler))
-	mux.Handle("/api/readmes", readmesHandler)
+	mux.Handle("/api/readmes", basicAuth(readmesHandler))
 	mux.Handle("/api/sessions", simpleAuth(sessionsHandler))
-	mux.Handle("/api/repo/plugins", authUpload(repoPluginsHandler))
-	mux.Handle("/api/repo/thumbnails", authUpload(repoThumbnailsHandler))
+	mux.Handle("/api/repo/plugins", basicAuth(repoPluginsHandler))
+	mux.Handle("/api/repo/thumbnails", basicAuth(repoThumbnailsHandler))
 
 	return internal.MakeServerFromMux(mux)
 }
