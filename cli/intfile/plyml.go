@@ -14,7 +14,7 @@ type plYml struct {
 	Description string `yaml:"description,omitempty"`
 }
 
-func Parse(path string) (plYml, error) {
+func ParsePluginYml(path string) (plYml, error) {
 	reader, err := zip.OpenReader(path)
 
 	if err != nil {
