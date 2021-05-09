@@ -110,10 +110,11 @@
   <div class="container">
     {{template "plugin-header" .}}
     {{if .Readme}}
-    <div class="card">
+    <div class="readme">
       {{.Readme}}
     </div>
     {{else}}
+
     {{ end }}
   </div>
 </body>
@@ -164,7 +165,12 @@
             value="Upload"
           />
         </div>
-        <input type="hidden" id="username" name="user" value="{{.Profile.Id}}" />
+        <input
+          type="hidden"
+          id="username"
+          name="user"
+          value="{{.Profile.Id}}"
+        />
         <input type="hidden" id="plugin" name="plugin" value="{{.Plugin.Id}}" />
       </form>
     </div>
@@ -190,5 +196,9 @@
     </div>
   </div>
   {{ end }}
+  <div class="plugin-download my-4">
+    <code class="py-1 px-3"> bundle install {{.Plugin.Name}} </code>
+  </div>
 </div>
+
 {{ end }}

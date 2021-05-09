@@ -8,15 +8,19 @@ import (
 )
 
 func ormToApiPl(pl Plugin) *api.Plugin {
-	return &api.Plugin{
+	p := &api.Plugin{
 		Id:          pl.Id.Hex(),
 		Name:        pl.Name,
 		Description: pl.Description,
-		Author:      ormToApiUser(pl.Author),
 		Version:     pl.Version,
 		Thumbnail:   pl.Thumbnail,
 		LastUpdated: pl.LastUpdated.Time().Unix(),
 	}
+	a, err := NewUsersOrm().Get(&api.User{Id: pl.Author.Hex()})
+	if err == nil {
+		p.Author = a
+	}
+	return p
 }
 
 func apiToOrmPl(pl *api.Plugin) Plugin {
@@ -34,7 +38,6 @@ func apiToOrmPl(pl *api.Plugin) Plugin {
 	result := Plugin{
 		Name:        pl.Name,
 		Description: pl.Description,
-		Author:      apiToOrmUser(pl.Author),
 		Version:     pl.Version,
 		Thumbnail:   pl.Thumbnail,
 		LastUpdated: lastUpdated,
@@ -42,6 +45,12 @@ func apiToOrmPl(pl *api.Plugin) Plugin {
 	pluginID, err := primitive.ObjectIDFromHex(pl.Id)
 	if pluginID != primitive.NilObjectID && err == nil {
 		result.Id = pluginID
+	}
+	if pl.Author != nil {
+		authorID, err := primitive.ObjectIDFromHex(pl.Author.Id)
+		if authorID != primitive.NilObjectID && err == nil {
+			result.Author = authorID
+		}
 	}
 
 	return result
@@ -78,11 +87,15 @@ func ormToApiUser(user User) *api.User {
 }
 
 func ormToApiReadme(rdme Readme) *api.Readme {
-	return &api.Readme{
-		Id:     rdme.Id.Hex(),
-		Plugin: ormToApiPl(rdme.Plugin),
-		Text:   rdme.Text,
+	r := &api.Readme{
+		Id:   rdme.Id.Hex(),
+		Text: rdme.Text,
 	}
+	pl, err := NewPluginsOrm().Get(&api.Plugin{Id: rdme.Plugin.Hex()})
+	if err == nil {
+		r.Plugin = pl
+	}
+	return r
 }
 
 func apiToOrmReadme(rdme *api.Readme) Readme {
@@ -90,12 +103,17 @@ func apiToOrmReadme(rdme *api.Readme) Readme {
 		return Readme{}
 	}
 	result := Readme{
-		Plugin: apiToOrmPl(rdme.Plugin),
-		Text:   rdme.Text,
+		Text: rdme.Text,
 	}
 	id, err := primitive.ObjectIDFromHex(rdme.Id)
 	if id != primitive.NilObjectID && err == nil {
 		result.Id = id
+	}
+	if rdme.Plugin != nil {
+		pl, err := primitive.ObjectIDFromHex(rdme.Plugin.Id)
+		if pl != primitive.NilObjectID && err == nil {
+			result.Plugin = pl
+		}
 	}
 	return result
 }

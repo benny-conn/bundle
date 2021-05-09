@@ -195,6 +195,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	client := client.NewReadmeClient("", "")
+	gs := NewGateService("", "")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -211,7 +212,14 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Id:   id,
 			Name: pluginName,
 		}
-		rdme, err := client.Get(req)
+
+		dbpl, err := gs.GetPlugin(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		rdme, err := client.Get(dbpl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -234,12 +242,20 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		req := &api.Plugin{
+			Id:   r.FormValue("plugin_id"),
+			Name: r.FormValue("plugin_name"),
+		}
+
+		dbPl, err := gs.GetPlugin(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
 		readme := &api.Readme{
-			Plugin: &api.Plugin{
-				Id:   r.FormValue("plugin_id"),
-				Name: r.FormValue("plugin_name"),
-			},
-			Text: r.FormValue("text"),
+			Plugin: dbPl,
+			Text:   r.FormValue("text"),
 		}
 
 		err = client.Insert(readme)

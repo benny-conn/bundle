@@ -94,6 +94,7 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return errors.New("specify a user and plugin")
 	}
 
+	writer.WriteField("username", user.Username)
 	writer.WriteField("author", user.Username)
 	writer.WriteField("password", user.Password)
 	writer.WriteField("name", plugin.Name)
@@ -177,7 +178,21 @@ func (g *gateServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 
 	client := internal.NewBasicClient()
 
-	resp, err := client.Post(u.String(), writer.FormDataContentType(), body)
+	req, err := http.NewRequest(http.MethodPost, u.String(), body)
+
+	if err != nil {
+		return err
+	}
+
+	accessToken, err := getAccessToken()
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -334,8 +349,9 @@ func (g *gateServiceImpl) InsertReadme(user *api.User, readme *api.Readme) error
 	if err != nil {
 		return err
 	}
-
 	defer resp.Body.Close()
+	bs, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(bs))
 	return nil
 }
 

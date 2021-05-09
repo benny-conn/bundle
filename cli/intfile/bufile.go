@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	_ "embed"
+
 	"gopkg.in/yaml.v2"
 )
 

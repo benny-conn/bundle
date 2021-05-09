@@ -10,7 +10,7 @@ import (
 
 type Readme struct {
 	Id     primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Plugin Plugin             `bson:"plugin,omitempty" json:"plugin"`
+	Plugin primitive.ObjectID `bson:"plugin,omitempty" json:"plugin"`
 	Text   string             `bson:"text,omitempty" json:"text"`
 }
 type ReadmesOrm struct{}
@@ -18,6 +18,7 @@ type ReadmesOrm struct{}
 func NewReadmesOrm() *ReadmesOrm { return &ReadmesOrm{} }
 
 func (p *ReadmesOrm) Insert(readme *api.Readme) error {
+
 	session, err := getMongoSession()
 	if err != nil {
 		return err
@@ -26,14 +27,35 @@ func (p *ReadmesOrm) Insert(readme *api.Readme) error {
 
 	collection := session.Client.Database("plugins").Collection("readmes")
 
-	pl := apiToOrmPl(readme.Plugin)
-	countName, err := collection.CountDocuments(session.Ctx, bson.D{{"plugin", pl}})
+	if readme.Plugin == nil {
+		return errors.New("plugin not specified")
+	}
+	var plId primitive.ObjectID
+	if readme.Plugin.Id == "" {
+		dbpl, err := NewPluginsOrm().Get(readme.Plugin)
+
+		if err != nil {
+			return err
+		}
+
+		plId, err = primitive.ObjectIDFromHex(dbpl.Id)
+		if err != nil {
+			return err
+		}
+	} else {
+		plId, err = primitive.ObjectIDFromHex(readme.Plugin.Id)
+		if err != nil {
+			return err
+		}
+
+	}
+	count, err := collection.CountDocuments(session.Ctx, bson.D{{"plugin", plId}})
 
 	if err != nil {
 		return err
 	}
 
-	if countName > 0 {
+	if count > 0 {
 		err = errors.New("plugin already has a readme, please update instead")
 		return err
 	}
@@ -62,7 +84,7 @@ func (p *ReadmesOrm) Update(req *api.Readme) error {
 	}
 	defer session.Cancel()
 
-	collection := session.Client.Database("plugins").Collection("plugins")
+	collection := session.Client.Database("plugins").Collection("readmes")
 
 	updated := apiToOrmReadme(req)
 
@@ -93,13 +115,27 @@ func (p *ReadmesOrm) Get(req *api.Plugin) (*api.Readme, error) {
 	collection := session.Client.Database("plugins").Collection("readmes")
 	decodedReadmeResult := &Readme{}
 
-	get := apiToOrmPl(req)
-	err = validateReadmeGet(get)
-	if err != nil {
-		return nil, err
+	var plId primitive.ObjectID
+	if req.Id == "" {
+		dbpl, err := NewPluginsOrm().Get(req)
+
+		if err != nil {
+			return nil, err
+		}
+
+		plId, err = primitive.ObjectIDFromHex(dbpl.Id)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		plId, err = primitive.ObjectIDFromHex(req.Id)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
-	err = collection.FindOne(session.Ctx, bson.D{{"plugin", get}}).Decode(decodedReadmeResult)
+	err = collection.FindOne(session.Ctx, bson.D{{"plugin", plId}}).Decode(decodedReadmeResult)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +159,7 @@ func validateReadmeUpdate(rdme Readme) error {
 }
 
 func validateReadmeInsert(rdme Readme) error {
-	if rdme.Plugin.Id == primitive.NilObjectID {
+	if rdme.Plugin == primitive.NilObjectID {
 		return errors.New("valid plugin required for insertion")
 	}
 	if rdme.Text == "" {

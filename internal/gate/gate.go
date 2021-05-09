@@ -21,7 +21,7 @@ func NewGateServer() *http.Server {
 	mux.Handle("/api/readmes", basicAuth(readmesHandler))
 	mux.Handle("/api/sessions", simpleAuth(sessionsHandler))
 	mux.Handle("/api/repo/plugins", basicAuth(repoPluginsHandler))
-	mux.Handle("/api/repo/thumbnails", basicAuth(repoThumbnailsHandler))
+	mux.Handle("/api/repo/thumbnails", simpleAuth(repoThumbnailsHandler))
 
 	return internal.MakeServerFromMux(mux)
 }

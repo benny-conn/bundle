@@ -14,7 +14,7 @@ type Plugin struct {
 	Id          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Name        string             `bson:"name,omitempty" json:"name"`
 	Description string             `bson:"description,omitempty" json:"description"`
-	Author      User               `bson:"author,omitempty" json:"author"`
+	Author      primitive.ObjectID `bson:"author,omitempty" json:"author"`
 	Version     string             `bson:"version,omitempty" json:"version"`
 	Thumbnail   string             `bson:"thumbnail,omitempty" json:"thumbnail"`
 	LastUpdated primitive.DateTime `bson:"lastUpdated,omitempty" json:"lastUpdated"`
@@ -69,12 +69,16 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 	collection := session.Client.Database("plugins").Collection("plugins")
 
+	beforeUpdate, err := p.Get(req)
+	if err != nil {
+		return err
+	}
+
 	update := apiToOrmPl(req)
 	err = validatePluginUpdate(update)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("UPDATING %v\n", update)
 
 	updateResult, err := collection.UpdateByID(session.Ctx, update.Id, bson.D{{"$set", update}})
 	if err != nil {
@@ -83,6 +87,19 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 	if updateResult.MatchedCount < 1 || updateResult.ModifiedCount < 1 {
 		return errors.New("no plugin found")
 	}
+
+	rdmeOrm := NewReadmesOrm()
+	rd, err := rdmeOrm.Get(beforeUpdate)
+	if err == nil {
+		rd.Plugin = req
+		err = rdmeOrm.Update(rd)
+		if err != nil {
+			return err
+		}
+	} else {
+		fmt.Println(err.Error())
+	}
+
 	return nil
 
 }
@@ -170,7 +187,7 @@ func validatePluginInsert(pl Plugin) error {
 	if pl.Version == "" {
 		return errors.New("version required for insertion")
 	}
-	if pl.Author.Id == primitive.NilObjectID {
+	if pl.Author == primitive.NilObjectID {
 		return errors.New("author id required for insertion")
 	}
 	return nil

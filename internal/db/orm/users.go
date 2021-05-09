@@ -79,12 +79,12 @@ func (u *UsersOrm) Insert(user *api.User) error {
 }
 
 func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
+
 	session, err := getMongoSession()
 	if err != nil {
 		return nil, err
 	}
 	defer session.Cancel()
-
 	collection := session.Client.Database("users").Collection("users")
 
 	decodedUser := &User{}

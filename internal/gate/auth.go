@@ -180,8 +180,11 @@ func basicAuth(next http.Handler) http.Handler {
 			err := r.ParseMultipartForm(10 << 20)
 
 			if err != nil {
-				http.Error(w, "invalid user", http.StatusBadRequest)
-				return
+				err = r.ParseForm()
+				if err != nil {
+					http.Error(w, "invalid user", http.StatusBadRequest)
+					return
+				}
 			}
 
 			user := &api.User{
@@ -203,6 +206,7 @@ func basicAuth(next http.Handler) http.Handler {
 				http.Error(w, "incorrect password", http.StatusUnauthorized)
 				return
 			}
+
 		}
 		next.ServeHTTP(w, r)
 	})

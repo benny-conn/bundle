@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/db/orm"
@@ -17,7 +16,6 @@ func (s *sessionsServer) Get(ctx context.Context, req *api.Session) (*api.Sessio
 
 	pl, err := s.orm.Get(req)
 	if err != nil {
-		fmt.Println(err.Error())
 		return nil, err
 	}
 
@@ -28,7 +26,6 @@ func (s *sessionsServer) Get(ctx context.Context, req *api.Session) (*api.Sessio
 func (s *sessionsServer) Insert(ctx context.Context, req *api.Session) (*api.Empty, error) {
 	err := s.orm.Insert(req)
 	if err != nil {
-		fmt.Println(err.Error())
 		return &api.Empty{}, err
 	}
 	return &api.Empty{}, nil

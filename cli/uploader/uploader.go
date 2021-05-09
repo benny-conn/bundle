@@ -20,6 +20,7 @@ type options struct {
 
 func New(user *api.User, location, name, version string) *uploader {
 	return &uploader{
+		user:     user,
 		location: location,
 		plugin: &api.Plugin{
 			Name:    name,
