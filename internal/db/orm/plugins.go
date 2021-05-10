@@ -187,7 +187,7 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, e
 	fil := bson.D{}
 
 	if req.Search != "" {
-		fil = append(fil, bson.E{"$text", bson.E{"$search", req.Search}})
+		fil = append(fil, bson.E{"$text", bson.D{{"$search", req.Search}}})
 	}
 	if req.Category != api.Category_ALL {
 		fil = append(fil, bson.E{"category", req.Category})

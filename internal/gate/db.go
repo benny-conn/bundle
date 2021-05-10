@@ -260,10 +260,19 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Text:   r.FormValue("text"),
 		}
 
-		err = client.Insert(readme)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		_, err = gs.GetReadme(dbPl)
+		if err == nil {
+			err = client.Update(readme)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			err = client.Insert(readme)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	case http.MethodPatch:
 		bs, err := io.ReadAll(r.Body)

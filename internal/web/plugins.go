@@ -42,6 +42,12 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			if page == "" {
 				page = "1"
 			}
+			if sort == "" {
+				sort = "0"
+			}
+			if category == "" {
+				category = "0"
+			}
 
 			pageNumber, err := strconv.Atoi(page)
 			if err != nil {
