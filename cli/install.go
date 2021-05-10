@@ -47,8 +47,8 @@ var installCmd = &cobra.Command{
 		if len(args) > 0 {
 			for _, v := range args {
 				version := "latest"
-				spl := strings.Split(v, ":")
-				if len(spl) > 0 {
+				spl := strings.Split(v, "@")
+				if len(spl) > 1 {
 					version = spl[1]
 				}
 				go func(pluginName string, bundleVersion string) {
