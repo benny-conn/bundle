@@ -7,13 +7,20 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func ormToApiPl(pl Plugin) *api.Plugin {
+func ormToApiPl(pl plugin) *api.Plugin {
 	p := &api.Plugin{
 		Id:          pl.Id.Hex(),
 		Name:        pl.Name,
 		Description: pl.Description,
 		Version:     pl.Version,
 		Thumbnail:   pl.Thumbnail,
+		Category:    api.Category(pl.Category),
+		Downloads:   pl.Downloads,
+		IsPremium:   pl.IsPremium,
+		Premium: &api.Premium{
+			Price:     pl.Premium.Price,
+			Purchases: pl.Premium.Purchases,
+		},
 		LastUpdated: pl.LastUpdated.Time().Unix(),
 	}
 	a, err := NewUsersOrm().Get(&api.User{Id: pl.Author.Hex()})
@@ -23,10 +30,10 @@ func ormToApiPl(pl Plugin) *api.Plugin {
 	return p
 }
 
-func apiToOrmPl(pl *api.Plugin) Plugin {
+func apiToOrmPl(pl *api.Plugin) plugin {
 
 	if pl == nil {
-		return Plugin{}
+		return plugin{}
 	}
 
 	var lastUpdated primitive.DateTime
@@ -35,12 +42,15 @@ func apiToOrmPl(pl *api.Plugin) Plugin {
 	} else {
 		lastUpdated = primitive.DateTime(time.Now().Unix())
 	}
-	result := Plugin{
+	result := plugin{
 		Name:        pl.Name,
 		Description: pl.Description,
 		Version:     pl.Version,
 		Thumbnail:   pl.Thumbnail,
 		LastUpdated: lastUpdated,
+		Category:    category(pl.Category),
+		Downloads:   pl.Downloads,
+		IsPremium:   pl.IsPremium,
 	}
 	pluginID, err := primitive.ObjectIDFromHex(pl.Id)
 	if pluginID != primitive.NilObjectID && err == nil {
@@ -52,41 +62,47 @@ func apiToOrmPl(pl *api.Plugin) Plugin {
 			result.Author = authorID
 		}
 	}
+	if pl.Premium != nil {
+		result.Premium = premium{
+			Price:     result.Premium.Price,
+			Purchases: result.Premium.Purchases,
+		}
+	}
 
 	return result
 
 }
 
-func apiToOrmUser(user *api.User) User {
-	if user == nil {
-		return User{}
+func apiToOrmUser(us *api.User) user {
+	if us == nil {
+		return user{}
 	}
-	result := User{
-		Username: user.Username,
-		Email:    user.Email,
-		Password: user.Password,
-		Tag:      user.Tag,
-		Scopes:   user.Scopes,
+	result := user{
+		Username: us.Username,
+		Email:    us.Email,
+		Password: us.Password,
+		Tag:      us.Tag,
+		Scopes:   us.Scopes,
 	}
-	userID, err := primitive.ObjectIDFromHex(user.Id)
+	userID, err := primitive.ObjectIDFromHex(us.Id)
 	if userID != primitive.NilObjectID && err == nil {
 		result.Id = userID
 	}
 	return result
 }
 
-func ormToApiUser(user User) *api.User {
+func ormToApiUser(us user) *api.User {
 	return &api.User{
-		Id:       user.Id.Hex(),
-		Username: user.Username,
-		Email:    user.Email,
-		Password: user.Password,
-		Tag:      user.Tag,
-		Scopes:   user.Scopes,
+		Id:       us.Id.Hex(),
+		Username: us.Username,
+		Email:    us.Email,
+		Password: us.Password,
+		Tag:      us.Tag,
+		Scopes:   us.Scopes,
 	}
 }
 
-func ormToApiReadme(rdme Readme) *api.Readme {
+func ormToApiReadme(rdme readme) *api.Readme {
 	r := &api.Readme{
 		Id:   rdme.Id.Hex(),
 		Text: rdme.Text,
@@ -98,11 +114,11 @@ func ormToApiReadme(rdme Readme) *api.Readme {
 	return r
 }
 
-func apiToOrmReadme(rdme *api.Readme) Readme {
+func apiToOrmReadme(rdme *api.Readme) readme {
 	if rdme == nil {
-		return Readme{}
+		return readme{}
 	}
-	result := Readme{
+	result := readme{
 		Text: rdme.Text,
 	}
 	id, err := primitive.ObjectIDFromHex(rdme.Id)
@@ -118,11 +134,11 @@ func apiToOrmReadme(rdme *api.Readme) Readme {
 	return result
 }
 
-func apiToOrmSession(ses *api.Session) Session {
+func apiToOrmSession(ses *api.Session) session {
 	if ses == nil {
-		return Session{}
+		return session{}
 	}
-	result := Session{}
+	result := session{}
 	if ses.Id != "" {
 		id, err := primitive.ObjectIDFromHex(ses.Id)
 		if err == nil && id != primitive.NilObjectID {
@@ -144,7 +160,7 @@ func apiToOrmSession(ses *api.Session) Session {
 	return result
 }
 
-func ormToApiSession(ses Session) *api.Session {
+func ormToApiSession(ses session) *api.Session {
 	return &api.Session{
 		Id:            ses.Id.Hex(),
 		UserId:        ses.UserId.Hex(),

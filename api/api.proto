@@ -33,10 +33,13 @@ service PluginsService {
 }
 
 
+
 message PaginatePluginsRequest {
     int32 page = 1;
     int32 count = 2;
     string search = 3;
+    Category category = 4;
+    Sort sort = 5;
 }
 
 message PaginatePluginsResponse {
@@ -50,7 +53,37 @@ message Plugin {
     string version = 4;
     string description = 5;
     string thumbnail = 6;
-    int64 lastUpdated = 7;
+    Category category = 7;
+    int32 downloads = 8;
+    bool isPremium = 9;
+    Premium premium = 10;
+    int64 lastUpdated = 11;
+}
+
+message Premium {
+    int32 price = 1;
+    int32 purchases = 2;
+}
+
+enum Category {
+    ALL = 0;
+    PREMIUM = 1;
+    TOOLS = 2;
+    ECONOMY =3;
+    CHAT = 4;
+    MECHANICS = 5;
+    ADMIN = 6;
+    BUNGEE = 7;
+    FUN = 8;
+    MISC = 9;
+    LIBRARIES = 10;
+}
+
+enum Sort {
+    NONE = 0;
+    DOWNLOADS = 1;
+    PURCHASES = 2;
+    LATEST = 3;
 }
 
 

@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
+type user struct {
 	Id       primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Username string             `bson:"username,omitempty" json:"username"`
 	Email    string             `bson:"email,omitempty" json:"email"`
@@ -24,15 +24,15 @@ type UsersOrm struct{}
 
 func NewUsersOrm() *UsersOrm { return &UsersOrm{} }
 
-func (u *UsersOrm) Insert(user *api.User) error {
+func (u *UsersOrm) Insert(us *api.User) error {
 
-	bcryptPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	bcryptPass, err := bcrypt.GenerateFromPassword([]byte(us.Password), bcrypt.DefaultCost)
 
 	if err != nil {
 		return err
 	}
 
-	user.Password = string(bcryptPass)
+	us.Password = string(bcryptPass)
 
 	session, err := getMongoSession()
 	if err != nil {
@@ -42,7 +42,7 @@ func (u *UsersOrm) Insert(user *api.User) error {
 
 	collection := session.Client.Database("users").Collection("users")
 
-	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", caseInsensitive(user.Username)}})
+	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", caseInsensitive(us.Username)}})
 
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (u *UsersOrm) Insert(user *api.User) error {
 		return err
 	}
 
-	countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", caseInsensitive(user.Email)}})
+	countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", caseInsensitive(us.Email)}})
 
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (u *UsersOrm) Insert(user *api.User) error {
 		return err
 	}
 
-	insertion := apiToOrmUser(user)
+	insertion := apiToOrmUser(us)
 	err = validateUserInsert(insertion)
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
 	defer session.Cancel()
 	collection := session.Client.Database("users").Collection("users")
 
-	decodedUser := &User{}
+	decodedUser := &user{}
 	get := apiToOrmUser(req)
 	err = validateUserGet(get)
 	if err != nil {
@@ -148,28 +148,28 @@ func (u *UsersOrm) Update(req *api.User) error {
 	return nil
 }
 
-func validateUserGet(user User) error {
+func validateUserGet(us user) error {
 
-	if user.Id == primitive.NilObjectID && user.Email == "" && user.Username == "" {
+	if us.Id == primitive.NilObjectID && us.Email == "" && us.Username == "" {
 		return errors.New("id, email, or username is required for get")
 	}
 	return nil
 }
 
-func validateUserInsert(user User) error {
+func validateUserInsert(us user) error {
 
-	if user.Username == "" {
+	if us.Username == "" {
 		return errors.New("username required for insert")
 	}
 
-	if user.Password == "" {
+	if us.Password == "" {
 		return errors.New("password required for insert")
 	}
 
 	rxEmail := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-	if user.Email != "" {
-		if len(user.Email) > 254 || !rxEmail.MatchString(user.Email) {
+	if us.Email != "" {
+		if len(us.Email) > 254 || !rxEmail.MatchString(us.Email) {
 			return errors.New("invalid email")
 		}
 	}
@@ -178,8 +178,8 @@ func validateUserInsert(user User) error {
 
 }
 
-func validateUserUpdate(user User) error {
-	if user.Id == primitive.NilObjectID {
+func validateUserUpdate(us user) error {
+	if us.Id == primitive.NilObjectID {
 		return errors.New("id required for update")
 	}
 	return nil

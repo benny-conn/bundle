@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Readme struct {
+type readme struct {
 	Id     primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Plugin primitive.ObjectID `bson:"plugin,omitempty" json:"plugin"`
 	Text   string             `bson:"text,omitempty" json:"text"`
@@ -17,7 +17,7 @@ type ReadmesOrm struct{}
 
 func NewReadmesOrm() *ReadmesOrm { return &ReadmesOrm{} }
 
-func (p *ReadmesOrm) Insert(readme *api.Readme) error {
+func (p *ReadmesOrm) Insert(rdme *api.Readme) error {
 
 	session, err := getMongoSession()
 	if err != nil {
@@ -27,12 +27,12 @@ func (p *ReadmesOrm) Insert(readme *api.Readme) error {
 
 	collection := session.Client.Database("plugins").Collection("readmes")
 
-	if readme.Plugin == nil {
+	if rdme.Plugin == nil {
 		return errors.New("plugin not specified")
 	}
 	var plId primitive.ObjectID
-	if readme.Plugin.Id == "" {
-		dbpl, err := NewPluginsOrm().Get(readme.Plugin)
+	if rdme.Plugin.Id == "" {
+		dbpl, err := NewPluginsOrm().Get(rdme.Plugin)
 
 		if err != nil {
 			return err
@@ -43,7 +43,7 @@ func (p *ReadmesOrm) Insert(readme *api.Readme) error {
 			return err
 		}
 	} else {
-		plId, err = primitive.ObjectIDFromHex(readme.Plugin.Id)
+		plId, err = primitive.ObjectIDFromHex(rdme.Plugin.Id)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ func (p *ReadmesOrm) Insert(readme *api.Readme) error {
 		return err
 	}
 
-	insert := apiToOrmReadme(readme)
+	insert := apiToOrmReadme(rdme)
 
 	err = validateReadmeInsert(insert)
 	if err != nil {
@@ -113,7 +113,7 @@ func (p *ReadmesOrm) Get(req *api.Plugin) (*api.Readme, error) {
 	defer session.Cancel()
 
 	collection := session.Client.Database("plugins").Collection("readmes")
-	decodedReadmeResult := &Readme{}
+	decodedReadmeResult := &readme{}
 
 	var plId primitive.ObjectID
 	if req.Id == "" {
@@ -144,21 +144,21 @@ func (p *ReadmesOrm) Get(req *api.Plugin) (*api.Readme, error) {
 
 }
 
-func validateReadmeGet(pl Plugin) error {
+func validateReadmeGet(pl plugin) error {
 	if pl.Name == "" {
 		return errors.New("plugin name required for search")
 	}
 	return nil
 }
 
-func validateReadmeUpdate(rdme Readme) error {
+func validateReadmeUpdate(rdme readme) error {
 	if rdme.Id == primitive.NilObjectID {
 		return errors.New("id required for update")
 	}
 	return nil
 }
 
-func validateReadmeInsert(rdme Readme) error {
+func validateReadmeInsert(rdme readme) error {
 	if rdme.Plugin == primitive.NilObjectID {
 		return errors.New("valid plugin required for insertion")
 	}

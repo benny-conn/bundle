@@ -47,11 +47,12 @@ var uploadCmd = &cobra.Command{
 			plugin.Name = result.Name
 			plugin.Version = result.Version
 			plugin.Description = result.Description
+			plugin.Category = api.Category(result.Category)
 		}
 
 		fmt.Printf("Uploading to Bundle Repository From: %s\n", path)
 
-		upl := uploader.New(user, path, plugin.Name, plugin.Version).WithReadme(isReadme)
+		upl := uploader.New(user, path, plugin).WithReadme(isReadme)
 
 		err := upl.Upload()
 		if err != nil {

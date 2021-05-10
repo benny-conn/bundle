@@ -3,6 +3,7 @@ package orm
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,30 +11,57 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Plugin struct {
+type plugin struct {
 	Id          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Name        string             `bson:"name,omitempty" json:"name"`
 	Description string             `bson:"description,omitempty" json:"description"`
 	Author      primitive.ObjectID `bson:"author,omitempty" json:"author"`
 	Version     string             `bson:"version,omitempty" json:"version"`
 	Thumbnail   string             `bson:"thumbnail,omitempty" json:"thumbnail"`
+	Category    category           `bson:"category,omitempty" json:"category"`
+	Downloads   int32              `bson:"downloads,omitempty" json:"downloads"`
+	IsPremium   bool               `bson:"isPremium,omitempty" json:"isPremium"`
+	Premium     premium            `bson:"premium,omitempty" json:"premium"`
 	LastUpdated primitive.DateTime `bson:"lastUpdated,omitempty" json:"lastUpdated"`
 }
+
+type premium struct {
+	Price     int32 `bson:"price,omitempty" json:"price"`
+	Purchases int32 `bson:"purchases,omitempty" json:"purchases"`
+}
+
+type category int32
+
+type sort int32
+
+const (
+	all category = 0 << iota
+	prem
+	tools
+	eco
+	chat
+	mech
+	admin
+	bungee
+	fun
+	misc
+	lib
+)
 
 type PluginsOrm struct{}
 
 func NewPluginsOrm() *PluginsOrm { return &PluginsOrm{} }
 
-func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
-	session, err := getMongoSession()
+func (p *PluginsOrm) Insert(pl *api.Plugin) error {
+	mgses, err := getMongoSession()
 	if err != nil {
 		return err
 	}
-	defer session.Cancel()
+	defer mgses.Cancel()
 
-	collection := session.Client.Database("plugins").Collection("plugins")
+	collection := mgses.Client.Database("plugins").Collection("plugins")
 
-	countName, err := collection.CountDocuments(session.Ctx, bson.D{{"name", caseInsensitive(plugin.Name)}})
+	countName, err := collection.CountDocuments(mgses.Ctx, bson.D{{"name", caseInsensitive(pl.Name)}})
 
 	if err != nil {
 		return err
@@ -44,13 +72,13 @@ func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 		return err
 	}
 
-	insertion := apiToOrmPl(plugin)
+	insertion := apiToOrmPl(pl)
 	err = validatePluginInsert(insertion)
 	if err != nil {
 		return err
 	}
 
-	_, err = collection.InsertOne(session.Ctx, insertion)
+	_, err = collection.InsertOne(mgses.Ctx, insertion)
 
 	if err != nil {
 		return err
@@ -61,13 +89,13 @@ func (p *PluginsOrm) Insert(plugin *api.Plugin) error {
 
 func (p *PluginsOrm) Update(req *api.Plugin) error {
 
-	session, err := getMongoSession()
+	mgses, err := getMongoSession()
 	if err != nil {
 		return err
 	}
-	defer session.Cancel()
+	defer mgses.Cancel()
 
-	collection := session.Client.Database("plugins").Collection("plugins")
+	collection := mgses.Client.Database("plugins").Collection("plugins")
 
 	beforeUpdate, err := p.Get(req)
 	if err != nil {
@@ -80,7 +108,9 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 		return err
 	}
 
-	updateResult, err := collection.UpdateByID(session.Ctx, update.Id, bson.D{{"$set", update}})
+	update.LastUpdated = primitive.NewDateTimeFromTime(time.Now())
+
+	updateResult, err := collection.UpdateByID(mgses.Ctx, update.Id, bson.D{{"$set", update}})
 	if err != nil {
 		return err
 	}
@@ -112,7 +142,7 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	defer session.Cancel()
 
 	collection := session.Client.Database("plugins").Collection("plugins")
-	decodedPluginResult := &Plugin{}
+	decodedPluginResult := &plugin{}
 
 	get := apiToOrmPl(req)
 	err = validatePluginGet(get)
@@ -139,11 +169,11 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 }
 
 func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, error) {
-	session, err := getMongoSession()
+	mgses, err := getMongoSession()
 	if err != nil {
 		return nil, err
 	}
-	defer session.Cancel()
+	defer mgses.Cancel()
 
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{"lastUpdated", -1}})
@@ -152,42 +182,54 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, e
 	}
 	findOptions.SetLimit(int64(req.Count))
 
-	collection := session.Client.Database("plugins").Collection("plugins")
+	collection := mgses.Client.Database("plugins").Collection("plugins")
 
 	fil := bson.D{}
 
 	if req.Search != "" {
-		fil = bson.D{{"$text", bson.D{{"$search", req.Search}}}}
-		findOptions.SetSort(bson.D{{"score", bson.D{{"$meta", "textScore"}}}})
+		fil = append(fil, bson.E{"$text", bson.E{"$search", req.Search}})
+	}
+	if req.Category != api.Category_ALL {
+		fil = append(fil, bson.E{"category", req.Category})
+	}
+	if req.Sort != api.Sort_NONE {
+		switch req.Sort {
+		case api.Sort_LATEST:
+			findOptions.SetSort(bson.D{{"lastUpdated", -1}})
+		case api.Sort_PURCHASES:
+			findOptions.SetSort(bson.D{{"premium.purchases", -1}})
+		case api.Sort_DOWNLOADS:
+			findOptions.SetSort(bson.D{{"downloads", -1}})
+		}
 	}
 
-	cur, err := collection.Find(session.Ctx, fil, findOptions)
+	cur, err := collection.Find(mgses.Ctx, fil, findOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	results := []*api.Plugin{}
-	defer cur.Close(session.Ctx)
-	for cur.Next(session.Ctx) {
-		plugin := &Plugin{}
-		if err = cur.Decode(&plugin); err != nil {
+	defer cur.Close(mgses.Ctx)
+	for cur.Next(mgses.Ctx) {
+		pl := &plugin{}
+		if err = cur.Decode(&pl); err != nil {
 			return nil, err
 		}
-		results = append(results, ormToApiPl(*plugin))
+		results = append(results, ormToApiPl(*pl))
 	}
 
 	return results, nil
 
 }
 
-func validatePluginUpdate(pl Plugin) error {
+func validatePluginUpdate(pl plugin) error {
 	if pl.Id == primitive.NilObjectID {
 		return errors.New("id required for update")
 	}
 	return nil
 }
 
-func validatePluginInsert(pl Plugin) error {
+func validatePluginInsert(pl plugin) error {
 	if pl.Name == "" {
 		return errors.New("name required for insertion")
 	}
@@ -200,7 +242,7 @@ func validatePluginInsert(pl Plugin) error {
 	return nil
 }
 
-func validatePluginGet(pl Plugin) error {
+func validatePluginGet(pl plugin) error {
 	if pl.Name == "" && pl.Id == primitive.NilObjectID {
 		return errors.New("id or name required for get")
 	}

@@ -12,6 +12,7 @@ type plYml struct {
 	Name        string `yaml:"name"`
 	Version     string `yaml:"version"`
 	Description string `yaml:"description,omitempty"`
+	Category    int32  `yaml:"description,omitempty"`
 }
 
 func ParsePluginYml(path string) (plYml, error) {

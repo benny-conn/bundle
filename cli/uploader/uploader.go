@@ -18,14 +18,11 @@ type options struct {
 	isReadme bool
 }
 
-func New(user *api.User, location, name, version string) *uploader {
+func New(user *api.User, location string, plugin *api.Plugin) *uploader {
 	return &uploader{
 		user:     user,
 		location: location,
-		plugin: &api.Plugin{
-			Name:    name,
-			Version: version,
-		},
+		plugin:   plugin,
 	}
 }
 

@@ -26,11 +26,11 @@ func getMongoSession() (*Mongo, error) {
 
 	opts := options.Client().ApplyURI(url)
 	if mode == "TRUE" {
-		user := os.Getenv("MONGO_INITDB_ROOT_USERNAME")
+		usr := os.Getenv("MONGO_INITDB_ROOT_USERNAME")
 		pass := os.Getenv("MONGO_INITDB_ROOT_PASSWORD")
 
 		credentials := options.Credential{
-			Username: user,
+			Username: usr,
 			Password: pass,
 		}
 		opts.SetAuth(credentials)

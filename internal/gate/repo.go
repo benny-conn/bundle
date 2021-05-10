@@ -3,6 +3,7 @@ package gate
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/repo"
@@ -57,8 +58,13 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Password: r.FormValue("password"),
 		}
 		plugin := &api.Plugin{
-			Name:    r.FormValue("name"),
-			Version: r.FormValue("version"),
+			Name:        r.FormValue("name"),
+			Version:     r.FormValue("version"),
+			Description: r.FormValue("description"),
+		}
+
+		if cat, err := strconv.Atoi(r.FormValue("category")); err == nil {
+			plugin.Category = api.Category(cat)
 		}
 
 		dbUser, err := gs.GetUser(user)

@@ -19,7 +19,7 @@ type gateService interface {
 	DownloadPlugin(plugin *api.Plugin) ([]byte, error)
 	UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error
 	UploadThumbnail(user *api.User, plugin *api.Plugin, data io.Reader) error
-	PaginatePlugins(page, count int, search string) ([]*api.Plugin, error)
+	PaginatePlugins(req *api.PaginatePluginsRequest) ([]*api.Plugin, error)
 	GetPlugin(plugin *api.Plugin) (*api.Plugin, error)
 	InsertPlugin(plugin *api.Plugin) error
 	UpdatePlugin(updatedPlugin *api.Plugin) error
@@ -99,6 +99,8 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	writer.WriteField("password", user.Password)
 	writer.WriteField("name", plugin.Name)
 	writer.WriteField("version", plugin.Version)
+	writer.WriteField("description", plugin.Description)
+	writer.WriteField("category", fmt.Sprint(plugin.Category))
 
 	part, err := writer.CreateFormFile("plugin", plugin.Name)
 	if err != nil {
@@ -201,7 +203,7 @@ func (g *gateServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 	return nil
 }
 
-func (g *gateServiceImpl) PaginatePlugins(page int, count int, search string) ([]*api.Plugin, error) {
+func (g *gateServiceImpl) PaginatePlugins(req *api.PaginatePluginsRequest) ([]*api.Plugin, error) {
 	scheme := "https://"
 	addr := fmt.Sprintf("%s%s:%s/api/plugins", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -210,9 +212,11 @@ func (g *gateServiceImpl) PaginatePlugins(page int, count int, search string) ([
 	}
 
 	q := u.Query()
-	q.Set("page", fmt.Sprint(page))
-	q.Set("count", fmt.Sprint(count))
-	q.Set("search", search)
+	q.Set("page", fmt.Sprint(req.Page))
+	q.Set("count", fmt.Sprint(req.Count))
+	q.Set("search", req.Search)
+	q.Set("category", fmt.Sprint(req.Category))
+	q.Set("sort", fmt.Sprint(req.Sort))
 	u.RawQuery = q.Encode()
 
 	client := internal.NewBasicClient()

@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Session struct {
+type session struct {
 	Id            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	UserId        primitive.ObjectID `bson:"userId,omitempty" json:"userId"`
 	LastRetrieved primitive.DateTime `bson:"lastRetrieved,omitempty" json:"lastRetrieved"`
@@ -20,13 +20,13 @@ type SessionsOrm struct{}
 func NewSessionsOrm() *SessionsOrm { return &SessionsOrm{} }
 
 func (o *SessionsOrm) Insert(ses *api.Session) error {
-	session, err := getMongoSession()
+	mgses, err := getMongoSession()
 	if err != nil {
 		return err
 	}
-	defer session.Cancel()
+	defer mgses.Cancel()
 
-	collection := session.Client.Database("users").Collection("sessions")
+	collection := mgses.Client.Database("users").Collection("sessions")
 
 	s := apiToOrmSession(ses)
 	err = validateSesInsert(s)
@@ -36,7 +36,7 @@ func (o *SessionsOrm) Insert(ses *api.Session) error {
 	s.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	s.LastRetrieved = primitive.NewDateTimeFromTime(time.Now())
 
-	res, err := collection.InsertOne(session.Ctx, s)
+	res, err := collection.InsertOne(mgses.Ctx, s)
 
 	if err != nil {
 		return err
@@ -50,13 +50,13 @@ func (o *SessionsOrm) Insert(ses *api.Session) error {
 }
 
 func (o *SessionsOrm) Delete(ses *api.Session) error {
-	session, err := getMongoSession()
+	mgses, err := getMongoSession()
 	if err != nil {
 		return err
 	}
-	defer session.Cancel()
+	defer mgses.Cancel()
 
-	collection := session.Client.Database("users").Collection("sessions")
+	collection := mgses.Client.Database("users").Collection("sessions")
 
 	s := apiToOrmSession(ses)
 	err = validateSesDelete(s)
@@ -64,7 +64,7 @@ func (o *SessionsOrm) Delete(ses *api.Session) error {
 		return err
 	}
 
-	_, err = collection.DeleteOne(session.Ctx, s)
+	_, err = collection.DeleteOne(mgses.Ctx, s)
 
 	if err != nil {
 		return err
@@ -73,23 +73,23 @@ func (o *SessionsOrm) Delete(ses *api.Session) error {
 }
 
 func (o *SessionsOrm) Get(ses *api.Session) (*api.Session, error) {
-	session, err := getMongoSession()
+	mgses, err := getMongoSession()
 	if err != nil {
 		return nil, err
 	}
-	defer session.Cancel()
-	collection := session.Client.Database("users").Collection("sessions")
+	defer mgses.Cancel()
+	collection := mgses.Client.Database("users").Collection("sessions")
 
 	s := apiToOrmSession(ses)
 	err = validateSesGet(s)
 	if err != nil {
 		return nil, err
 	}
-	result := collection.FindOne(session.Ctx, s)
+	result := collection.FindOne(mgses.Ctx, s)
 	if result.Err() != nil {
 		return nil, result.Err()
 	}
-	final := Session{}
+	final := session{}
 
 	err = result.Decode(&final)
 
@@ -100,7 +100,7 @@ func (o *SessionsOrm) Get(ses *api.Session) (*api.Session, error) {
 	upSes := final
 	upSes.LastRetrieved = primitive.NewDateTimeFromTime(time.Now())
 
-	update, err := collection.UpdateByID(session.Ctx, upSes.Id, bson.D{{"$set", upSes}})
+	update, err := collection.UpdateByID(mgses.Ctx, upSes.Id, bson.D{{"$set", upSes}})
 	if update.MatchedCount < 1 {
 		return nil, errors.New("could not find a session to updae last retrieved time")
 	}
@@ -112,21 +112,21 @@ func (o *SessionsOrm) Get(ses *api.Session) (*api.Session, error) {
 	return ormToApiSession(final), nil
 }
 
-func validateSesInsert(ses Session) error {
+func validateSesInsert(ses session) error {
 	if ses.UserId == primitive.NilObjectID {
 		return errors.New("user id required")
 	}
 	return nil
 }
 
-func validateSesGet(ses Session) error {
+func validateSesGet(ses session) error {
 	if ses.Id == primitive.NilObjectID && ses.UserId == primitive.NilObjectID {
 		return errors.New("id or user id required")
 	}
 	return nil
 }
 
-func validateSesDelete(ses Session) error {
+func validateSesDelete(ses session) error {
 	if ses.Id == primitive.NilObjectID {
 		return errors.New("id required")
 	}

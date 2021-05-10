@@ -36,12 +36,24 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		if pluginName == "" {
 			page := req.FormValue("page")
 			search := req.FormValue("search")
+			sort := req.FormValue("sort")
+			category := req.FormValue("category")
 
 			if page == "" {
 				page = "1"
 			}
 
 			pageNumber, err := strconv.Atoi(page)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			sortNumber, err := strconv.Atoi(sort)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			categoryNum, err := strconv.Atoi(category)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusNotFound)
 				return
@@ -65,7 +77,15 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			}
 			data.Math = math
 
-			plugins, err := gs.PaginatePlugins(pageNumber, perPageCount, search)
+			req := &api.PaginatePluginsRequest{
+				Count:    10,
+				Search:   search,
+				Page:     int32(pageNumber),
+				Sort:     api.Sort(sortNumber),
+				Category: api.Category(categoryNum),
+			}
+
+			plugins, err := gs.PaginatePlugins(req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusNotFound)
 				return
