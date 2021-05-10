@@ -101,6 +101,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		id := r.FormValue("id")
 		page := r.FormValue("page")
 		count := r.FormValue("count")
+		search := r.FormValue("search")
 
 		if pluginName != "" || id != "" {
 
@@ -135,8 +136,9 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			req := &api.PaginatePluginsRequest{
-				Page:  int32(convPage),
-				Count: int32(convCount),
+				Page:   int32(convPage),
+				Count:  int32(convCount),
+				Search: search,
 			}
 			plugins, err := client.Paginate(req)
 			if err != nil {

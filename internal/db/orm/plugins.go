@@ -154,7 +154,14 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, e
 
 	collection := session.Client.Database("plugins").Collection("plugins")
 
-	cur, err := collection.Find(session.Ctx, bson.D{}, findOptions)
+	fil := bson.D{}
+
+	if req.Search != "" {
+		fil = bson.D{{"$text", bson.D{{"$search", req.Search}}}}
+		findOptions.SetSort(bson.D{{"score", bson.D{{"$meta", "textScore"}}}})
+	}
+
+	cur, err := collection.Find(session.Ctx, fil, findOptions)
 	if err != nil {
 		return nil, err
 	}

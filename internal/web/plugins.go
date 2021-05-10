@@ -35,6 +35,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		if pluginName == "" {
 			page := req.FormValue("page")
+			search := req.FormValue("search")
 
 			if page == "" {
 				page = "1"
@@ -64,7 +65,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			}
 			data.Math = math
 
-			plugins, err := gs.PaginatePlugins(pageNumber, perPageCount)
+			plugins, err := gs.PaginatePlugins(pageNumber, perPageCount, search)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusNotFound)
 				return

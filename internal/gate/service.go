@@ -19,7 +19,7 @@ type gateService interface {
 	DownloadPlugin(plugin *api.Plugin) ([]byte, error)
 	UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error
 	UploadThumbnail(user *api.User, plugin *api.Plugin, data io.Reader) error
-	PaginatePlugins(page int, count int) ([]*api.Plugin, error)
+	PaginatePlugins(page, count int, search string) ([]*api.Plugin, error)
 	GetPlugin(plugin *api.Plugin) (*api.Plugin, error)
 	InsertPlugin(plugin *api.Plugin) error
 	UpdatePlugin(updatedPlugin *api.Plugin) error
@@ -201,7 +201,7 @@ func (g *gateServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 	return nil
 }
 
-func (g *gateServiceImpl) PaginatePlugins(page int, count int) ([]*api.Plugin, error) {
+func (g *gateServiceImpl) PaginatePlugins(page int, count int, search string) ([]*api.Plugin, error) {
 	scheme := "https://"
 	addr := fmt.Sprintf("%s%s:%s/api/plugins", scheme, g.Host, g.Port)
 	u, err := url.Parse(addr)
@@ -212,6 +212,7 @@ func (g *gateServiceImpl) PaginatePlugins(page int, count int) ([]*api.Plugin, e
 	q := u.Query()
 	q.Set("page", fmt.Sprint(page))
 	q.Set("count", fmt.Sprint(count))
+	q.Set("search", search)
 	u.RawQuery = q.Encode()
 
 	client := internal.NewBasicClient()

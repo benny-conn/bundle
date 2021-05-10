@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/db/orm"
@@ -42,6 +43,7 @@ func (s *pluginsServer) Insert(ctx context.Context, plugin *api.Plugin) (*api.Em
 func (s *pluginsServer) Paginate(ctx context.Context, req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
 	pls, err := s.orm.Paginate(req)
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 	return &api.PaginatePluginsResponse{

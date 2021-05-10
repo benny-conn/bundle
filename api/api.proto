@@ -36,6 +36,7 @@ service PluginsService {
 message PaginatePluginsRequest {
     int32 page = 1;
     int32 count = 2;
+    string search = 3;
 }
 
 message PaginatePluginsResponse {
@@ -68,8 +69,6 @@ message Readme {
     Plugin plugin = 2;
     string text = 3;
 }
-
-
 
 // SESSIONS ---------------------------------------------------------------- ||
 
