@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/bennycio/bundle/cli/intfile"
 	"github.com/bennycio/bundle/internal"
@@ -39,7 +38,7 @@ var initCmd = &cobra.Command{
 			return errors.New("there is no plugin directory in your current directory")
 		}
 
-		err = intfile.Initialize(filepath.Join(path, intfile.BuFileName))
+		err = intfile.Initialize(path)
 		if err != nil {
 			return err
 		}

@@ -27,10 +27,13 @@ var installCmd = &cobra.Command{
 	download to your plugins folder`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		bundlePlugins, err := intfile.GetBundleFilePlugins(buFilePath)
+		bundle, err := intfile.GetBundle("")
 		if err != nil {
+			fmt.Println("WE GOT AN 7")
 			return err
 		}
+
+		bundlePlugins := bundle.Plugins
 		if bundlePlugins == nil {
 			bundlePlugins = make(map[string]string)
 		}
@@ -42,6 +45,7 @@ var installCmd = &cobra.Command{
 		} else {
 			length = len(bundlePlugins)
 		}
+
 		wg.Add(length)
 		totalProgressBar := progressbar.Default(int64(length))
 		if len(args) > 0 {
@@ -58,32 +62,35 @@ var installCmd = &cobra.Command{
 					if err != nil {
 						fmt.Printf("error occured: %s\n", err.Error())
 					}
-					if strings.EqualFold(bundleVersion, "latest") && force {
+					if bundleVersion != "latest" && force {
 						bundlePlugins[pluginName] = ver
 					}
 				}(v, version)
 			}
 		} else {
+
 			for k, v := range bundlePlugins {
+
 				go func(pluginName string, bundleVersion string) {
 					defer wg.Done()
 					defer totalProgressBar.Add(1)
 					ver, err := downloadAndInstall(pluginName, bundleVersion)
+
 					if err != nil {
 						fmt.Printf("error occured: %s\n", err.Error())
 					}
-					if strings.EqualFold(bundleVersion, "latest") && force {
+					if bundleVersion != "latest" && force {
 						bundlePlugins[pluginName] = ver
 					}
 				}(k, v)
 			}
 		}
 
-		err = intfile.WritePluginsToBundle(bundlePlugins, buFilePath)
+		wg.Wait()
+		err = intfile.WritePluginsToBundle(bundlePlugins, "")
 		if err != nil {
 			return err
 		}
-		wg.Wait()
 		return nil
 	},
 }
@@ -91,15 +98,12 @@ var installCmd = &cobra.Command{
 func downloadAndInstall(pluginName string, bundleVersion string) (string, error) {
 	fp := filepath.Join("plugins", pluginName+".jar")
 	latest := strings.EqualFold(bundleVersion, "latest")
-	dl := downloader.New(pluginName, bundleVersion).WithForce(force).WithLocation(fp).WithLatest(latest)
+	dl := downloader.New(pluginName, bundleVersion).WithLocation(fp).WithLatest(latest)
 	bs, err := dl.Download()
 	if err != nil {
 		return "", err
 	}
 	err = dl.Install(bs)
-	if err != nil {
-		return "", err
-	}
 	if err != nil {
 		return "", err
 	}

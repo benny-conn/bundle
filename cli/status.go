@@ -15,18 +15,20 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check which plugins have updates.",
 	Run: func(cmd *cobra.Command, args []string) {
-		m, err := intfile.GetBundleFilePlugins(buFilePath)
+		bundle, err := intfile.GetBundle("")
 		if err != nil {
 			panic(err)
 		}
+
+		pls := bundle.Plugins
 
 		pluginsToUpdate := make(map[string]string)
 
 		var wg sync.WaitGroup
 
-		wg.Add(len(m))
+		wg.Add(len(pls))
 
-		for k, v := range m {
+		for k, v := range pls {
 			go func(pluginName string, bundleVersion string) {
 				defer wg.Done()
 
@@ -42,11 +44,11 @@ var statusCmd = &cobra.Command{
 
 				latestVersion := plugin.Version
 
-				fp := filepath.Join(buFilePath, "plugins", pluginName+".jar")
+				fp := filepath.Join("plugins", pluginName+".jar")
 
 				res, err := intfile.ParsePluginYml(fp)
 				if err != nil {
-					fmt.Printf("error occurred: %s\n", res)
+					fmt.Printf("error occurred: %s\n", err.Error())
 				}
 				if res.Version != latestVersion {
 					pluginsToUpdate[pluginName] = latestVersion

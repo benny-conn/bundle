@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/bennycio/bundle/api"
@@ -13,7 +14,6 @@ type downloader struct {
 }
 
 type options struct {
-	force    bool
 	latest   bool
 	location string
 }
@@ -27,13 +27,8 @@ func New(name, version string) *downloader {
 	}
 }
 
-func (d *downloader) WithForce(force bool) *downloader {
-	d.options.force = true
-	return d
-}
-
 func (d *downloader) WithLatest(latest bool) *downloader {
-	d.options.latest = true
+	d.options.latest = latest
 	return d
 }
 
@@ -46,9 +41,11 @@ func (u *downloader) Download() ([]byte, error) {
 
 	gservice := gate.NewGateService("localhost", "8020")
 
-	if u.options.force && u.options.latest {
+	fmt.Println(u.options)
+	if u.options.latest {
 		plugin, err := gservice.GetPlugin(u.Plugin)
 		if err != nil {
+
 			return nil, err
 		}
 		u.Plugin.Version = plugin.Version
@@ -56,8 +53,10 @@ func (u *downloader) Download() ([]byte, error) {
 
 	pl, err := gservice.DownloadPlugin(u.Plugin)
 	if err != nil {
+
 		return nil, err
 	}
+
 	return pl, nil
 }
 
@@ -65,6 +64,7 @@ func (d *downloader) Install(bs []byte) error {
 
 	file, err := os.OpenFile(d.options.location, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
+
 		return err
 	}
 

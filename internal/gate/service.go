@@ -64,10 +64,12 @@ func (g *gateServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 	u.RawQuery = q.Encode()
 
 	client := internal.NewBasicClient()
+
 	resp, err := client.Get(u.String())
 	if err != nil {
 		return nil, err
 	}
+
 	defer resp.Body.Close()
 	bs, err := io.ReadAll(resp.Body)
 	if err != nil {

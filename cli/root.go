@@ -12,17 +12,13 @@ var rootCmd = &cobra.Command{
 
 var force bool
 
-var buFilePath string
-
 func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	rootCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Force the command to run regardless of constraints")
-	rootCmd.PersistentFlags().StringVarP(&buFilePath, "bundle", "b", "", "Specify a path to bundle file")
+	rootCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "Specify a path to bundle file")
 }
 
 // initConfig reads in config file and ENV variables if set.
