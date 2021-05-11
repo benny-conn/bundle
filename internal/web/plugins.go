@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
@@ -82,6 +83,12 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 				return result
 			}
 			data.Math = math
+
+			date := func(i int64) string {
+				d := time.Unix(i, 0)
+				return d.Format("Mon Jan 2 15:04:05 MST")
+			}
+			data.Date = date
 
 			req := &api.PaginatePluginsRequest{
 				Count:    10,

@@ -20,6 +20,7 @@ type TemplateData struct {
 	Plugins []*api.Plugin
 	Page    int
 	Math    func(int, int, string) int
+	Date    func(int64) string
 	Readme  string
 }
 

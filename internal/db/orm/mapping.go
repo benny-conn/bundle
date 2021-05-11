@@ -62,7 +62,7 @@ func apiToOrmPl(pl *api.Plugin) plugin {
 			result.Author = authorID
 		}
 	}
-	if pl.Premium != nil {
+	if pl.Premium != nil && pl.IsPremium {
 		result.Premium = premium{
 			Price:     result.Premium.Price,
 			Purchases: result.Premium.Purchases,

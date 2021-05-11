@@ -1416,8 +1416,7 @@ body {
 }
 
 .plugins-thumbnail {
-  height: 80px;
-  width: 80px;
+  max-height: 350px;
 }
 
 .plugin-download code {
@@ -1425,4 +1424,16 @@ body {
   color: hsl(0, 0%, 85%);
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   border-radius: 500px;
+}
+
+.plugin-link {
+  text-decoration: none;
+}
+
+.plugin-card {
+  max-height: 400px;
+  transition: transform 0.25s ease-in-out;
+}
+.plugin-card:hover {
+  transform: scale(1.1);
 }
