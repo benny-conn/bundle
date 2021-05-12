@@ -1,4 +1,4 @@
-package client
+package grpc
 
 import (
 	"context"
@@ -9,61 +9,61 @@ import (
 	"google.golang.org/grpc"
 )
 
-type readmesGrpcClient interface {
-	Get(req *api.Plugin) (*api.Readme, error)
-	Update(req *api.Readme) error
-	Insert(req *api.Readme) error
+type usersGrpcClient interface {
+	Get(req *api.User) (*api.User, error)
+	Update(req *api.User) error
+	Insert(req *api.User) error
 }
 
-type readmesGrpcClientImpl struct {
+type usersGrpcClientImpl struct {
 	Host string
 	Port string
 }
 
-func NewReadmeClient(host string, port string) readmesGrpcClient {
+func NewUserClient(host string, port string) usersGrpcClient {
 	if host == "" {
 		host = os.Getenv("DATABASE_HOST")
 	}
 	if port == "" {
 		port = os.Getenv("DATABASE_PORT")
 	}
-	return &readmesGrpcClientImpl{
+	return &usersGrpcClientImpl{
 		Host: host,
 		Port: port,
 	}
 }
 
-func (r *readmesGrpcClientImpl) Get(req *api.Plugin) (*api.Readme, error) {
+func (u *usersGrpcClientImpl) Get(req *api.User) (*api.User, error) {
 	creds, err := getCert()
 	if err != nil {
 		return nil, err
 	}
-	addr := fmt.Sprintf("%v:%v", r.Host, r.Port)
+	addr := fmt.Sprintf("%v:%v", u.Host, u.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
-	client := api.NewReadmeServiceClient(conn)
-	rdme, err := client.Get(context.Background(), req)
+	client := api.NewUsersServiceClient(conn)
+	user, err := client.Get(context.Background(), req)
 	if err != nil {
 		return nil, err
 	}
-	return rdme, nil
+	return user, nil
 }
 
-func (r *readmesGrpcClientImpl) Update(req *api.Readme) error {
+func (u *usersGrpcClientImpl) Update(req *api.User) error {
 	creds, err := getCert()
 	if err != nil {
 		return err
 	}
-	addr := fmt.Sprintf("%v:%v", r.Host, r.Port)
+	addr := fmt.Sprintf("%v:%v", u.Host, u.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-	client := api.NewReadmeServiceClient(conn)
+	client := api.NewUsersServiceClient(conn)
 	_, err = client.Update(context.Background(), req)
 	if err != nil {
 		return err
@@ -71,22 +71,26 @@ func (r *readmesGrpcClientImpl) Update(req *api.Readme) error {
 	return nil
 }
 
-func (r *readmesGrpcClientImpl) Insert(req *api.Readme) error {
+func (u *usersGrpcClientImpl) Insert(user *api.User) error {
+
 	creds, err := getCert()
 	if err != nil {
 		return err
 	}
-	addr := fmt.Sprintf("%v:%v", r.Host, r.Port)
+
+	addr := fmt.Sprintf("%v:%v", u.Host, u.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
 	}
+
 	defer conn.Close()
-	client := api.NewReadmeServiceClient(conn)
-	_, err = client.Insert(context.Background(), req)
+	client := api.NewUsersServiceClient(conn)
+	_, err = client.Insert(context.Background(), user)
 	if err != nil {
 		return err
 	}
+
 	return nil
 
 }

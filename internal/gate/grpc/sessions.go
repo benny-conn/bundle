@@ -1,4 +1,4 @@
-package client
+package grpc
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 type sessionsGrpcClient interface {
 	Get(req *api.Session) (*api.Session, error)
-	Insert(req *api.Session) error
+	Insert(req *api.Session) (*api.SessionInsertResponse, error)
 	Delete(req *api.Session) error
 }
 
@@ -22,10 +22,10 @@ type sessionsGrpcClientImpl struct {
 
 func NewSessionsClient(host string, port string) sessionsGrpcClient {
 	if host == "" {
-		host = os.Getenv("DATABASE_HOST")
+		host = os.Getenv("MEM_HOST")
 	}
 	if port == "" {
-		port = os.Getenv("DATABASE_PORT")
+		port = os.Getenv("MEM_PORT")
 	}
 	return &sessionsGrpcClientImpl{
 		Host: host,
@@ -52,23 +52,23 @@ func (r *sessionsGrpcClientImpl) Get(req *api.Session) (*api.Session, error) {
 	return ses, nil
 }
 
-func (r *sessionsGrpcClientImpl) Insert(req *api.Session) error {
+func (r *sessionsGrpcClientImpl) Insert(req *api.Session) (*api.SessionInsertResponse, error) {
 	creds, err := getCert()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	addr := fmt.Sprintf("%v:%v", r.Host, r.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer conn.Close()
 	client := api.NewSessionServiceClient(conn)
-	_, err = client.Insert(context.Background(), req)
+	res, err := client.Insert(context.Background(), req)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return res, nil
 }
 
 func (r *sessionsGrpcClientImpl) Delete(req *api.Session) error {

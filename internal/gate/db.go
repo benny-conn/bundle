@@ -8,12 +8,12 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/gate/client"
+	"github.com/bennycio/bundle/internal/gate/grpc"
 )
 
 func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
-	client := client.NewUserClient("", "")
+	client := grpc.NewUserClient("", "")
 
 	switch req.Method {
 	case http.MethodGet:
@@ -88,7 +88,7 @@ func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
-	client := client.NewPluginClient("", "")
+	client := grpc.NewPluginClient("", "")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -196,7 +196,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	client := client.NewReadmeClient("", "")
+	client := grpc.NewReadmeClient("", "")
 	gs := NewGateService("", "")
 
 	switch r.Method {
@@ -297,7 +297,7 @@ func readmesHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func sessionHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	client := client.NewSessionsClient("", "")
+	client := grpc.NewSessionsClient("", "")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -338,16 +338,21 @@ func sessionHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 		pl := &api.Session{}
 
-		err = json.Unmarshal(bs, pl)
+		if err = json.Unmarshal(bs, pl); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res, err := client.Insert(pl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		err = client.Insert(pl)
+		r, err := json.Marshal(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		internal.WriteResponse(w, string(r), http.StatusOK)
 	case http.MethodDelete:
 		bs, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -372,7 +377,7 @@ func sessionHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func bundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	client := client.NewBundlesClient("", "")
+	client := grpc.NewBundlesClient("", "")
 
 	switch r.Method {
 	case http.MethodGet:

@@ -107,7 +107,7 @@ message Readme {
 
 service SessionService {
     rpc Get(Session) returns (Session) {}
-    rpc Insert(Session) returns (Empty) {}
+    rpc Insert(Session) returns (SessionInsertResponse) {}
     rpc Delete(Session) returns (Empty) {}
 }
 
@@ -115,7 +115,10 @@ message Session{
     string id = 1;
     string userId = 2;
     int64 lastRetrieved = 3;
-    int64 createdAt = 4;
+}
+
+message SessionInsertResponse {
+    string id = 1;
 }
 
 

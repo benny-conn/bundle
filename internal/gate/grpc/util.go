@@ -1,4 +1,4 @@
-package client
+package grpc
 
 import "google.golang.org/grpc/credentials"
 

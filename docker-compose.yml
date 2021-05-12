@@ -32,6 +32,14 @@ services:
       - 8040:8040
     env_file:
       - ".env"
+  mem:
+    build:
+      context: .
+      dockerfile: ./images/mem/Dockerfile
+    ports:
+      - 8090:8090
+    env_file:
+      - ".env"
   mongo:
     # image: mongo:latest
     build:
@@ -43,5 +51,13 @@ services:
       - /data/db
       - /home/mongodb
       - /docker-entrypoint-initdb.d
+    env_file:
+      - ".env"
+  redis:
+    build:
+      context: .
+      dockerfile: ./images/redis/Dockerfile
+    ports:
+      - "6379:6379"
     env_file:
       - ".env"

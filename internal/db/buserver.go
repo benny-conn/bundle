@@ -26,7 +26,7 @@ func (s *bundlesServer) Get(ctx context.Context, req *api.Bundle) (*api.Bundle, 
 func (s *bundlesServer) Insert(ctx context.Context, req *api.Bundle) (*api.Empty, error) {
 	err := s.orm.Insert(req)
 	if err != nil {
-		return &api.Empty{}, err
+		return nil, err
 	}
 	return &api.Empty{}, nil
 }
@@ -34,7 +34,7 @@ func (s *bundlesServer) Insert(ctx context.Context, req *api.Bundle) (*api.Empty
 func (s *bundlesServer) Delete(ctx context.Context, req *api.Bundle) (*api.Empty, error) {
 	err := s.orm.Delete(req)
 	if err != nil {
-		return &api.Empty{}, err
+		return nil, err
 	}
 	return &api.Empty{}, nil
 }
@@ -42,7 +42,7 @@ func (s *bundlesServer) Delete(ctx context.Context, req *api.Bundle) (*api.Empty
 func (s *bundlesServer) Update(ctx context.Context, req *api.Bundle) (*api.Empty, error) {
 	err := s.orm.Update(req)
 	if err != nil {
-		return &api.Empty{}, err
+		return nil, err
 	}
 	return &api.Empty{}, nil
 }

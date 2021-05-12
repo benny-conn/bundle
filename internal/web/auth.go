@@ -10,87 +10,6 @@ import (
 	"github.com/bennycio/bundle/internal/gate"
 )
 
-// type CustomClaims struct {
-// 	Id string `json:"id"`
-// 	jwt.StandardClaims
-// }
-
-// func newAuthToken(profile Profile) (string, error) {
-
-// 	secret := os.Getenv("AUTH0_SECRET")
-
-// 	claims := CustomClaims{
-// 		Id: profile.Id,
-// 		StandardClaims: jwt.StandardClaims{
-// 			ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
-// 			Issuer:    "bundle",
-// 		},
-// 	}
-// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-// 	signedToken, err := token.SignedString([]byte(secret))
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return signedToken, nil
-// }
-
-// func getProfileFromToken(tokenString string) (Profile, error) {
-
-// 	secret := os.Getenv("AUTH0_SECRET")
-// 	token, err := jwt.ParseWithClaims(
-// 		tokenString,
-// 		&CustomClaims{},
-// 		func(token *jwt.Token) (interface{}, error) {
-// 			return []byte(secret), nil
-// 		},
-// 	)
-// 	if err != nil {
-// 		return Profile{}, err
-// 	}
-
-// 	claims, ok := token.Claims.(*CustomClaims)
-// 	if !ok {
-// 		err = errors.New("couldn't parse claims")
-// 		return Profile{}, err
-// 	}
-
-// 	gs := gate.NewGateService("", "")
-// 	user, err := gs.GetUser(&api.User{Id: claims.Id})
-// 	if err != nil {
-// 		return Profile{}, err
-// 	}
-
-// 	return userToProfile(user), nil
-
-// }
-
-// func validateToken(tokenString string) error {
-// 	secret := os.Getenv("AUTH0_SECRET")
-
-// 	token, err := jwt.ParseWithClaims(
-// 		tokenString,
-// 		&CustomClaims{},
-// 		func(token *jwt.Token) (interface{}, error) {
-// 			return []byte(secret), nil
-// 		},
-// 	)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	claims, ok := token.Claims.(*CustomClaims)
-// 	if !ok {
-// 		err = errors.New("couldn't parse claims")
-// 		return err
-// 	}
-// 	if claims.ExpiresAt < time.Now().Local().Unix() {
-// 		err = errors.New("expired token")
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
 func newAccessCookie(token string) *http.Cookie {
 	return &http.Cookie{
 		Name:     "access_token",
@@ -135,10 +54,11 @@ func newSession(prof Profile) (*api.Session, error) {
 		UserId: prof.Id,
 	}
 
-	err := gs.InsertSession(req)
+	res, err := gs.InsertSession(req)
 	if err != nil {
 		return nil, err
 	}
+	req.Id = res.Id
 	ses, err := gs.GetSession(req)
 	if err != nil {
 		return nil, err

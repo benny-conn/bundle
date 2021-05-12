@@ -29,7 +29,7 @@ type gateService interface {
 	UpdateUser(updatedUser *api.User) error
 	GetUser(user *api.User) (*api.User, error)
 	InsertUser(user *api.User) error
-	InsertSession(ses *api.Session) error
+	InsertSession(ses *api.Session) (*api.SessionInsertResponse, error)
 	GetSession(ses *api.Session) (*api.Session, error)
 	DeleteSession(ses *api.Session) error
 	InsertBundle(ses *api.Bundle) error
@@ -192,7 +192,7 @@ func (g *gateServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 		return err
 	}
 
-	accessToken, err := getAccessToken()
+	accessToken, err := newAuthToken("thumbnails")
 	if err != nil {
 		return err
 	}
@@ -451,11 +451,11 @@ func (g *gateServiceImpl) UpdateUser(updatedUser *api.User) error {
 		return err
 	}
 
-	access, err := getAccessToken()
+	access, err := newAuthToken("users")
 	if err != nil {
 		return err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -487,7 +487,7 @@ func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
 		return nil, err
 	}
 
-	access, err := getAccessToken()
+	access, err := newAuthToken("users")
 	if err != nil {
 		return nil, err
 	}
@@ -536,11 +536,11 @@ func (g *gateServiceImpl) InsertUser(user *api.User) error {
 	if err != nil {
 		return err
 	}
-	access, err := getAccessToken()
+	access, err := newAuthToken("users")
 	if err != nil {
 		return err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -569,11 +569,11 @@ func (g *gateServiceImpl) DeleteSession(ses *api.Session) error {
 	if err != nil {
 		return err
 	}
-	access, err := getAccessToken()
+	access, err := newAuthToken("sessions")
 	if err != nil {
 		return err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -601,11 +601,11 @@ func (g *gateServiceImpl) GetSession(ses *api.Session) (*api.Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	access, err := getAccessToken()
+	access, err := newAuthToken("sessions")
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -624,17 +624,17 @@ func (g *gateServiceImpl) GetSession(ses *api.Session) (*api.Session, error) {
 	return result, nil
 }
 
-func (g *gateServiceImpl) InsertSession(ses *api.Session) error {
+func (g *gateServiceImpl) InsertSession(ses *api.Session) (*api.SessionInsertResponse, error) {
 	scheme := "https://"
 
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/sessions", scheme, g.Host, g.Port))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	asJSON, err := json.Marshal(ses)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	buf := bytes.NewBuffer([]byte(asJSON))
@@ -643,21 +643,34 @@ func (g *gateServiceImpl) InsertSession(ses *api.Session) error {
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	access, err := getAccessToken()
+	access, err := newAuthToken("sessions")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer resp.Body.Close()
-	return nil
+
+	bs := &bytes.Buffer{}
+
+	if _, err = io.Copy(bs, resp.Body); err != nil {
+		return nil, err
+	}
+
+	result := &api.SessionInsertResponse{}
+
+	if err = json.Unmarshal(bs.Bytes(), result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (g *gateServiceImpl) DeleteBundle(bu *api.Bundle) error {
@@ -678,11 +691,11 @@ func (g *gateServiceImpl) DeleteBundle(bu *api.Bundle) error {
 	if err != nil {
 		return err
 	}
-	access, err := getAccessToken()
+	access, err := newAuthToken("bundles")
 	if err != nil {
 		return err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -711,11 +724,11 @@ func (g *gateServiceImpl) UpdateBundle(bu *api.Bundle) error {
 	if err != nil {
 		return err
 	}
-	access, err := getAccessToken()
+	access, err := newAuthToken("bundles")
 	if err != nil {
 		return err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -743,11 +756,11 @@ func (g *gateServiceImpl) GetBundle(bu *api.Bundle) (*api.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	access, err := getAccessToken()
+	access, err := newAuthToken("bundles")
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -788,11 +801,11 @@ func (g *gateServiceImpl) InsertBundle(bu *api.Bundle) error {
 	if err != nil {
 		return err
 	}
-	access, err := getAccessToken()
+	access, err := newAuthToken("bundles")
 	if err != nil {
 		return err
 	}
-	req.Header.Add("authorization", "Bearer "+access)
+	req.Header.Add("Authorization", "Bearer "+access)
 
 	resp, err := client.Do(req)
 	if err != nil {

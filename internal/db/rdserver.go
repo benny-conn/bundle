@@ -26,7 +26,7 @@ func (s *readmesServer) Get(ctx context.Context, req *api.Plugin) (*api.Readme, 
 func (s *readmesServer) Update(ctx context.Context, req *api.Readme) (*api.Empty, error) {
 	err := s.orm.Update(req)
 	if err != nil {
-		return &api.Empty{}, err
+		return nil, err
 	}
 	return &api.Empty{}, nil
 }
@@ -34,7 +34,7 @@ func (s *readmesServer) Update(ctx context.Context, req *api.Readme) (*api.Empty
 func (s *readmesServer) Insert(ctx context.Context, readme *api.Readme) (*api.Empty, error) {
 	err := s.orm.Insert(readme)
 	if err != nil {
-		return &api.Empty{}, err
+		return nil, err
 	}
 	return &api.Empty{}, nil
 }

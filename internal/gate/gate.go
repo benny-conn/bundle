@@ -18,12 +18,12 @@ func NewGateServer() *http.Server {
 	bundlesHandler := http.HandlerFunc(bundleHandlerFunc)
 
 	mux.Handle("/api/plugins", pluginsHandler)
-	mux.Handle("/api/users", simpleAuth(usersHandler))
+	mux.Handle("/api/users", scopedAuth(usersHandler, "users"))
 	mux.Handle("/api/readmes", basicAuth(readmesHandler))
-	mux.Handle("/api/sessions", simpleAuth(sessionsHandler))
-	mux.Handle("/api/bundles", simpleAuth(bundlesHandler))
+	mux.Handle("/api/sessions", scopedAuth(sessionsHandler, "sessions"))
+	mux.Handle("/api/bundles", scopedAuth(bundlesHandler, "bundles"))
 	mux.Handle("/api/repo/plugins", basicAuth(repoPluginsHandler))
-	mux.Handle("/api/repo/thumbnails", simpleAuth(repoThumbnailsHandler))
+	mux.Handle("/api/repo/thumbnails", scopedAuth(repoThumbnailsHandler, "thumbnails"))
 
 	return internal.MakeServerFromMux(mux)
 }

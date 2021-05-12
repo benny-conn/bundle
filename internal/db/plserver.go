@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/db/orm"
@@ -27,7 +26,7 @@ func (s *pluginsServer) Get(ctx context.Context, req *api.Plugin) (*api.Plugin, 
 func (s *pluginsServer) Update(ctx context.Context, req *api.Plugin) (*api.Empty, error) {
 	err := s.orm.Update(req)
 	if err != nil {
-		return &api.Empty{}, err
+		return nil, err
 	}
 	return &api.Empty{}, nil
 }
@@ -35,7 +34,7 @@ func (s *pluginsServer) Update(ctx context.Context, req *api.Plugin) (*api.Empty
 func (s *pluginsServer) Insert(ctx context.Context, plugin *api.Plugin) (*api.Empty, error) {
 	err := s.orm.Insert(plugin)
 	if err != nil {
-		return &api.Empty{}, err
+		return nil, err
 	}
 	return &api.Empty{}, nil
 }
@@ -43,7 +42,6 @@ func (s *pluginsServer) Insert(ctx context.Context, plugin *api.Plugin) (*api.Em
 func (s *pluginsServer) Paginate(ctx context.Context, req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
 	pls, err := s.orm.Paginate(req)
 	if err != nil {
-		fmt.Println(err.Error())
 		return nil, err
 	}
 	return &api.PaginatePluginsResponse{
