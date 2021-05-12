@@ -132,3 +132,38 @@ func validateSesDelete(ses session) error {
 	}
 	return nil
 }
+
+func apiToOrmSession(ses *api.Session) session {
+	if ses == nil {
+		return session{}
+	}
+	result := session{}
+	if ses.Id != "" {
+		id, err := primitive.ObjectIDFromHex(ses.Id)
+		if err == nil && id != primitive.NilObjectID {
+			result.Id = id
+		}
+	}
+	if ses.UserId != "" {
+		id, err := primitive.ObjectIDFromHex(ses.UserId)
+		if err == nil && id != primitive.NilObjectID {
+			result.UserId = id
+		}
+	}
+	if ses.LastRetrieved != 0 {
+		result.LastRetrieved = primitive.DateTime(ses.LastRetrieved)
+	}
+	if ses.CreatedAt != 0 {
+		result.CreatedAt = primitive.DateTime(ses.CreatedAt)
+	}
+	return result
+}
+
+func ormToApiSession(ses session) *api.Session {
+	return &api.Session{
+		Id:            ses.Id.Hex(),
+		UserId:        ses.UserId.Hex(),
+		LastRetrieved: ses.LastRetrieved.Time().Unix(),
+		CreatedAt:     ses.CreatedAt.Time().Unix(),
+	}
+}

@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
@@ -19,30 +20,43 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		req.ParseForm()
 
-		newUsername := req.FormValue("username")
-		newTag := req.FormValue("tag")
+		ftpUser := req.FormValue("ftp-username")
+		ftpPass := req.FormValue("ftp-password")
+		ftpPort := req.FormValue("ftp-port")
+		ftpHost := req.FormValue("ftp-host")
 
-		updatedUser := &api.User{
-			Id:       pro.Id,
-			Username: newUsername,
-			Tag:      newTag,
-		}
-
-		gs := gate.NewGateService("", "")
-		err = gs.UpdateUser(updatedUser)
+		port, err := strconv.Atoi(ftpPort)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		dbUpdatedUser, _ := gs.GetUser(updatedUser)
+		req := &api.Bundle{
+			UserId:  pro.Id,
+			FtpUser: ftpUser,
+			FtpPass: ftpPass,
+			FtpPort: int32(port),
+			FtpHost: ftpHost,
+		}
 
-		updatedProfile := userToProfile(dbUpdatedUser)
+		gs := gate.NewGateService("", "")
 
-		token, _ := newSession(updatedProfile)
-		c := newAccessCookie(token.Id)
-		http.SetCookie(w, c)
-		pro = updatedProfile
+		_, err = gs.GetBundle(req)
+
+		if err == nil {
+			err = gs.UpdateBundle(req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		} else {
+
+			err = gs.InsertBundle(req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+		}
 	}
 
 	data := TemplateData{

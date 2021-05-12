@@ -184,3 +184,32 @@ func validateUserUpdate(us user) error {
 	}
 	return nil
 }
+
+func apiToOrmUser(us *api.User) user {
+	if us == nil {
+		return user{}
+	}
+	result := user{
+		Username: us.Username,
+		Email:    us.Email,
+		Password: us.Password,
+		Tag:      us.Tag,
+		Scopes:   us.Scopes,
+	}
+	userID, err := primitive.ObjectIDFromHex(us.Id)
+	if userID != primitive.NilObjectID && err == nil {
+		result.Id = userID
+	}
+	return result
+}
+
+func ormToApiUser(us user) *api.User {
+	return &api.User{
+		Id:       us.Id.Hex(),
+		Username: us.Username,
+		Email:    us.Email,
+		Password: us.Password,
+		Tag:      us.Tag,
+		Scopes:   us.Scopes,
+	}
+}

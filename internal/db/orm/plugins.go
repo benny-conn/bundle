@@ -248,3 +248,69 @@ func validatePluginGet(pl plugin) error {
 	}
 	return nil
 }
+
+func ormToApiPl(pl plugin) *api.Plugin {
+	p := &api.Plugin{
+		Id:          pl.Id.Hex(),
+		Name:        pl.Name,
+		Description: pl.Description,
+		Version:     pl.Version,
+		Thumbnail:   pl.Thumbnail,
+		Category:    api.Category(pl.Category),
+		Downloads:   pl.Downloads,
+		IsPremium:   pl.IsPremium,
+		Premium: &api.Premium{
+			Price:     pl.Premium.Price,
+			Purchases: pl.Premium.Purchases,
+		},
+		LastUpdated: pl.LastUpdated.Time().Unix(),
+	}
+	a, err := NewUsersOrm().Get(&api.User{Id: pl.Author.Hex()})
+	if err == nil {
+		p.Author = a
+	}
+	return p
+}
+
+func apiToOrmPl(pl *api.Plugin) plugin {
+
+	if pl == nil {
+		return plugin{}
+	}
+
+	var lastUpdated primitive.DateTime
+	if pl.LastUpdated != 0 {
+		lastUpdated = primitive.DateTime(pl.LastUpdated)
+	} else {
+		lastUpdated = primitive.DateTime(time.Now().Unix())
+	}
+	result := plugin{
+		Name:        pl.Name,
+		Description: pl.Description,
+		Version:     pl.Version,
+		Thumbnail:   pl.Thumbnail,
+		LastUpdated: lastUpdated,
+		Category:    category(pl.Category),
+		Downloads:   pl.Downloads,
+		IsPremium:   pl.IsPremium,
+	}
+	pluginID, err := primitive.ObjectIDFromHex(pl.Id)
+	if pluginID != primitive.NilObjectID && err == nil {
+		result.Id = pluginID
+	}
+	if pl.Author != nil {
+		authorID, err := primitive.ObjectIDFromHex(pl.Author.Id)
+		if authorID != primitive.NilObjectID && err == nil {
+			result.Author = authorID
+		}
+	}
+	if pl.Premium != nil && pl.IsPremium {
+		result.Premium = premium{
+			Price:     result.Premium.Price,
+			Purchases: result.Premium.Purchases,
+		}
+	}
+
+	return result
+
+}

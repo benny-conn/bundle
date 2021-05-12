@@ -32,6 +32,10 @@ type gateService interface {
 	InsertSession(ses *api.Session) error
 	GetSession(ses *api.Session) (*api.Session, error)
 	DeleteSession(ses *api.Session) error
+	InsertBundle(ses *api.Bundle) error
+	GetBundle(ses *api.Bundle) (*api.Bundle, error)
+	DeleteBundle(ses *api.Bundle) error
+	UpdateBundle(ses *api.Bundle) error
 }
 type gateServiceImpl struct {
 	Host string
@@ -629,6 +633,149 @@ func (g *gateServiceImpl) InsertSession(ses *api.Session) error {
 	}
 
 	asJSON, err := json.Marshal(ses)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer([]byte(asJSON))
+
+	client := internal.NewBasicClient()
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
+	if err != nil {
+		return err
+	}
+	access, err := getAccessToken()
+	if err != nil {
+		return err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	return nil
+}
+
+func (g *gateServiceImpl) DeleteBundle(bu *api.Bundle) error {
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/bundles", scheme, g.Host, g.Port))
+	if err != nil {
+		return err
+	}
+	asJSON, err := json.Marshal(bu)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer([]byte(asJSON))
+	client := internal.NewBasicClient()
+	req, err := http.NewRequest(http.MethodDelete, u.String(), buf)
+	if err != nil {
+		return err
+	}
+	access, err := getAccessToken()
+	if err != nil {
+		return err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	return nil
+}
+
+func (g *gateServiceImpl) UpdateBundle(bu *api.Bundle) error {
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/bundles", scheme, g.Host, g.Port))
+	if err != nil {
+		return err
+	}
+	asJSON, err := json.Marshal(bu)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer([]byte(asJSON))
+	client := internal.NewBasicClient()
+	req, err := http.NewRequest(http.MethodPatch, u.String(), buf)
+	if err != nil {
+		return err
+	}
+	access, err := getAccessToken()
+	if err != nil {
+		return err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	return nil
+}
+
+func (g *gateServiceImpl) GetBundle(bu *api.Bundle) (*api.Bundle, error) {
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/bundles", scheme, g.Host, g.Port))
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	q.Add("id", bu.Id)
+	q.Add("userId", bu.UserId)
+	u.RawQuery = q.Encode()
+	client := internal.NewBasicClient()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	access, err := getAccessToken()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("authorization", "Bearer "+access)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &api.Bundle{}
+	err = json.Unmarshal(bs, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (g *gateServiceImpl) InsertBundle(bu *api.Bundle) error {
+
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/bundles", scheme, g.Host, g.Port))
+	if err != nil {
+		return err
+	}
+
+	asJSON, err := json.Marshal(bu)
 	if err != nil {
 		return err
 	}

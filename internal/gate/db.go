@@ -370,3 +370,97 @@ func sessionHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func bundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	client := client.NewBundlesClient("", "")
+
+	switch r.Method {
+	case http.MethodGet:
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		id := r.FormValue("id")
+		userId := r.FormValue("userId")
+
+		req := &api.Bundle{
+			Id:     id,
+			UserId: userId,
+		}
+		ses, err := client.Get(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		asJSON, err := json.Marshal(ses)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		internal.WriteResponse(w, string(asJSON), http.StatusOK)
+		return
+
+	case http.MethodPost:
+
+		bs, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		bu := &api.Bundle{}
+
+		err = json.Unmarshal(bs, bu)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = client.Insert(bu)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	case http.MethodDelete:
+		bs, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		bu := &api.Bundle{}
+
+		err = json.Unmarshal(bs, bu)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = client.Delete(bu)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	case http.MethodPatch:
+		bs, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		bu := &api.Bundle{}
+
+		err = json.Unmarshal(bs, bu)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = client.Update(bu)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+}

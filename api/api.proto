@@ -119,8 +119,28 @@ message Session{
 }
 
 
-// UTIL ----------------------------------------------------------------- ||
 
+// BUNDLES ------------------------------------------------------------- ||
+
+service BundleService {
+    rpc Get(Bundle) returns (Bundle) {}
+    rpc Insert(Bundle) returns (Empty) {}
+    rpc Update(Bundle) returns (Empty) {}
+    rpc Delete(Bundle) returns (Empty) {}
+}
+
+
+message Bundle{
+    string id = 1;
+    string userId = 2;
+    string ftpUser = 3;
+    string ftpPass = 4;
+    int32 ftpPort = 5;
+    string ftpHost = 6;
+    repeated string plugins = 7;
+}
+
+// UTIL ----------------------------------------------------------------- ||
 
 message Empty {
 }

@@ -167,3 +167,35 @@ func validateReadmeInsert(rdme readme) error {
 	}
 	return nil
 }
+
+func ormToApiReadme(rdme readme) *api.Readme {
+	r := &api.Readme{
+		Id:   rdme.Id.Hex(),
+		Text: rdme.Text,
+	}
+	pl, err := NewPluginsOrm().Get(&api.Plugin{Id: rdme.Plugin.Hex()})
+	if err == nil {
+		r.Plugin = pl
+	}
+	return r
+}
+
+func apiToOrmReadme(rdme *api.Readme) readme {
+	if rdme == nil {
+		return readme{}
+	}
+	result := readme{
+		Text: rdme.Text,
+	}
+	id, err := primitive.ObjectIDFromHex(rdme.Id)
+	if id != primitive.NilObjectID && err == nil {
+		result.Id = id
+	}
+	if rdme.Plugin != nil {
+		pl, err := primitive.ObjectIDFromHex(rdme.Plugin.Id)
+		if pl != primitive.NilObjectID && err == nil {
+			result.Plugin = pl
+		}
+	}
+	return result
+}

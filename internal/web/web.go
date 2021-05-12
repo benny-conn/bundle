@@ -16,10 +16,12 @@ func NewWebServer() *http.Server {
 	logoutHandler := http.HandlerFunc(logoutHandlerFunc)
 	pluginHandler := http.HandlerFunc(pluginsHandlerFunc)
 	profileHandler := http.HandlerFunc(profileHandlerFunc)
+	ftpHandler := http.HandlerFunc(ftpHandlerFunc)
 
 	mux.Handle("/", rootHandler)
 	mux.Handle("/plugins", pluginHandler)
 	mux.Handle("/profile", loginGate(profileHandler))
+	mux.Handle("/ftp", ftpHandler)
 	mux.Handle("/login", loginHandler)
 	mux.Handle("/logout", logoutHandler)
 	mux.Handle("/signup", signupHandler)

@@ -31,8 +31,8 @@ func (s *sessionsServer) Insert(ctx context.Context, req *api.Session) (*api.Emp
 	return &api.Empty{}, nil
 }
 
-func (s *sessionsServer) Delete(ctx context.Context, readme *api.Session) (*api.Empty, error) {
-	err := s.orm.Delete(readme)
+func (s *sessionsServer) Delete(ctx context.Context, req *api.Session) (*api.Empty, error) {
+	err := s.orm.Delete(req)
 	if err != nil {
 		return &api.Empty{}, err
 	}
