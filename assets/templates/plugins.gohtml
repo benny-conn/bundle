@@ -149,7 +149,6 @@
 
 {{define "plugin-header"}}
 <div class="my-4">
-  {{if .Profile.Id}}
   {{if eq .Profile.Id .Plugin.Author.Id}}
   <div class="row justify-content-between">
     <div class="plugin-info col-9">
@@ -202,7 +201,6 @@
       </form>
     </div>
   </div>
-  {{ end }}
   {{ else }}
   <div class="plugin-info">
     {{if .Plugin.Thumbnail}}

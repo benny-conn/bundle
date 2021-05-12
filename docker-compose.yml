@@ -59,5 +59,3 @@ services:
       dockerfile: ./images/redis/Dockerfile
     ports:
       - "6379:6379"
-    env_file:
-      - ".env"

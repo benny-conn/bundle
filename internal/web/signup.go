@@ -24,7 +24,11 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		dbUser, _ := gs.GetUser(user)
+		dbUser, err := gs.GetUser(user)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		token, err := newSession(userToProfile(dbUser))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

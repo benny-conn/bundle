@@ -3,6 +3,7 @@ package mem
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/bennycio/bundle/api"
@@ -21,11 +22,13 @@ func (s *sessionsServer) Get(ctx context.Context, req *api.Session) (*api.Sessio
 
 	res, err := s.client.Get(ctx, req.Id).Result()
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 
 	err = json.Unmarshal([]byte(res), ses)
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 
@@ -37,11 +40,13 @@ func (s *sessionsServer) Get(ctx context.Context, req *api.Session) (*api.Sessio
 
 	bs, err := json.Marshal(copy)
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 
 	err = s.client.Set(ctx, copy.Id, string(bs), redis.KeepTTL).Err()
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 
@@ -58,11 +63,13 @@ func (s *sessionsServer) Insert(ctx context.Context, req *api.Session) (*api.Ses
 
 	bs, err := json.Marshal(req)
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 
 	err = s.client.Set(ctx, req.Id, string(bs), 24*time.Hour).Err()
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, err
 	}
 

@@ -63,7 +63,6 @@ func newSession(prof Profile) (*api.Session, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return ses, nil
 }
 
