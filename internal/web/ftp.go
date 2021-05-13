@@ -22,6 +22,10 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	data := TemplateData{
+		Profile: pro,
+	}
+
 	if req.Method == http.MethodPost {
 
 		req.ParseForm()
@@ -41,6 +45,8 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
+
+		data.Profile.Bundles = dbBundle.Plugins
 
 		c, err := ftp.Dial(fmt.Sprintf("%s:%v", dbBundle.FtpHost, dbBundle.FtpPort), ftp.DialWithTimeout(10*time.Second))
 		if err != nil {
@@ -77,14 +83,9 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	if req.Method == http.MethodGet {
-
-		referer := req.Referer()
-
-		err := tpl.ExecuteTemplate(w, "ftp", referer)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	err = tpl.ExecuteTemplate(w, "ftp", data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
