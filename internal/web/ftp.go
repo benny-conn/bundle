@@ -48,7 +48,7 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		err = c.Login(dbBundle.FtpUser, dbBundle.FtpPass)
+		err = c.Login(dbBundle.FtpUser, pass)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

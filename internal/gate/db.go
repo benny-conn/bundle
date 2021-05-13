@@ -353,7 +353,6 @@ func sessionHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pl := &api.Session{}
-		fmt.Println(bs.String())
 		if err = json.Unmarshal(bs.Bytes(), pl); err != nil {
 			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -364,7 +363,6 @@ func sessionHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println(res)
 		r, err := json.Marshal(res)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -432,14 +430,15 @@ func bundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 
-		bs, err := io.ReadAll(r.Body)
+		bs := &bytes.Buffer{}
+		_, err := io.Copy(bs, r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		bu := &api.Bundle{}
 
-		err = json.Unmarshal(bs, bu)
+		err = json.Unmarshal(bs.Bytes(), bu)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -450,7 +449,8 @@ func bundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case http.MethodDelete:
-		bs, err := io.ReadAll(r.Body)
+		bs := &bytes.Buffer{}
+		_, err := io.Copy(bs, r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -458,7 +458,7 @@ func bundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		bu := &api.Bundle{}
 
-		err = json.Unmarshal(bs, bu)
+		err = json.Unmarshal(bs.Bytes(), bu)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -469,7 +469,8 @@ func bundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case http.MethodPatch:
-		bs, err := io.ReadAll(r.Body)
+		bs := &bytes.Buffer{}
+		_, err := io.Copy(bs, r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -477,7 +478,7 @@ func bundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		bu := &api.Bundle{}
 
-		err = json.Unmarshal(bs, bu)
+		err = json.Unmarshal(bs.Bytes(), bu)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

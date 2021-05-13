@@ -29,7 +29,6 @@ var installCmd = &cobra.Command{
 
 		bundle, err := intfile.GetBundle("")
 		if err != nil {
-			fmt.Println("WE GOT AN 7")
 			return err
 		}
 

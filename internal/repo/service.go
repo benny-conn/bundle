@@ -63,11 +63,12 @@ func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	return bs, nil
+	return bs.Bytes(), nil
 }
 
 func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error {
@@ -94,11 +95,7 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	if err != nil {
 		return err
 	}
-	bs, err := io.ReadAll(data)
-	if err != nil {
-		return err
-	}
-	_, err = part.Write(bs)
+	_, err = io.Copy(part, data)
 	if err != nil {
 		return err
 	}
@@ -122,8 +119,11 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return err
 	}
 
-	b, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(b))
+	b := &bytes.Buffer{}
+	if _, err = io.Copy(b, resp.Body); err != nil {
+		return err
+	}
+	fmt.Println(b.String())
 
 	defer resp.Body.Close()
 	return nil
@@ -163,14 +163,11 @@ func (r *repoServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 	if err != nil {
 		return err
 	}
-	bs, err := io.ReadAll(data)
+	_, err = io.Copy(part, data)
 	if err != nil {
 		return err
 	}
-	_, err = part.Write(bs)
-	if err != nil {
-		return err
-	}
+
 	err = writer.Close()
 
 	if err != nil {
@@ -191,8 +188,11 @@ func (r *repoServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 		return err
 	}
 
-	b, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(b))
+	b := &bytes.Buffer{}
+	if _, err = io.Copy(b, resp.Body); err != nil {
+		return err
+	}
+	fmt.Println(b.String())
 
 	defer resp.Body.Close()
 	return nil

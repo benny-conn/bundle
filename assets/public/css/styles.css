@@ -1437,3 +1437,7 @@ body {
 .plugin-card:hover {
   transform: scale(1.1);
 }
+
+.readme a {
+  color: hsl(240, 100%, 65%);
+}

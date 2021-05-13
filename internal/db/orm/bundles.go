@@ -2,7 +2,6 @@ package orm
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
@@ -111,7 +110,6 @@ func (o *BundlesOrm) Update(bu *api.Bundle) error {
 }
 
 func (o *BundlesOrm) Get(bu *api.Bundle) (*api.Bundle, error) {
-	fmt.Println("WE GOT HERE")
 	mgses, err := getMongoSession()
 	if err != nil {
 		return nil, err

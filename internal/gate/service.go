@@ -75,11 +75,12 @@ func (g *gateServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 	}
 
 	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	return bs, nil
+	return bs.Bytes(), nil
 }
 
 func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error {
@@ -113,11 +114,7 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return err
 	}
 
-	bs, err := io.ReadAll(data)
-	if err != nil {
-		return err
-	}
-	_, err = part.Write(bs)
+	_, err = io.Copy(part, data)
 	if err != nil {
 		return err
 	}
@@ -169,11 +166,7 @@ func (g *gateServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 		return err
 	}
 
-	bs, err := io.ReadAll(data)
-	if err != nil {
-		return err
-	}
-	_, err = part.Write(bs)
+	_, err = io.Copy(part, data)
 	if err != nil {
 		return err
 	}
@@ -231,13 +224,14 @@ func (g *gateServiceImpl) PaginatePlugins(req *api.PaginatePluginsRequest) ([]*a
 		return nil, err
 	}
 	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &api.PaginatePluginsResponse{}
-	err = json.Unmarshal(bs, result)
+	err = json.Unmarshal(bs.Bytes(), result)
 	if err != nil {
 		return nil, err
 	}
@@ -265,13 +259,14 @@ func (g *gateServiceImpl) GetPlugin(plugin *api.Plugin) (*api.Plugin, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &api.Plugin{}
-	err = json.Unmarshal(bs, result)
+	err = json.Unmarshal(bs.Bytes(), result)
 
 	if err != nil {
 		return nil, err
@@ -361,8 +356,6 @@ func (g *gateServiceImpl) InsertReadme(user *api.User, readme *api.Readme) error
 		return err
 	}
 	defer resp.Body.Close()
-	bs, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(bs))
 	return nil
 }
 
@@ -383,13 +376,14 @@ func (g *gateServiceImpl) GetReadme(plugin *api.Plugin) (*api.Readme, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	rdme := &api.Readme{}
-	err = json.Unmarshal(bs, &rdme)
+	err = json.Unmarshal(bs.Bytes(), &rdme)
 	if err != nil {
 		return nil, err
 	}
@@ -498,14 +492,15 @@ func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
 	}
 	defer resp.Body.Close()
 
-	bs, err := io.ReadAll(resp.Body)
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &api.User{}
 
-	err = json.Unmarshal(bs, result)
+	err = json.Unmarshal(bs.Bytes(), result)
 
 	if err != nil {
 		return nil, err
@@ -611,13 +606,14 @@ func (g *gateServiceImpl) GetSession(ses *api.Session) (*api.Session, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &api.Session{}
-	err = json.Unmarshal(bs, result)
+	err = json.Unmarshal(bs.Bytes(), result)
 	if err != nil {
 		return nil, err
 	}
@@ -766,13 +762,14 @@ func (g *gateServiceImpl) GetBundle(bu *api.Bundle) (*api.Bundle, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &api.Bundle{}
-	err = json.Unmarshal(bs, result)
+	err = json.Unmarshal(bs.Bytes(), result)
 	if err != nil {
 		return nil, err
 	}

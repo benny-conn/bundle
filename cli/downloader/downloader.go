@@ -1,7 +1,6 @@
 package downloader
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/bennycio/bundle/api"
@@ -41,7 +40,6 @@ func (u *downloader) Download() ([]byte, error) {
 
 	gservice := gate.NewGateService("localhost", "8020")
 
-	fmt.Println(u.options)
 	if u.options.latest {
 		plugin, err := gservice.GetPlugin(u.Plugin)
 		if err != nil {

@@ -32,6 +32,12 @@ services:
       - 8040:8040
     env_file:
       - ".env"
+  redis:
+    build:
+      context: .
+      dockerfile: ./images/redis/Dockerfile
+    ports:
+      - "6379:6379"
   mem:
     build:
       context: .
@@ -53,9 +59,3 @@ services:
       - /docker-entrypoint-initdb.d
     env_file:
       - ".env"
-  redis:
-    build:
-      context: .
-      dockerfile: ./images/redis/Dockerfile
-    ports:
-      - "6379:6379"

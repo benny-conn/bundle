@@ -1,8 +1,9 @@
 package intfile
 
 import (
+	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -48,11 +49,18 @@ func getBundleFileBytes(path string) ([]byte, error) {
 		return nil, errors.New("bundle file does not exist at current directory")
 	}
 	path = findBundle(path)
-	bytes, err := ioutil.ReadFile(path)
+
+	fi, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, fi)
 	if err != nil {
 		panic(err)
 	}
-	return bytes, nil
+	return bs.Bytes(), nil
 }
 
 func GetBundle(path string) (*BundleFile, error) {
