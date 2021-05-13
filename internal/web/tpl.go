@@ -11,7 +11,7 @@ type Profile struct {
 	Username string
 	Email    string
 	Tag      string
-	Scopes   []string
+	Bundles  []string
 }
 
 type TemplateData struct {
@@ -36,6 +36,5 @@ func userToProfile(u *api.User) Profile {
 		Username: u.Username,
 		Email:    u.Email,
 		Tag:      u.Tag,
-		Scopes:   u.Scopes,
 	}
 }
