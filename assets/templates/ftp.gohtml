@@ -4,32 +4,53 @@
 <html>
   {{template "head" .}}
   {{template "header" .}}
-  <body class="text-center">
-    <div class="mt-5">
-      <h2>Plugins</h2>
-      <div contenteditable="true"></div>
-
-      <form action="/ftp" method="POST">
-        <div class="form-floating" style="margin-bottom: 10px">
-          <input
-            type="password"
-            class="form-control"
-            id="password"
-            name="ftp-password"
-            placeholder="FTP Password"
-            minlength="5"
-            required
-            maxlength="100"
-          />
-          <label for="floatingPassword">FTP Password</label>
+  <body class="ftp">
+    <div class="row">
+      <div class="bundles col-9">
+        <div id="bundles-input-header" class="header">
+          <h2 class="m-4">Plugins</h2>
+          <input type="text" id="pluginInput" placeholder="Add Plugin" />
+          <button id="pluginAdd" class="btn btn-primary">Add</button>
         </div>
-        <button class="w-100 btn btn-lg btn-primary" type="submit">
-          Update
-        </button>
-        <input type="hidden" id="referer" name="referer" value="{{.}}" />
-      </form>
+
+        <ul id="pluginsList" class="my-3">
+          <!-- prettier-ignore -->
+          {{range .Profile.Bundles}}
+          <!-- <li class="">
+          <span>{{.}}</span>
+          <button id="removePlugin"><i class="bi bi-dash-circle"></i></button>
+        </li> -->
+          <!-- prettier-ignore -->
+          {{end}}
+        </ul>
+        <div class="mt-5">
+          <form action="/ftp" method="POST" id="ftpForm">
+            <div class="form-floating" style="margin-bottom: 10px">
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="ftp-password"
+                placeholder="FTP Password"
+                minlength="5"
+                required
+                maxlength="100"
+              />
+              <label for="floatingPassword">FTP Password</label>
+              <input type="hidden" id="pluginsHidden" name="plugins" value="" />
+            </div>
+            <button class="w-100 btn btn-lg btn-primary" type="submit">
+              Update
+            </button>
+          </form>
+        </div>
+      </div>
+      <div class="col-3"></div>
     </div>
   </body>
   {{template "footer" .}}
+  <script>
+    setBundles();
+  </script>
 </html>
 {{ end }}

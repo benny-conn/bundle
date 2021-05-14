@@ -11,6 +11,7 @@ define clean-script =
 	fuser -k 8040/tcp 
 	fuser -k 8060/tcp 
 	fuser -k 8080/tcp 
+	fuser -k 8090/tcp
 endef
 
 
@@ -18,15 +19,18 @@ endef
 
 all: docker-run
 
-docker-build:
+docker-build: sass
 	go mod vendor
 	docker-compose build 
 
 docker-run: docker-build
 	docker-compose up -d
 
-dev:
+dev: sass
 	./dev.sh
+
+sass:
+	sass ./assets/public/scss/styles.scss ./assets/public/css/styles.css
 
 
 .ONESHELL: dev clean cert

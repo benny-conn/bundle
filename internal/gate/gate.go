@@ -16,7 +16,6 @@ func NewGateServer() *http.Server {
 	readmesHandler := http.HandlerFunc(readmesHandlerFunc)
 	sessionsHandler := http.HandlerFunc(sessionHandlerFunc)
 	bundlesHandler := http.HandlerFunc(bundleHandlerFunc)
-
 	mux.Handle("/api/plugins", pluginsHandler)
 	mux.Handle("/api/users", scopedAuth(usersHandler, "users"))
 	mux.Handle("/api/readmes", basicAuth(readmesHandler))

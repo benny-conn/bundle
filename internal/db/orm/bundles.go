@@ -10,13 +10,13 @@ import (
 )
 
 type bundle struct {
-	Id      primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
-	UserId  primitive.ObjectID   `bson:"userId,omitempty" json:"userId"`
-	FtpUser string               `bson:"ftpUser,omitempty" json:"ftpUser"`
-	FtpPass string               `bson:"ftpPass,omitempty" json:"ftpPass"`
-	FtpPort int32                `bson:"ftpPort,omitempty" json:"ftpPort"`
-	FtpHost string               `bson:"ftpHost,omitempty" json:"ftpHost"`
-	Plugins []primitive.ObjectID `bson:"plugins,omitempty" json:"plugins"`
+	Id      primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserId  primitive.ObjectID `bson:"userId,omitempty" json:"userId"`
+	FtpUser string             `bson:"ftpUser,omitempty" json:"ftpUser"`
+	FtpPass string             `bson:"ftpPass,omitempty" json:"ftpPass"`
+	FtpPort int32              `bson:"ftpPort,omitempty" json:"ftpPort"`
+	FtpHost string             `bson:"ftpHost,omitempty" json:"ftpHost"`
+	Plugins []string           `bson:"plugins,omitempty" json:"plugins"`
 }
 type BundlesOrm struct{}
 
@@ -174,6 +174,7 @@ func apiToOrmBundle(bu *api.Bundle) bundle {
 		FtpPass: bu.FtpPass,
 		FtpPort: bu.FtpPort,
 		FtpHost: bu.FtpHost,
+		Plugins: bu.Plugins,
 	}
 
 	if bu.Id != "" {
@@ -200,5 +201,6 @@ func ormToApiBundle(bu bundle) *api.Bundle {
 		FtpPass: bu.FtpPass,
 		FtpPort: bu.FtpPort,
 		FtpHost: bu.FtpHost,
+		Plugins: bu.Plugins,
 	}
 }
