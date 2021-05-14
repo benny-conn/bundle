@@ -31,6 +31,7 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		dbPl, err := gs.GetPlugin(req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
+			return
 		}
 
 		if version != "latest" && version != "" {

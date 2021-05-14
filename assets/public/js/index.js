@@ -6,7 +6,7 @@ function setBundles() {
       var current = $(element);
       var txt = current.text();
       if (txt != "") {
-        plugins.push(txt);
+        plugins.push(txt.trim());
       }
     });
   $("#pluginsHidden").val(plugins.join(","));
@@ -32,13 +32,17 @@ $(document).ready(() => {
     setBundles();
   });
 
+  $(document).on("submit", "#ftpForm", (e) => {
+    setBundles();
+  });
+
   $("#pluginAdd").click((e) => {
     e.preventDefault();
     const val = $("#pluginInput").val();
     $("#pluginsList").append(
-      `<li id="pluginListItem" class="border border-secondary rounded-pill px-3 py-2"><span>` +
+      `<li  class="plugin-list-item border border-primary rounded-pill px-3 py-2"><span>` +
         val +
-        `<button id="pluginRemove"><i class="bi bi-dash-circle ml-3"></i></button></span></li>`
+        `<button id="pluginRemove"><i class="bi bi-dash-circle ml-3 text-primary"></i></button></span></li>`
     );
     $("#pluginInput").val("");
     setBundles();

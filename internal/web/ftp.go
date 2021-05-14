@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/jlaffaye/ftp"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -31,79 +31,103 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 
 		req.ParseForm()
-		pass := req.FormValue("ftp-password")
 		pls := req.FormValue("plugins")
+
+		fmt.Println(pls)
 
 		plsSplit := strings.Split(pls, ",")
 
-		data.Profile.Bundles = plsSplit
+		ftpUser := req.FormValue("ftp-username")
+		ftpPass := req.FormValue("ftp-password")
+		ftpPort := req.FormValue("ftp-port")
+		ftpHost := req.FormValue("ftp-host")
+		save := req.FormValue("save")
 
-		dbBundle, err := gs.GetBundle(&api.Bundle{UserId: pro.Id})
-
+		port, err := strconv.Atoi(ftpPort)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword([]byte(dbBundle.FtpPass), []byte(pass))
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
+		sBool := false
+		if save == "on" {
+			sBool = true
 		}
 
-		dbBundle.Plugins = plsSplit
-
-		err = gs.UpdateBundle(dbBundle)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+		req := &api.Bundle{
+			UserId:  pro.Id,
+			FtpUser: ftpUser,
+			FtpPort: int32(port),
+			FtpHost: ftpHost,
+			Plugins: plsSplit,
 		}
 
-		c, err := ftp.Dial(fmt.Sprintf("%s:%v", dbBundle.FtpHost, dbBundle.FtpPort), ftp.DialWithTimeout(10*time.Second))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		if sBool {
+			_, err = gs.GetBundle(req)
 
-		err = c.Login(dbBundle.FtpUser, pass)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		err = c.ChangeDir("plugins")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		wg := &sync.WaitGroup{}
-		wg.Add(len(dbBundle.Plugins))
-		for _, v := range dbBundle.Plugins {
-			go func(pl string) {
-				defer wg.Done()
-				c.Delete(pl + ".jar")
-				bs, err := gs.DownloadPlugin(&api.Plugin{Name: pl})
+			if err == nil {
+				err = gs.UpdateBundle(req)
 				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
-				buf := bytes.NewBuffer(bs)
-				err = c.Stor(pl+".jar", buf)
-				fmt.Println(err.Error())
-			}(v)
+			} else {
+				err = gs.InsertBundle(req)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+			}
 		}
 
-		wg.Wait()
-		if err := c.Quit(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		go func() {
+			c, err := ftp.Dial(fmt.Sprintf("%s:%v", req.FtpHost, req.FtpPort), ftp.DialWithTimeout(10*time.Second))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			err = c.Login(req.FtpUser, ftpPass)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			err = c.ChangeDir("plugins")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			var wg *sync.WaitGroup
+			wg.Add(len(req.Plugins))
+			for _, v := range req.Plugins {
+				go func(pl string) {
+					defer wg.Done()
+					c.Delete(pl + ".jar")
+					bs, err := gs.DownloadPlugin(&api.Plugin{Name: pl})
+					if err != nil {
+						return
+					}
+					buf := bytes.NewBuffer(bs)
+					err = c.Stor(pl+".jar", buf)
+					if err != nil {
+						fmt.Println(err.Error())
+					}
+				}(v)
+			}
+
+			wg.Wait()
+			if err := c.Quit(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}()
 
 	}
 
 	dbBundle, err := gs.GetBundle(&api.Bundle{UserId: pro.Id})
 	if err == nil {
-		data.Profile.Bundles = dbBundle.Plugins
+		data.Bundle = dbBundle
 	}
 
 	err = tpl.ExecuteTemplate(w, "ftp", data)

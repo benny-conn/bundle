@@ -137,10 +137,9 @@ message Bundle{
     string id = 1;
     string userId = 2;
     string ftpUser = 3;
-    string ftpPass = 4;
-    int32 ftpPort = 5;
-    string ftpHost = 6;
-    repeated string plugins = 7;
+    int32 ftpPort = 4;
+    string ftpHost = 5;
+    repeated string plugins = 6;
 }
 
 // UTIL ----------------------------------------------------------------- ||

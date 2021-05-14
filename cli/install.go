@@ -90,6 +90,8 @@ var installCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("Successfully installed plugins! :)")
 		return nil
 	},
 }

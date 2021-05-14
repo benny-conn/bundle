@@ -91,7 +91,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			data.Date = date
 
 			req := &api.PaginatePluginsRequest{
-				Count:    10,
+				Count:    perPageCount,
 				Search:   search,
 				Page:     int32(pageNumber),
 				Sort:     api.Sort(sortNumber),

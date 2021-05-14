@@ -6,7 +6,6 @@ import (
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type bundle struct {
@@ -23,14 +22,6 @@ type BundlesOrm struct{}
 func NewBundlesOrm() *BundlesOrm { return &BundlesOrm{} }
 
 func (o *BundlesOrm) Insert(bu *api.Bundle) error {
-
-	bcryptPass, err := bcrypt.GenerateFromPassword([]byte(bu.FtpPass), bcrypt.DefaultCost)
-
-	if err != nil {
-		return err
-	}
-
-	bu.FtpPass = string(bcryptPass)
 
 	mgses, err := getMongoSession()
 	if err != nil {
@@ -171,7 +162,6 @@ func apiToOrmBundle(bu *api.Bundle) bundle {
 	}
 	result := bundle{
 		FtpUser: bu.FtpUser,
-		FtpPass: bu.FtpPass,
 		FtpPort: bu.FtpPort,
 		FtpHost: bu.FtpHost,
 		Plugins: bu.Plugins,
@@ -198,7 +188,6 @@ func ormToApiBundle(bu bundle) *api.Bundle {
 		Id:      bu.Id.Hex(),
 		UserId:  bu.UserId.Hex(),
 		FtpUser: bu.FtpUser,
-		FtpPass: bu.FtpPass,
 		FtpPort: bu.FtpPort,
 		FtpHost: bu.FtpHost,
 		Plugins: bu.Plugins,

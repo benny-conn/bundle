@@ -58,6 +58,7 @@ var uploadCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		fmt.Println("Successfully uploaded your plugin! :)")
 		return nil
 	},
 }

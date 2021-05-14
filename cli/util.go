@@ -25,7 +25,7 @@ func credentialsPrompt() *api.User {
 	var username string
 	fmt.Scanln(&username)
 
-	fmt.Print("Enter Your Password: ")
+	fmt.Println("Enter Your Password: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		log.Fatal(err.Error())

@@ -5,26 +5,115 @@
   {{template "head" .}}
   {{template "header" .}}
   <body class="ftp">
-    <div class="row">
+    <div class="row container">
       <div class="bundles col-9">
         <div id="bundles-input-header" class="header">
           <h2 class="m-4">Plugins</h2>
-          <input type="text" id="pluginInput" placeholder="Add Plugin" />
+          <div class="form-floating" style="margin-bottom: 10px">
+            <input
+              type="text"
+              class="form-control"
+              id="pluginInput"
+              placeholder="Add Plugin"
+            />
+            <label for="pluginInput">FTP Username</label>
+          </div>
           <button id="pluginAdd" class="btn btn-primary">Add</button>
         </div>
 
-        <ul id="pluginsList" class="my-3">
+        <ul id="pluginsList" class="my-3 p-3 border border-secondary rounded-3">
+          {{ if .Bundle}}
           <!-- prettier-ignore -->
-          {{range .Profile.Bundles}}
-          <!-- <li class="">
-          <span>{{.}}</span>
-          <button id="removePlugin"><i class="bi bi-dash-circle"></i></button>
-        </li> -->
+          {{range .Bundle.Plugins}}
+          <li
+            class="
+              plugin-list-item
+              border border-primary
+              rounded-pill
+              px-3
+              py-2
+            "
+          >
+            <span>
+              {{.}}
+              <button id="pluginRemove">
+                <i class="bi bi-dash-circle ml-3 text-primary"></i>
+              </button>
+            </span>
+          </li>
           <!-- prettier-ignore -->
           {{end}}
+          {{
+            end
+          }}
         </ul>
         <div class="mt-5">
           <form action="/ftp" method="POST" id="ftpForm">
+            <div class="form-floating" style="margin-bottom: 10px">
+              {{if .Bundle}}
+              <input
+                class="form-control"
+                id="ftp-username"
+                name="ftp-username"
+                placeholder="FTP Username"
+                value="{{.Bundle.FtpUser}}"
+                required
+              />
+              {{else}}
+              <input
+                class="form-control"
+                id="ftp-username"
+                name="ftp-username"
+                placeholder="FTP Username"
+                required
+              />
+              {{ end }}
+              <label for="ftp-username">FTP Username</label>
+            </div>
+            <div class="form-floating" style="margin-bottom: 10px">
+              {{ if .Bundle}}
+              <input
+                class="form-control"
+                id="ftp-host"
+                name="ftp-host"
+                placeholder="FTP Host"
+                value="{{.Bundle.FtpHost}}"
+                required
+              />
+              {{else}}
+              <input
+                class="form-control"
+                id="ftp-host"
+                name="ftp-host"
+                placeholder="FTP Host"
+                required
+              />
+              {{ end }}
+              <label for="ftp-host">FTP Host</label>
+            </div>
+            <div class="form-floating" style="margin-bottom: 10px">
+              {{if .Bundle}}
+              <input
+                type="number"
+                class="form-control"
+                id="ftp-port"
+                name="ftp-port"
+                placeholder="FTP Port"
+                value="{{.Bundle.FtpPort}}"
+                required
+              />
+              {{else}}
+              <input
+                type="number"
+                class="form-control"
+                id="ftp-port"
+                name="ftp-port"
+                placeholder="FTP Port"
+                required
+              />
+              {{ end }}
+              <label for="ftp-port">FTP Port</label>
+            </div>
             <div class="form-floating" style="margin-bottom: 10px">
               <input
                 type="password"
@@ -32,15 +121,34 @@
                 id="password"
                 name="ftp-password"
                 placeholder="FTP Password"
-                minlength="5"
                 required
-                maxlength="100"
               />
-              <label for="floatingPassword">FTP Password</label>
-              <input type="hidden" id="pluginsHidden" name="plugins" value="" />
+              <label for="password">FTP Password</label>
             </div>
+            {{if .Bundle}}
+            <input type="hidden" value="on" id="save" name="save" />
+            {{else}}
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="save"
+                name="save"
+              />
+              <label class="form-check-label" for="save">
+                Save Credentials and Bundled Plugins
+              </label>
+            </div>
+            {{ end }}
+            <input type="hidden" id="pluginsHidden" name="plugins" value="" />
+            <p>
+              <em>
+                If your server is not off while downloading plugins, you risk
+                jars being corrupted.
+              </em>
+            </p>
             <button class="w-100 btn btn-lg btn-primary" type="submit">
-              Update
+              Bundle-ify
             </button>
           </form>
         </div>
@@ -49,8 +157,5 @@
     </div>
   </body>
   {{template "footer" .}}
-  <script>
-    setBundles();
-  </script>
 </html>
 {{ end }}
