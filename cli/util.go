@@ -2,10 +2,14 @@ package cli
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"syscall"
 
 	"github.com/bennycio/bundle/api"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func isPluginDirectory(path string) bool {
@@ -20,13 +24,17 @@ func credentialsPrompt() *api.User {
 	fmt.Println("Enter your username: ")
 	var username string
 	fmt.Scanln(&username)
-	fmt.Println("Enter your password: ")
-	var password string
-	fmt.Scanln(&password)
+
+	fmt.Print("Enter Your Password: ")
+	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	password := string(bytePassword)
 
 	user := &api.User{
-		Username: username,
-		Password: password,
+		Username: strings.TrimSpace(username),
+		Password: strings.TrimSpace(password),
 	}
 
 	return user
