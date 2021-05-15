@@ -12,12 +12,14 @@ import (
 )
 
 type user struct {
-	Id       primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Username string             `bson:"username,omitempty" json:"username"`
-	Email    string             `bson:"email,omitempty" json:"email"`
-	Password string             `bson:"password,omitempty" json:"password"`
-	Tag      string             `bson:"tag,omitempty" json:"tag"`
-	Scopes   []string           `bson:"scopes,omitempty" json:"scopes"`
+	Id        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Username  string             `bson:"username,omitempty" json:"username"`
+	Email     string             `bson:"email,omitempty" json:"email"`
+	Password  string             `bson:"password,omitempty" json:"password"`
+	Tag       string             `bson:"tag,omitempty" json:"tag"`
+	Scopes    []string           `bson:"scopes,omitempty" json:"scopes"`
+	Thumbnail string             `bson:"thumbnail,omitempty" json:"thumbnail"`
+	StripeId  string             `bson:"stripeId,omitempty" json:"stripeId"`
 }
 
 type UsersOrm struct{}
@@ -190,11 +192,13 @@ func apiToOrmUser(us *api.User) user {
 		return user{}
 	}
 	result := user{
-		Username: us.Username,
-		Email:    us.Email,
-		Password: us.Password,
-		Tag:      us.Tag,
-		Scopes:   us.Scopes,
+		Username:  us.Username,
+		Email:     us.Email,
+		Password:  us.Password,
+		Tag:       us.Tag,
+		Scopes:    us.Scopes,
+		Thumbnail: us.Thumbnail,
+		StripeId:  us.StripeId,
 	}
 	userID, err := primitive.ObjectIDFromHex(us.Id)
 	if userID != primitive.NilObjectID && err == nil {
@@ -205,11 +209,13 @@ func apiToOrmUser(us *api.User) user {
 
 func ormToApiUser(us user) *api.User {
 	return &api.User{
-		Id:       us.Id.Hex(),
-		Username: us.Username,
-		Email:    us.Email,
-		Password: us.Password,
-		Tag:      us.Tag,
-		Scopes:   us.Scopes,
+		Id:        us.Id.Hex(),
+		Username:  us.Username,
+		Email:     us.Email,
+		Password:  us.Password,
+		Tag:       us.Tag,
+		Scopes:    us.Scopes,
+		Thumbnail: us.Thumbnail,
+		StripeId:  us.StripeId,
 	}
 }

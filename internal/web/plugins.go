@@ -2,19 +2,22 @@ package web
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/russross/blackfriday/v2"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/checkout/session"
 )
 
 const perPageCount = 15
 
 func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
-	data := TemplateData{}
+	data := templateData{}
 	user, err := getProfFromCookie(req)
 
 	if err == nil {
@@ -179,5 +182,93 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+}
+
+func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
+
+	pro, err := getProfFromCookie(r)
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	data := templateData{
+		Profile: pro,
+	}
+
+	switch r.Method {
+
+	case http.MethodGet:
+
+		r.ParseForm()
+
+		plugin := r.FormValue("plugin")
+
+		if plugin == "" {
+			http.Redirect(w, r, "/plugins", http.StatusNotFound)
+			return
+		}
+
+		gs := gate.NewGateService("", "")
+
+		dbpl, err := gs.GetPlugin(&api.Plugin{Id: plugin})
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		if dbpl.Author == nil {
+			http.Error(w, "author is nil", http.StatusNotFound)
+			return
+		}
+
+		if dbpl.Author.StripeId == "" {
+			http.Error(w, "author is not striped up", http.StatusNotFound)
+			return
+		}
+
+		stripe.Key = os.Getenv("STRIPE_TEST_KEY")
+		params := &stripe.CheckoutSessionParams{
+			PaymentMethodTypes: stripe.StringSlice([]string{
+				"card",
+			}),
+			LineItems: []*stripe.CheckoutSessionLineItemParams{
+				{
+					Name:     stripe.String(dbpl.Name),
+					Amount:   stripe.Int64(int64(dbpl.Premium.Price)),
+					Currency: stripe.String(string(stripe.CurrencyUSD)),
+					Quantity: stripe.Int64(1),
+				},
+			},
+			PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
+				ApplicationFeeAmount: stripe.Int64(int64(dbpl.Premium.Price / 20)),
+				TransferData: &stripe.CheckoutSessionPaymentIntentDataTransferDataParams{
+					Destination: stripe.String(dbpl.Author.StripeId),
+				},
+			},
+			Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
+			SuccessURL: stripe.String("https://" + os.Getenv("WEB_HOST") + "plugins/payment_success"),
+			CancelURL:  stripe.String("https://" + os.Getenv("WEB_HOST") + "plugins/payment_cancel"),
+		}
+
+		session, err := session.New(params)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		data.PurchaseSession = session.ID
+
+		err = tpl.ExecuteTemplate(w, "purchase", data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+}
+
+func paymentSuccessHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 }

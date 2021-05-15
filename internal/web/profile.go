@@ -12,7 +12,7 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data := TemplateData{
+	data := templateData{
 		Profile: pro,
 	}
 

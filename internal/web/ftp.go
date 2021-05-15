@@ -24,7 +24,7 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	gs := gate.NewGateService("", "")
 
-	data := TemplateData{
+	data := templateData{
 		Profile: pro,
 	}
 

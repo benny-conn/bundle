@@ -21,6 +21,7 @@ message User {
     repeated string scopes = 5;
     string tag = 6;
     string thumbnail = 7;
+    string stripeId = 8;
 }
 
 // PLUGINS --------------------------------------------------------------------- ||

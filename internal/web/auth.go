@@ -47,7 +47,7 @@ func loginGate(next http.Handler) http.Handler {
 	})
 }
 
-func newSession(prof Profile) (*api.Session, error) {
+func newSession(prof profile) (*api.Session, error) {
 	gs := gate.NewGateService("", "")
 
 	req := &api.Session{
@@ -80,7 +80,7 @@ func checkSession(req *api.Session) error {
 	return nil
 }
 
-func getProfileFromToken(token string) (Profile, error) {
+func getProfileFromToken(token string) (profile, error) {
 	req := &api.Session{
 		Id: token,
 	}
@@ -88,11 +88,11 @@ func getProfileFromToken(token string) (Profile, error) {
 
 	ses, err := gs.GetSession(req)
 	if err != nil {
-		return Profile{}, nil
+		return profile{}, nil
 	}
 	user, err := gs.GetUser(&api.User{Id: ses.UserId})
 	if err != nil {
-		return Profile{}, nil
+		return profile{}, nil
 	}
 	return userToProfile(user), nil
 }

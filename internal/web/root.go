@@ -7,7 +7,7 @@ import (
 func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	prof, err := getProfFromCookie(r)
-	data := TemplateData{}
+	data := templateData{}
 	if err == nil {
 		data.Profile = prof
 	} else {
