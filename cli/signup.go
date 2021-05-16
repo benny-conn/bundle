@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 	"runtime"
 
@@ -14,10 +13,15 @@ var signupCmd = &cobra.Command{
 	Use:   "signup",
 	Short: "Sign up for Bundle MC, allowing you to upload plugins to the official repository",
 	Long:  "Sign up for Bundle MC and gain upload access to the official repository. Use flags \"-u\" \"-e\" and \"-p\" to specify username, email, and password ",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
-		openBrowser("https://bundlemc.io/signup")
+		err := openBrowser("https://bundlemc.io/signup")
+		if err != nil {
+			return err
+		}
 		fmt.Println("Opened signup in new browser window")
+
+		return nil
 
 	},
 }
@@ -26,7 +30,7 @@ func init() {
 	rootCmd.AddCommand(signupCmd)
 }
 
-func openBrowser(url string) {
+func openBrowser(url string) error {
 	var err error
 
 	switch runtime.GOOS {
@@ -40,7 +44,8 @@ func openBrowser(url string) {
 		err = fmt.Errorf("unsupported platform")
 	}
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
+	return nil
 }

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -14,10 +15,10 @@ import (
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check which plugins have updates.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		bundle, err := intfile.GetBundle("")
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		pls := bundle.Plugins
@@ -39,7 +40,7 @@ var statusCmd = &cobra.Command{
 
 				plugin, err := gs.GetPlugin(req)
 				if err != nil {
-					panic(err)
+					fmt.Fprintf(os.Stderr, "error occurred: %s\n", err.Error())
 				}
 
 				latestVersion := plugin.Version
@@ -48,7 +49,7 @@ var statusCmd = &cobra.Command{
 
 				res, err := intfile.ParsePluginYml(fp)
 				if err != nil {
-					fmt.Printf("error occurred: %s\n", err.Error())
+					fmt.Fprintf(os.Stderr, "error occurred: %s\n", err.Error())
 				}
 				if res.Version != latestVersion {
 					pluginsToUpdate[pluginName] = latestVersion
@@ -65,7 +66,7 @@ var statusCmd = &cobra.Command{
 		} else {
 			fmt.Println("All plugins are up to date :)")
 		}
-
+		return nil
 	},
 }
 
