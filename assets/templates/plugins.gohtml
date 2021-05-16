@@ -43,40 +43,35 @@
     </div>
     <div class="row">
       <div class="col-sm-12 col-md-9">
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-          <div class="col plugins-container">
-            {{ $date := .Date }}
-            <!-- prettier-ignore -->
-            {{ range .Plugins }}
-            <a href="?plugin={{.Name}}" class="plugin-link">
-              <div class="card h-100 plugin-card">
-                {{if .Thumbnail}}
-                <img
-                  class="card-img-top plugin-thumbnail"
-                  src="{{.Thumbnail}}"
-                />
-                {{else}}
-                <img
-                  class="card-img-top plugin-thumbnail"
-                  src="https://via.placeholder.com/154.png"
-                />
-                {{ end }}
-                <div class="card-body">
-                  <h5 class="card-title">{{.Name}}</h5>
-                  <p class="card-text">
-                    Author: {{.Author.Username}} <br />
-                    {{.Description}}
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <small class="text-muted"
-                    >Last updated {{ call $date .LastUpdated }}</small
-                  >
-                </div>
+        <div class="plugins-container row row-cols-1 row-cols-md-3 g-4">
+          {{ $date := .Date }}
+          <!-- prettier-ignore -->
+          {{ range .Plugins }}
+          <a href="?plugin={{.Name}}" class="plugin-link col">
+            <div class="card h-100 plugin-card">
+              {{if .Thumbnail}}
+              <img class="card-img-top plugin-thumbnail" src="{{.Thumbnail}}" />
+              {{else}}
+              <img
+                class="card-img-top plugin-thumbnail"
+                src="https://via.placeholder.com/154.png"
+              />
+              {{ end }}
+              <div class="card-body">
+                <h5 class="card-title">{{.Name}}</h5>
+                <p class="card-text">
+                  Author: {{.Author.Username}} <br />
+                  {{.Description}}
+                </p>
               </div>
-            </a>
-            {{ end }}
-          </div>
+              <div class="card-footer">
+                <small class="text-muted"
+                  >Last updated {{ call $date .LastUpdated }}</small
+                >
+              </div>
+            </div>
+          </a>
+          {{ end }}
         </div>
         {{$previous := call .Math .Page 1 "sub" }}
         {{$next := call .Math .Page 1 "add" }}

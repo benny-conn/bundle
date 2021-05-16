@@ -2,7 +2,6 @@ package orm
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/bennycio/bundle/api"
@@ -97,11 +96,6 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 	collection := mgses.Client.Database("plugins").Collection("plugins")
 
-	beforeUpdate, err := p.Get(req)
-	if err != nil {
-		return err
-	}
-
 	update := apiToOrmPl(req)
 	err = validatePluginUpdate(update)
 	if err != nil {
@@ -116,18 +110,6 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 	}
 	if updateResult.MatchedCount < 1 || updateResult.ModifiedCount < 1 {
 		return errors.New("no plugin found")
-	}
-
-	rdmeOrm := NewReadmesOrm()
-	rd, err := rdmeOrm.Get(beforeUpdate)
-	if err == nil {
-		rd.Plugin = req
-		err = rdmeOrm.Update(rd)
-		if err != nil {
-			return err
-		}
-	} else {
-		fmt.Println(err.Error())
 	}
 
 	return nil
@@ -151,7 +133,7 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	}
 
 	if get.Id == primitive.NilObjectID {
-		res := collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(req.Name)}})
+		res := collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(get.Name)}})
 		if res.Err() != nil {
 			return nil, res.Err()
 		}

@@ -78,7 +78,11 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		_, err = gs.GetPlugin(plugin)
 		if err == nil {
-			gs.UpdatePlugin(plugin)
+			err = gs.UpdatePlugin(plugin)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 		} else {
 			err = gs.InsertPlugin(plugin)
 			if err != nil {
@@ -88,6 +92,7 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 		dbPlugin, err := gs.GetPlugin(plugin)
 		if err != nil {
+			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -99,6 +104,7 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 		err = repo.UploadPlugin(dbUser, dbPlugin, file)
 		if err != nil {
+			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusBadGateway)
 			return
 		}
