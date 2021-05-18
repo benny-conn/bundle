@@ -18,7 +18,6 @@ func (s *readmesServer) Get(ctx context.Context, req *api.Plugin) (*api.Readme, 
 
 	pl, err := s.orm.Get(req)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "GET README"+err.Error())
 		return nil, err
 	}
 

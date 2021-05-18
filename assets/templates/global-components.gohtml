@@ -67,14 +67,19 @@
             <a href="/downloads" class="nav-link">Downloads</a>
           </li>
           <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
-          <li class="nav-item"><a href="/ftp" class="nav-link pr-3">FTP</a></li>
+          {{if .Profile.Id}}
+          <li class="nav-item">
+            <a href="/ftp" class="btn btn-primary mx-1">FTP</a>
+          </li>
+          <!-- prettier-ignore -->
+          {{end}}
           <!-- prettier-ignore -->
           {{if .Profile.Id}}
           <li class="nav-item">
-            <a class="btn btn-light mr-1 ml-5" href="/profile"> Profile </a>
+            <a class="btn btn-light mx-1" href="/profile"> Profile </a>
           </li>
           <li class="nav-item">
-            <a class="btn btn-warning mx-2" href="/logout"> Logout</a>
+            <a class="btn btn-warning mx-1" href="/logout"> Logout</a>
           </li>
           {{else}}
           <li class="nav-item">

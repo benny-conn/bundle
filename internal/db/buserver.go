@@ -18,7 +18,6 @@ func (s *bundlesServer) Get(ctx context.Context, req *api.Bundle) (*api.Bundle, 
 
 	pl, err := s.orm.Get(req)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "GET BUNDLE"+err.Error())
 		return nil, err
 	}
 

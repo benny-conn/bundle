@@ -18,7 +18,6 @@ func (s *pluginsServer) Get(ctx context.Context, req *api.Plugin) (*api.Plugin, 
 
 	pl, err := s.orm.Get(req)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "GET PLUGIN"+err.Error())
 		return nil, err
 	}
 
@@ -47,7 +46,7 @@ func (s *pluginsServer) Insert(ctx context.Context, plugin *api.Plugin) (*api.Em
 func (s *pluginsServer) Paginate(ctx context.Context, req *api.PaginatePluginsRequest) (*api.PaginatePluginsResponse, error) {
 	pls, err := s.orm.Paginate(req)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+
 		return nil, err
 	}
 	return &api.PaginatePluginsResponse{

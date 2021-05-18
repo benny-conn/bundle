@@ -17,7 +17,7 @@ type usersServer struct {
 func (s *usersServer) Get(ctx context.Context, req *api.User) (*api.User, error) {
 	user, err := s.orm.Get(req)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "GET USER"+err.Error())
+
 		return nil, err
 	}
 	return user, nil
