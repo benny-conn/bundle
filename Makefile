@@ -26,12 +26,14 @@ docker-build: sass
 docker-run: docker-build
 	docker-compose up -d
 
-dev: sass
+dev: sass cli
 	./dev.sh
 
 sass:
 	sass ./assets/public/scss/styles.scss ./assets/public/css/styles.css
 
+cli:
+	go install cmd/cli/bundle.go
 
 .ONESHELL: dev clean cert
 
@@ -43,7 +45,7 @@ proto:
 	protoc --gofast_out=plugins=grpc:. ./api/api.proto
 
 
-.PHONY: clean
+.PHONY: clean cli
 clean:
 	$(value clean-script)
 

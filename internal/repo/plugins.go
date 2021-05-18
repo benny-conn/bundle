@@ -43,7 +43,6 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		err := r.ParseMultipartForm(32 << 20)
 		if err != nil {
-
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

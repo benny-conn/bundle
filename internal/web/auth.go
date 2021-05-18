@@ -88,11 +88,11 @@ func getProfileFromToken(token string) (profile, error) {
 
 	ses, err := gs.GetSession(req)
 	if err != nil {
-		return profile{}, nil
+		return profile{}, err
 	}
 	user, err := gs.GetUser(&api.User{Id: ses.UserId})
 	if err != nil {
-		return profile{}, nil
+		return profile{}, err
 	}
 	return userToProfile(user), nil
 }

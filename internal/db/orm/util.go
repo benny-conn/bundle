@@ -82,3 +82,7 @@ func remove(s bson.D, i int) bson.D {
 func caseInsensitive(value string) primitive.Regex {
 	return primitive.Regex{Pattern: value, Options: "i"}
 }
+
+func boolin(b bool) *bool {
+	return &b
+}

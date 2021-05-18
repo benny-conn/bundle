@@ -32,10 +32,10 @@ type gateService interface {
 	InsertSession(ses *api.Session) (*api.SessionInsertResponse, error)
 	GetSession(ses *api.Session) (*api.Session, error)
 	DeleteSession(ses *api.Session) error
-	InsertBundle(ses *api.Bundle) error
-	GetBundle(ses *api.Bundle) (*api.Bundle, error)
-	DeleteBundle(ses *api.Bundle) error
-	UpdateBundle(ses *api.Bundle) error
+	InsertBundle(bu *api.Bundle) error
+	GetBundle(bu *api.Bundle) (*api.Bundle, error)
+	DeleteBundle(bu *api.Bundle) error
+	UpdateBundle(bu *api.Bundle) error
 }
 type gateServiceImpl struct {
 	Host string
@@ -670,6 +670,7 @@ func (g *gateServiceImpl) InsertSession(ses *api.Session) (*api.SessionInsertRes
 }
 
 func (g *gateServiceImpl) DeleteBundle(bu *api.Bundle) error {
+	fmt.Println("HOW DID WE GET HERE")
 	scheme := "https://"
 
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/bundles", scheme, g.Host, g.Port))

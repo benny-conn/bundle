@@ -14,7 +14,7 @@ func logoutHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		accessCookie.MaxAge = -1
 		gs := gate.NewGateService("", "")
 
-		gs.DeleteBundle(&api.Bundle{Id: accessCookie.Value})
+		gs.DeleteSession(&api.Session{Id: accessCookie.Value})
 	}
 
 	http.SetCookie(w, accessCookie)

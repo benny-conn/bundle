@@ -6,6 +6,8 @@ import (
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type bundle struct {
@@ -51,6 +53,7 @@ func (o *BundlesOrm) Insert(bu *api.Bundle) error {
 }
 
 func (o *BundlesOrm) Delete(bu *api.Bundle) error {
+
 	mgses, err := getMongoSession()
 	if err != nil {
 		return err
@@ -88,13 +91,19 @@ func (o *BundlesOrm) Update(bu *api.Bundle) error {
 		return err
 	}
 
-	update, err := collection.UpdateByID(mgses.Ctx, bu.Id, bson.D{{"$set", bu}})
-	if update.MatchedCount < 1 {
-		return errors.New("could not find a session to updae last retrieved time")
+	var update *mongo.UpdateResult
+	if s.Id != primitive.NilObjectID {
+		update, err = collection.UpdateByID(mgses.Ctx, bu.Id, bson.D{{"$set", bu}}, &options.UpdateOptions{Upsert: boolin(true)})
+	} else {
+		update, err = collection.UpdateOne(mgses.Ctx, bson.D{{"userId", bu.UserId}}, bson.D{{"$set", bu}}, &options.UpdateOptions{Upsert: boolin(true)})
 	}
 
 	if err != nil {
 		return err
+	}
+
+	if update.MatchedCount < 1 && update.UpsertedCount < 1 {
+		return errors.New("could not find a bundle to update or upsert")
 	}
 
 	return nil
@@ -143,15 +152,13 @@ func validateBundleGet(bu bundle) error {
 }
 
 func validateBundleUpdate(bu bundle) error {
-	if bu.Id == primitive.NilObjectID {
-		return errors.New("id required")
-	}
+
 	return nil
 }
 
 func validateBundleDelete(bu bundle) error {
 	if bu.Id == primitive.NilObjectID {
-		return errors.New("id required")
+		return errors.New("id required for delete")
 	}
 	return nil
 }

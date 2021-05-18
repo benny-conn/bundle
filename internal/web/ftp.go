@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,8 +34,6 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		req.ParseForm()
 		pls := req.FormValue("plugins")
 
-		fmt.Println(pls)
-
 		plsSplit := strings.Split(pls, ",")
 
 		ftpUser := req.FormValue("ftp-username")
@@ -49,10 +48,7 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		sBool := false
-		if save == "on" {
-			sBool = true
-		}
+		sBool := save == "on"
 
 		req := &api.Bundle{
 			UserId:  pro.Id,
@@ -63,24 +59,15 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if sBool {
-			_, err = gs.GetBundle(req)
-
-			if err == nil {
-				err = gs.UpdateBundle(req)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-			} else {
-				err = gs.InsertBundle(req)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
+			fmt.Println("SAVING")
+			err = gs.UpdateBundle(req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
 			}
 		}
 
-		go func() {
+		go func(req *api.Bundle) {
 			c, err := ftp.Dial(fmt.Sprintf("%s:%v", req.FtpHost, req.FtpPort), ftp.DialWithTimeout(10*time.Second))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -98,20 +85,26 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			var wg *sync.WaitGroup
+			wg := &sync.WaitGroup{}
 			wg.Add(len(req.Plugins))
 			for _, v := range req.Plugins {
 				go func(pl string) {
 					defer wg.Done()
-					c.Delete(pl + ".jar")
+					err = c.Delete(pl + ".jar")
+					if err != nil {
+						fmt.Fprintln(os.Stderr, err.Error())
+						return
+					}
 					bs, err := gs.DownloadPlugin(&api.Plugin{Name: pl})
 					if err != nil {
+						fmt.Fprintln(os.Stderr, err.Error())
 						return
 					}
 					buf := bytes.NewBuffer(bs)
 					err = c.Stor(pl+".jar", buf)
 					if err != nil {
-						fmt.Println(err.Error())
+						fmt.Fprintln(os.Stderr, err.Error())
+						return
 					}
 				}(v)
 			}
@@ -121,7 +114,7 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-		}()
+		}(req)
 
 	}
 

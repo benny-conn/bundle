@@ -105,7 +105,7 @@ func (r *bundlesRpcClientImpl) Update(req *api.Bundle) error {
 	}
 	defer conn.Close()
 	client := api.NewBundleServiceClient(conn)
-	_, err = client.Delete(context.Background(), req)
+	_, err = client.Update(context.Background(), req)
 	if err != nil {
 		return err
 	}

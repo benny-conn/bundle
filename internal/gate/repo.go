@@ -6,12 +6,14 @@ import (
 	"strconv"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal/gate/grpc"
 	"github.com/bennycio/bundle/internal/repo"
 )
 
 func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	repo := repo.NewRepoService("", "")
-	gs := NewGateService("", "")
+	dbcl := grpc.NewPluginClient("", "")
+	uscl := grpc.NewUserClient("", "")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -28,7 +30,7 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			Name: pluginName,
 		}
 
-		dbPl, err := gs.GetPlugin(req)
+		dbPl, err := dbcl.Get(req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -68,34 +70,27 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			plugin.Category = api.Category(cat)
 		}
 
-		dbUser, err := gs.GetUser(user)
+		dbUser, err := uscl.Get(user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		plugin.Author = dbUser
-
-		_, err = gs.GetPlugin(plugin)
-		if err == nil {
-			err = gs.UpdatePlugin(plugin)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-		} else {
-			err = gs.InsertPlugin(plugin)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
+		err = dbcl.Update(plugin)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
-		dbPlugin, err := gs.GetPlugin(plugin)
+
+		dbPlugin, err := dbcl.Get(plugin)
 		if err != nil {
 			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		fmt.Println(dbPlugin)
 
 		file, _, err := r.FormFile("plugin")
 		if err != nil {

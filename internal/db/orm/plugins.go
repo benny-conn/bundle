@@ -7,6 +7,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -30,8 +31,6 @@ type premium struct {
 }
 
 type category int32
-
-type sort int32
 
 const (
 	all category = 0 << iota
@@ -104,11 +103,18 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 	update.LastUpdated = primitive.NewDateTimeFromTime(time.Now())
 
-	updateResult, err := collection.UpdateByID(mgses.Ctx, update.Id, bson.D{{"$set", update}})
+	var updateResult *mongo.UpdateResult
+
+	if update.Id != primitive.NilObjectID {
+		updateResult, err = collection.UpdateByID(mgses.Ctx, update.Id, bson.D{{"$set", update}}, &options.UpdateOptions{Upsert: boolin(true)})
+	} else {
+		updateResult, err = collection.UpdateOne(mgses.Ctx, bson.D{{"name", update.Name}}, bson.D{{"$set", update}}, &options.UpdateOptions{Upsert: boolin(true)})
+	}
+
 	if err != nil {
 		return err
 	}
-	if updateResult.MatchedCount < 1 || updateResult.ModifiedCount < 1 {
+	if updateResult.ModifiedCount < 1 && updateResult.UpsertedCount < 1 {
 		return errors.New("no plugin found")
 	}
 
@@ -205,8 +211,8 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, e
 }
 
 func validatePluginUpdate(pl plugin) error {
-	if pl.Id == primitive.NilObjectID {
-		return errors.New("id required for update")
+	if pl.Id == primitive.NilObjectID && pl.Name == "" {
+		return errors.New("id or name required for update")
 	}
 	return nil
 }
