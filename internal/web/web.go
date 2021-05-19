@@ -7,6 +7,8 @@ import (
 	"github.com/rs/cors"
 )
 
+// TODO custom routing
+
 func NewWebServer() *http.Server {
 
 	mux := http.NewServeMux()
@@ -15,13 +17,17 @@ func NewWebServer() *http.Server {
 	loginHandler := http.HandlerFunc(loginHandlerFunc)
 	logoutHandler := http.HandlerFunc(logoutHandlerFunc)
 	pluginHandler := http.HandlerFunc(pluginsHandlerFunc)
+	thumbnailHandler := http.HandlerFunc(thumbnailHandlerFunc)
+	bundlerHandler := http.HandlerFunc(bundlerHandlerFunc)
 	profileHandler := http.HandlerFunc(profileHandlerFunc)
 	ftpHandler := http.HandlerFunc(ftpHandlerFunc)
 	stripeAuthHandler := http.HandlerFunc(stripeAuthHandlerFunc)
 	stripeReturnHandler := http.HandlerFunc(stripeReturnHandlerFunc)
 
 	mux.Handle("/", rootHandler)
-	mux.Handle("/plugins", pluginHandler)
+	mux.Handle("/plugins/", pluginHandler)
+	mux.Handle("/plugins/thumbnails", thumbnailHandler)
+	mux.Handle("/plugins/bundler", bundlerHandler)
 	mux.Handle("/profile", loginGate(profileHandler))
 	mux.Handle("/ftp", ftpHandler)
 	mux.Handle("/stripe/auth", stripeAuthHandler)

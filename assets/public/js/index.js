@@ -1,7 +1,7 @@
 function setBundles() {
   const plugins = [];
-  $("#pluginsList")
-    .children()
+  $(".plugin-list-item")
+    .children("th")
     .each((index, element) => {
       var current = $(element);
       var txt = current.text();
@@ -28,7 +28,7 @@ $(document).ready(() => {
 
   $(document).on("click", "#pluginRemove", (e) => {
     e.preventDefault();
-    $(e.target).parents("#pluginListItem").remove();
+    $(e.target).parents(".plugin-list-item").remove();
     setBundles();
   });
 
@@ -40,9 +40,16 @@ $(document).ready(() => {
     e.preventDefault();
     const val = $("#pluginInput").val();
     $("#pluginsList").append(
-      `<li  class="plugin-list-item border border-primary rounded-pill px-3 py-2"><span>` +
-        val +
-        `<button id="pluginRemove"><i class="bi bi-dash-circle ml-3 text-primary"></i></button></span></li>`
+      `<tr class="plugin-list-item">
+        <th class="plugin-name" scope="row">
+        ${val}
+        </th>
+        <td>
+          <button id="pluginRemove">
+          <i class="bi bi-backspace"></i>
+          </button>
+        </td>
+        </tr>`
     );
     $("#pluginInput").val("");
     setBundles();

@@ -90,8 +90,6 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Println(dbPlugin)
-
 		file, _, err := r.FormFile("plugin")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

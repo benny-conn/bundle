@@ -93,9 +93,9 @@ func (o *BundlesOrm) Update(bu *api.Bundle) error {
 
 	var update *mongo.UpdateResult
 	if s.Id != primitive.NilObjectID {
-		update, err = collection.UpdateByID(mgses.Ctx, bu.Id, bson.D{{"$set", bu}}, &options.UpdateOptions{Upsert: boolin(true)})
+		update, err = collection.UpdateByID(mgses.Ctx, bu.Id, bson.D{{"$set", s}}, &options.UpdateOptions{Upsert: boolin(true)})
 	} else {
-		update, err = collection.UpdateOne(mgses.Ctx, bson.D{{"userId", bu.UserId}}, bson.D{{"$set", bu}}, &options.UpdateOptions{Upsert: boolin(true)})
+		update, err = collection.UpdateOne(mgses.Ctx, bson.D{{"userId", s.UserId}}, bson.D{{"$set", s}}, &options.UpdateOptions{Upsert: boolin(true)})
 	}
 
 	if err != nil {

@@ -29,6 +29,7 @@ type templateData struct {
 	Page            int
 	Math            func(int, int, string) int
 	Date            func(int64) string
+	Contains        func([]string, string) bool
 	Readme          string
 }
 

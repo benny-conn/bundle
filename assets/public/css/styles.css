@@ -1478,4 +1478,12 @@ body {
   display: inline;
 }
 
+.color-green {
+  color: #0ec80e;
+}
+
+.cat-btn:hover {
+  color: grey;
+}
+
 /*# sourceMappingURL=styles.css.map */

@@ -1,7 +1,6 @@
 package mem
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -17,13 +16,6 @@ func newClient() *redis.Client {
 		Password: pass,
 		DB:       0,
 	})
-	pong, err := client.Ping(context.TODO()).Result()
-
-	if err != nil {
-		fmt.Println("PINGING ERROR " + err.Error())
-	}
-
-	fmt.Println(pong)
 
 	return client
 

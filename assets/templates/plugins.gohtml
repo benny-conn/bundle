@@ -114,11 +114,68 @@
         <div class="cool-card">
           <h4 class="category-header">Plugin Categories</h4>
           <ul class="categories">
-            <li><a href="#premium">Premium</a></li>
-            <li><a href="#premium">Tools</a></li>
-            <li><a href="#premium">Economy</a></li>
-            <li><a href="#premium">Mechanics</a></li>
-            <li><a href="#premium">Chat</a></li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="0" />
+                <button type="submit" class="btn cat-btn">Premium</button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="1" />
+                <button type="submit" class="btn cat-btn">Economy</button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="2" />
+                <button type="submit" class="btn cat-btn">Tools</button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="3" />
+                <button type="submit" class="btn cat-btn">Chat</button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="4" />
+                <button type="submit" class="btn cat-btn">Mechanics</button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="5" />
+                <button type="submit" class="btn cat-btn">
+                  Administration
+                </button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="6" />
+                <button type="submit" class="btn cat-btn">Bungeecord</button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="7" />
+                <button type="submit" class="btn cat-btn">Fun</button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="8" />
+                <button type="submit" class="btn cat-btn">Miscellaneous</button>
+              </form>
+            </li>
+            <li>
+              <form action="/plugins">
+                <input type="hidden" name="category" value="9" />
+                <button type="submit" class="btn cat-btn">Libraries</button>
+              </form>
+            </li>
           </ul>
         </div>
       </div>
@@ -167,7 +224,7 @@
     <div class="col-3">
       <form
         id="thumbnail-form"
-        action="/plugins"
+        action="/plugins/thumbnails"
         method="POST"
         enctype="multipart/form-data"
       >
@@ -217,9 +274,41 @@
   </div>
   {{ end }}
   <div class="plugin-download my-4">
+    <h4>Install By CLI</h4>
     <code class="py-1 px-3 user-select-all">
       bundle install {{.Plugin.Name}}
     </code>
+    <h4>Install By Bundler</h4>
+    {{if .Bundle}}
+    {{if call .Contains .Bundle.Plugins .Plugin.Name}}
+    <p><em>Already Being Bundled</em></p>
+    {{ else }}
+    <form action="/plugins/bundler" method="POST" id="addBundle">
+      <input
+        type="hidden"
+        value="{{.Plugin.Name}}"
+        name="plugin"
+        id="bundle-add"
+      />
+      <button type="submit" class="btn btn-primary">Add To Bundle</button>
+    </form>
+    {{ end }}
+    {{ else }}
+    {{if .Profile.Id}}
+    <form action="/plugins/bundler" method="POST" id="addBundle">
+      <input
+        type="hidden"
+        value="{{.Plugin.Name}}"
+        name="plugin"
+        id="bundle-add"
+      />
+      <button type="submit" class="btn btn-primary">Add To Bundle</button>
+    </form>
+    {{else}}
+    <p>Login to Bundle</p>
+    <a class="btn btn-primary" href="/login">Login</a>
+    {{ end }}
+    {{ end }}
   </div>
 </div>
 

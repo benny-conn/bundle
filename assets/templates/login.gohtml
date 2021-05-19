@@ -51,12 +51,15 @@
           />
           <label for="floatingPassword">Password</label>
         </div>
-
         <button class="w-100 btn btn-lg btn-primary" type="submit">
-          Log In
+          Login
         </button>
         <input type="hidden" id="referer" name="referer" value="{{.}}" />
       </form>
+      <p class="my-1">
+        Don't Have an Account?
+        <a class="text-primary" href="/signup">Sign Up</a>
+      </p>
     </main>
   </body>
   {{template "footer" .}}

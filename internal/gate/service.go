@@ -670,7 +670,6 @@ func (g *gateServiceImpl) InsertSession(ses *api.Session) (*api.SessionInsertRes
 }
 
 func (g *gateServiceImpl) DeleteBundle(bu *api.Bundle) error {
-	fmt.Println("HOW DID WE GET HERE")
 	scheme := "https://"
 
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/bundles", scheme, g.Host, g.Port))

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/russross/blackfriday/v2"
 	"github.com/stripe/stripe-go/v72"
@@ -24,6 +25,17 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		data.Profile = user
 	}
 
+	gs := gate.NewGateService("", "")
+
+	if user.Id != "" {
+		bu, err := gs.GetBundle(&api.Bundle{UserId: user.Id})
+		if err == nil {
+			data.Bundle = bu
+		}
+	}
+
+	data.Contains = internal.Contains
+
 	switch req.Method {
 
 	case http.MethodGet:
@@ -32,8 +44,6 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		gs := gate.NewGateService("", "")
 
 		pluginName := req.FormValue("plugin")
 
@@ -128,53 +138,6 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 			data.Plugin = plugin
 		}
-	case http.MethodPost:
-
-		err = req.ParseMultipartForm(32 << 20)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		user := req.FormValue("user")
-		plugin := req.FormValue("plugin")
-
-		thumbnail, h, err := req.FormFile("thumbnail")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		if h.Size > (1 << 20) {
-			http.Error(w, "file too large", http.StatusBadRequest)
-			return
-		}
-
-		if user == "" {
-			http.Error(w, "no user specified", http.StatusBadRequest)
-			return
-		}
-		if plugin == "" {
-			http.Error(w, "no user specified", http.StatusBadRequest)
-			return
-		}
-
-		gs := gate.NewGateService("", "")
-
-		u := &api.User{
-			Id: user,
-		}
-		p := &api.Plugin{
-			Id: plugin,
-		}
-
-		err = gs.UploadThumbnail(u, p, thumbnail)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
-		return
 	}
 
 	err = tpl.ExecuteTemplate(w, "plugins", data)
@@ -183,6 +146,97 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+}
+
+func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
+
+	if req.Method != http.MethodPost {
+		http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
+		return
+	}
+	gs := gate.NewGateService("", "")
+	err := req.ParseMultipartForm(32 << 20)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	user := req.FormValue("user")
+	plugin := req.FormValue("plugin")
+
+	thumbnail, h, err := req.FormFile("thumbnail")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if h.Size > (1 << 20) {
+		http.Error(w, "file too large", http.StatusBadRequest)
+		return
+	}
+
+	if user == "" {
+		http.Error(w, "no user specified", http.StatusBadRequest)
+		return
+	}
+	if plugin == "" {
+		http.Error(w, "no user specified", http.StatusBadRequest)
+		return
+	}
+
+	u := &api.User{
+		Id: user,
+	}
+	p := &api.Plugin{
+		Id: plugin,
+	}
+
+	err = gs.UploadThumbnail(u, p, thumbnail)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
+}
+
+func bundlerHandlerFunc(w http.ResponseWriter, req *http.Request) {
+
+	if req.Method != http.MethodPost {
+		http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
+		return
+	}
+	req.ParseForm()
+
+	user, err := getProfFromCookie(req)
+	if err != nil {
+		http.Redirect(w, req, "/login", http.StatusSeeOther)
+		return
+	}
+
+	gs := gate.NewGateService("", "")
+
+	r := &api.Bundle{UserId: user.Id}
+	bu, err := gs.GetBundle(&api.Bundle{UserId: user.Id})
+	if err != nil {
+		bu = r
+	}
+
+	plname := req.FormValue("plugin")
+
+	if plname == "" {
+		http.Error(w, "no plugin name found", http.StatusBadRequest)
+		return
+	}
+
+	bu.Plugins = append(bu.Plugins, plname)
+
+	err = gs.UpdateBundle(bu)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
 }
 
 func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {

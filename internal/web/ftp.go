@@ -40,15 +40,12 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		ftpPass := req.FormValue("ftp-password")
 		ftpPort := req.FormValue("ftp-port")
 		ftpHost := req.FormValue("ftp-host")
-		save := req.FormValue("save")
 
 		port, err := strconv.Atoi(ftpPort)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		sBool := save == "on"
 
 		req := &api.Bundle{
 			UserId:  pro.Id,
@@ -58,13 +55,10 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			Plugins: plsSplit,
 		}
 
-		if sBool {
-			fmt.Println("SAVING")
-			err = gs.UpdateBundle(req)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
+		err = gs.UpdateBundle(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		go func(req *api.Bundle) {

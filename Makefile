@@ -1,22 +1,6 @@
 
 version = 1.0
 
-
-
-define clean-script =
-	docker-compose down
-	docker rm -f $(docker ps -a -q)
-	docker volume rm $(docker volume ls -q)
-	fuser -k 8020/tcp 
-	fuser -k 8040/tcp 
-	fuser -k 8060/tcp 
-	fuser -k 8080/tcp 
-	fuser -k 8090/tcp
-endef
-
-
-
-
 all: docker-run
 
 docker-build: sass
@@ -26,7 +10,7 @@ docker-build: sass
 docker-run: docker-build
 	docker-compose up -d
 
-dev: sass cli
+dev: clean sass cli
 	./dev.sh
 
 sass:
@@ -47,10 +31,11 @@ proto:
 
 .PHONY: clean cli
 clean:
-	$(value clean-script)
+	docker-compose down
+	./clean.sh
 
 full-clean:
-	$(value clean-script)
+	./clean.sh
 	docker system prune -a --volumes
 
 
