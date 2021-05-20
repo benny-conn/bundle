@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"fmt"
+	"bufio"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/cli/term"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -21,11 +22,12 @@ func isPluginDirectory(path string) bool {
 
 func credentialsPrompt() *api.User {
 
-	fmt.Println("Enter your username: ")
-	var username string
-	fmt.Scanln(&username)
+	term.Println("Enter your username: ")
+	rd := bufio.NewReader(os.Stdin)
+	username, _ := rd.ReadString(byte('\n'))
+	username = strings.TrimSpace(strings.Trim(username, "\n"))
 
-	fmt.Println("Enter Your Password: ")
+	term.Println("Enter Your Password: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		log.Fatal(err.Error())

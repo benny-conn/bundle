@@ -25,11 +25,12 @@ func NewWebServer() *http.Server {
 	stripeReturnHandler := http.HandlerFunc(stripeReturnHandlerFunc)
 
 	mux.Handle("/", rootHandler)
+	mux.Handle("/plugins", pluginHandler)
 	mux.Handle("/plugins/", pluginHandler)
 	mux.Handle("/plugins/thumbnails", thumbnailHandler)
 	mux.Handle("/plugins/bundler", bundlerHandler)
 	mux.Handle("/profile", loginGate(profileHandler))
-	mux.Handle("/ftp", ftpHandler)
+	mux.Handle("/ftp", loginGate(ftpHandler))
 	mux.Handle("/stripe/auth", stripeAuthHandler)
 	mux.Handle("/stripe/return", stripeReturnHandler)
 	mux.Handle("/login", loginHandler)

@@ -1,13 +1,16 @@
 package cli
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/intfile"
+	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/cli/uploader"
 	"github.com/bennycio/bundle/internal"
 	"github.com/spf13/cobra"
@@ -48,17 +51,61 @@ var uploadCmd = &cobra.Command{
 			plugin.Version = result.Version
 			plugin.Description = result.Description
 			plugin.Category = api.Category(result.Category)
+
 		}
 
-		fmt.Printf("Uploading to Bundle Repository From: %s\n", path)
+		term.Print(fmt.Sprintf("Uploading to Bundle Repository From: %s\n", path))
 
-		upl := uploader.New(user, path, plugin).WithReadme(isReadme)
-
-		err := upl.Upload()
+		fi, err := os.Open(path)
 		if err != nil {
 			return err
 		}
-		fmt.Println("Successfully uploaded your plugin! :)")
+		defer fi.Close()
+
+		upl := uploader.New(user, fi, plugin).WithReadme(isReadme)
+
+		err = upl.Upload()
+		if err != nil {
+			return err
+		}
+		term.Println("Successfully uploaded! :)")
+
+		if !isReadme {
+			term.Println("Would you like to upload a README as well? [Y/n]")
+
+			var rdmeToo string
+			fmt.Scanln(&rdmeToo)
+
+			if strings.EqualFold(rdmeToo, "y") || strings.EqualFold(rdmeToo, "yes") {
+				term.Println("Please specify a path to your readme file or press enter to scan for readme in close directories.")
+				rd := bufio.NewReader(os.Stdin)
+				p, err := rd.ReadString(byte('\n'))
+				if err != nil {
+					return err
+				}
+				p = strings.TrimSpace(strings.Trim(p, "\n"))
+				var readme *os.File
+				if p == "" {
+					wlk := uploader.NewFileWalker("README.md", "bundle")
+					readme, err = wlk.Walk()
+					if err != nil {
+						return err
+					}
+				} else {
+					readme, err = os.Open(path)
+					if err != nil {
+						return err
+					}
+				}
+				upl := uploader.New(user, readme, plugin).WithReadme(true)
+				err = upl.Upload()
+				if err != nil {
+					return err
+				}
+				term.Println("Successfully uploaded! :)")
+			}
+		}
+
 		return nil
 	},
 }

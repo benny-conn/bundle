@@ -28,9 +28,9 @@ func Contains(s []string, str string) bool {
 	return false
 }
 
+// Set timeouts so that a slow or malicious client doesn't
+// hold resources forever
 func MakeServerFromMux(mux http.Handler) *http.Server {
-	// set timeouts so that a slow or malicious client doesn't
-	// hold resources forever
 	return &http.Server{
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,

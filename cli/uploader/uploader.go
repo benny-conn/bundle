@@ -1,6 +1,8 @@
 package uploader
 
 import (
+	"bytes"
+	"io"
 	"os"
 
 	"github.com/bennycio/bundle/api"
@@ -8,21 +10,21 @@ import (
 )
 
 type uploader struct {
-	location string
-	user     *api.User
-	plugin   *api.Plugin
-	opts     options
+	file   *os.File
+	user   *api.User
+	plugin *api.Plugin
+	opts   options
 }
 
 type options struct {
 	isReadme bool
 }
 
-func New(user *api.User, location string, plugin *api.Plugin) *uploader {
+func New(user *api.User, file *os.File, plugin *api.Plugin) *uploader {
 	return &uploader{
-		user:     user,
-		location: location,
-		plugin:   plugin,
+		user:   user,
+		file:   file,
+		plugin: plugin,
 	}
 }
 
@@ -34,25 +36,21 @@ func (u *uploader) WithReadme(isReadme bool) *uploader {
 func (u *uploader) Upload() error {
 	gservice := gate.NewGateService("localhost", "8020")
 	if u.opts.isReadme {
-		file, err := os.ReadFile(u.location)
+		buf := &bytes.Buffer{}
+		_, err := io.Copy(buf, u.file)
 		if err != nil {
 			return err
 		}
 		readme := &api.Readme{
 			Plugin: u.plugin,
-			Text:   string(file),
+			Text:   buf.String(),
 		}
 		err = gservice.InsertReadme(u.user, readme)
 		if err != nil {
 			return err
 		}
 	} else {
-		file, err := os.Open(u.location)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		err = gservice.UploadPlugin(u.user, u.plugin, file)
+		err := gservice.UploadPlugin(u.user, u.plugin, u.file)
 		if err != nil {
 			return err
 		}

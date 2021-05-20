@@ -19,7 +19,7 @@ func init() {
 // installCmd represents the install command
 var installCmd = &cobra.Command{
 	Use:     "install",
-	Aliases: []string{"update", "get"},
+	Aliases: []string{"update", "get", "download"},
 	Short:   "Install plugins for your Bundle",
 	Long: `Install plugins from the official Bundle Repository to your Bundle. If no plugins are
 	specified, all plugins listed in bundle.yml will be downloaded. Any arguments to this command
