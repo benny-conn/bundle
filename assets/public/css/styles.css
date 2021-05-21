@@ -622,7 +622,6 @@ body {
 .categories {
   list-style: none;
   text-align: right;
-  margin-right: 20px;
 }
 
 .categories li {
@@ -648,16 +647,6 @@ body {
 
 .search i {
   right: 0;
-}
-
-.category-header {
-  width: 100%;
-  background: #4d4d4d;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  text-align: right;
-  color: white;
-  padding: 10px;
 }
 
 .plugin {
@@ -1424,12 +1413,9 @@ body {
   flex: 1 1 auto;
 }
 
-.plugin-info .plugin-thumbnail {
-  height: 80px;
-  width: 80px;
-  margin-right: 20px;
-  object-fit: contain;
-  align-self: flex-start;
+.plugin-thumbnail {
+  height: 200px;
+  width: 100%;
 }
 
 .plugins-thumbnail {
@@ -1443,12 +1429,7 @@ body {
   border-radius: 500px;
 }
 
-.plugin-link {
-  text-decoration: none;
-}
-
 .plugin-card {
-  max-height: 400px;
   transition: transform 0.25s ease-in-out;
 }
 

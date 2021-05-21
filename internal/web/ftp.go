@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/bennycio/bundle/api"
@@ -79,31 +78,27 @@ func ftpHandlerFunc(w http.ResponseWriter, req *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			wg := &sync.WaitGroup{}
-			wg.Add(len(req.Plugins))
 			for _, v := range req.Plugins {
-				go func(pl string) {
-					defer wg.Done()
-					err = c.Delete(pl + ".jar")
-					if err != nil {
-						fmt.Fprintln(os.Stderr, err.Error())
-						return
-					}
-					bs, err := gs.DownloadPlugin(&api.Plugin{Name: pl})
-					if err != nil {
-						fmt.Fprintln(os.Stderr, err.Error())
-						return
-					}
-					buf := bytes.NewBuffer(bs)
-					err = c.Stor(pl+".jar", buf)
-					if err != nil {
-						fmt.Fprintln(os.Stderr, err.Error())
-						return
-					}
-				}(v)
+				bs, err := gs.DownloadPlugin(&api.Plugin{Name: v})
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err.Error())
+					return
+				}
+				rd := &bytes.Buffer{}
+				n, err := rd.Write(bs)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err.Error())
+					return
+				}
+				fmt.Println(n)
+				err = c.Stor(v+".jar", rd)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err.Error())
+					return
+				}
+				fmt.Println(n)
 			}
 
-			wg.Wait()
 			if err := c.Quit(); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

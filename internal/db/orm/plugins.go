@@ -122,6 +122,7 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 }
 
+// TODO make this not get every plugin that contains the words of a search phrase
 func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	session, err := getMongoSession()
 	if err != nil {

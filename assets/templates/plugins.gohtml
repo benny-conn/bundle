@@ -48,7 +48,7 @@
           <!-- prettier-ignore -->
           {{ range .Plugins }}
           <a href="?plugin={{.Name}}" class="plugin-link col">
-            <div class="card h-100 plugin-card">
+            <div class="card plugin-card shadow">
               {{if .Thumbnail}}
               <img class="card-img-top plugin-thumbnail" src="{{.Thumbnail}}" />
               {{else}}
@@ -58,11 +58,9 @@
               />
               {{ end }}
               <div class="card-body">
-                <h5 class="card-title">{{.Name}}</h5>
-                <p class="card-text">
-                  Author: {{.Author.Username}} <br />
-                  {{.Description}}
-                </p>
+                <h4 class="card-title">{{.Name}}</h4>
+                <h5 class="card-text">Author: {{.Author.Username}}</h5>
+                <p class="card-text">{{.Description}}</p>
               </div>
               <div class="card-footer">
                 <small class="text-muted"
@@ -73,80 +71,60 @@
           </a>
           {{ end }}
         </div>
-        {{$previous := call .Math .Page 1 "sub" }}
-        {{$next := call .Math .Page 1 "add" }}
-        {{$nextNext := call .Math .Page 2 "add" }}
       </div>
-      <div class="col-sm-12 col-md-3 options-container">
-        <div class="cool-card">
-          <h4 class="category-header">Plugin Categories</h4>
-          <ul class="categories">
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="0" />
-                <button type="submit" class="btn cat-btn">Premium</button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="1" />
-                <button type="submit" class="btn cat-btn">Economy</button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="2" />
-                <button type="submit" class="btn cat-btn">Tools</button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="3" />
-                <button type="submit" class="btn cat-btn">Chat</button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="4" />
-                <button type="submit" class="btn cat-btn">Mechanics</button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="5" />
-                <button type="submit" class="btn cat-btn">
-                  Administration
-                </button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="6" />
-                <button type="submit" class="btn cat-btn">Bungeecord</button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="7" />
-                <button type="submit" class="btn cat-btn">Fun</button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="8" />
-                <button type="submit" class="btn cat-btn">Miscellaneous</button>
-              </form>
-            </li>
-            <li>
-              <form action="/plugins">
-                <input type="hidden" name="category" value="9" />
-                <button type="submit" class="btn cat-btn">Libraries</button>
-              </form>
-            </li>
-          </ul>
+      <div class="col-sm-12 col-md-3">
+        <div class="card text-end h-auto shadow">
+          <h5 class="card-header">Plugin Categories</h5>
+          <div class="card-body">
+            <form action="/plugins">
+              <input type="hidden" name="category" value="0" />
+              <button type="submit" class="btn cat-btn">Premium</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="1" />
+              <button type="submit" class="btn cat-btn">Economy</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="2" />
+              <button type="submit" class="btn cat-btn">Tools</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="3" />
+              <button type="submit" class="btn cat-btn">Chat</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="4" />
+              <button type="submit" class="btn cat-btn">Mechanics</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="5" />
+              <button type="submit" class="btn cat-btn">Administration</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="6" />
+              <button type="submit" class="btn cat-btn">Bungeecord</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="7" />
+              <button type="submit" class="btn cat-btn">Fun</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="8" />
+              <button type="submit" class="btn cat-btn">Miscellaneous</button>
+            </form>
+            <form action="/plugins">
+              <input type="hidden" name="category" value="9" />
+              <button type="submit" class="btn cat-btn">Libraries</button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
+
+    {{$previous := call .Math .Page 1 "sub" }}
+    {{$next := call .Math .Page 1 "add" }}
+    {{$nextNext := call .Math .Page 2 "add" }}
+
     <nav aria-label="Page navigation example">
       <ul class="pagination justify-content-center">
         {{ if eq .Page 1}}
@@ -217,7 +195,7 @@
       {{ end }}
       <div class="text">
         <h2>{{.Plugin.Name}}</h2>
-        <h4>{{.Plugin.Author.Username}}</h4>
+        <h4>- by {{.Plugin.Author.Username}}</h4>
         <h6>{{.Plugin.Description}}</h6>
       </div>
     </div>
@@ -268,47 +246,54 @@
     {{ end }}
     <div class="text">
       <h2>{{.Plugin.Name}}</h2>
-      <h4>{{.Plugin.Author.Username}}</h4>
+      <h4>- by {{.Plugin.Author.Username}}</h4>
       <h6>{{.Plugin.Description}}</h6>
     </div>
   </div>
   {{ end }}
-  <div class="plugin-download my-4">
-    <h4>Install By CLI</h4>
-    <code class="py-1 px-3 user-select-all">
-      bundle install {{.Plugin.Name}}
-    </code>
-    <h4>Install By Bundler</h4>
-    {{if .Bundle}}
-    {{if call .Contains .Bundle.Plugins .Plugin.Name}}
-    <p><em>Already Being Bundled</em></p>
-    {{ else }}
-    <form action="/plugins/bundler" method="POST" id="addBundle">
-      <input
-        type="hidden"
-        value="{{.Plugin.Name}}"
-        name="plugin"
-        id="bundle-add"
-      />
-      <button type="submit" class="btn btn-primary">Add To Bundle</button>
-    </form>
-    {{ end }}
-    {{ else }}
-    {{if .Profile.Id}}
-    <form action="/plugins/bundler" method="POST" id="addBundle">
-      <input
-        type="hidden"
-        value="{{.Plugin.Name}}"
-        name="plugin"
-        id="bundle-add"
-      />
-      <button type="submit" class="btn btn-primary">Add To Bundle</button>
-    </form>
-    {{else}}
-    <p>Login to Bundle</p>
-    <a class="btn btn-primary" href="/login">Login</a>
-    {{ end }}
-    {{ end }}
+  <div class="plugin-download my-4 row">
+    <div class="col">
+      <h4>Install By CLI</h4>
+      <code class="py-1 px-3 user-select-all">
+        bundle install {{.Plugin.Name}}
+      </code>
+    </div>
+    <div class="col">
+      <h4>Install By Bundler</h4>
+      {{if .Bundle}}
+      {{if call .Contains .Bundle.Plugins .Plugin.Name}}
+      <p><em>Already Being Bundled</em></p>
+      {{ else }}
+      <form action="/plugins/bundler" method="POST" id="addBundle">
+        <input
+          type="hidden"
+          value="{{.Plugin.Name}}"
+          name="plugin"
+          id="bundle-add"
+        />
+        <button type="submit" class="btn btn-primary btn-sm">
+          Add To Bundle
+        </button>
+      </form>
+      {{ end }}
+      {{ else }}
+      {{if .Profile.Id}}
+      <form action="/plugins/bundler" method="POST" id="addBundle">
+        <input
+          type="hidden"
+          value="{{.Plugin.Name}}"
+          name="plugin"
+          id="bundle-add"
+        />
+        <button type="submit" class="btn btn-primary btn-sm">
+          Add To Bundle
+        </button>
+      </form>
+      {{else}}
+      <a href="/login">Login To Bundle</a>
+      {{ end }}
+      {{ end }}
+    </div>
   </div>
 </div>
 

@@ -86,7 +86,7 @@ var uploadCmd = &cobra.Command{
 				p = strings.TrimSpace(strings.Trim(p, "\n"))
 				var readme *os.File
 				if p == "" {
-					wlk := uploader.NewFileWalker("README.md", "bundle")
+					wlk := uploader.NewFileWalker("README.md", plugin.Name)
 					readme, err = wlk.Walk()
 					if err != nil {
 						return err
@@ -97,8 +97,8 @@ var uploadCmd = &cobra.Command{
 						return err
 					}
 				}
-				upl := uploader.New(user, readme, plugin).WithReadme(true)
-				err = upl.Upload()
+				rdmeUpl := uploader.New(user, readme, plugin).WithReadme(true)
+				err = rdmeUpl.Upload()
 				if err != nil {
 					return err
 				}
