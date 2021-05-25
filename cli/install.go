@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"sync"
 
+	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/downloader"
 	"github.com/bennycio/bundle/cli/intfile"
-	"github.com/schollz/progressbar/v3"
+	"github.com/bennycio/bundle/cli/term"
+	"github.com/bennycio/bundle/internal/gate"
+	"github.com/c-bata/go-prompt"
+	. "github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
 
@@ -37,16 +40,8 @@ var installCmd = &cobra.Command{
 			bundlePlugins = make(map[string]string)
 		}
 
-		var wg sync.WaitGroup
-		var length int
-		if len(args) > 0 {
-			length = len(args)
-		} else {
-			length = len(bundlePlugins)
-		}
+		gs := gate.NewGateService("localhost", "8020")
 
-		wg.Add(length)
-		totalProgressBar := progressbar.NewOptions(length, progressbar.OptionFullWidth(), progressbar.OptionSetItsString("pls"), progressbar.OptionShowCount(), progressbar.OptionShowIts(), progressbar.OptionClearOnFinish())
 		if len(args) > 0 {
 			for _, v := range args {
 				version := "latest"
@@ -54,49 +49,62 @@ var installCmd = &cobra.Command{
 				if len(spl) > 1 {
 					version = spl[1]
 				}
-				go func(pluginName string, bundleVersion string) {
-					defer wg.Done()
-					defer totalProgressBar.Add(1)
-					ver, err := downloadAndInstall(pluginName, bundleVersion)
-					if err != nil {
-						fmt.Printf("error occured: %s\n", err.Error())
+				ver, err := downloadAndInstall(v, version)
+				if err != nil {
+					fmt.Printf("error occured: %s\n", err.Error())
+				} else {
+					if version != "latest" && force {
+						bundlePlugins[v] = ver
 					}
-					if bundleVersion != "latest" && force {
-						bundlePlugins[pluginName] = ver
-					}
-				}(v, version)
+				}
 			}
 		} else {
-
+			i := 1
 			for k, v := range bundlePlugins {
 
-				go func(pluginName string, bundleVersion string) {
-					defer wg.Done()
-					defer totalProgressBar.Add(1)
-					ver, err := downloadAndInstall(pluginName, bundleVersion)
+				fp := filepath.Join("plugins", k+".jar")
+				yml, err := intfile.ParsePluginYml(fp)
 
+				if err == nil {
+					dbpl, err := gs.GetPlugin(&api.Plugin{Name: yml.Name})
 					if err != nil {
-						fmt.Printf("error occured: %s\n", err.Error())
+						return err
 					}
-					if bundleVersion != "latest" && force {
-						bundlePlugins[pluginName] = ver
+					err = changesSinceCurrent(dbpl.Id, dbpl.Name, yml.Version)
+					if err != nil {
+						return err
 					}
-				}(k, v)
+					term.Println(fmt.Sprintf("Update Plugin %s (%d/%d)? [Y/n]", dbpl.Name, i, len(bundlePlugins)))
+					cont := prompt.Input(">> ", yesOrNoCompleter)
+					if !strings.EqualFold(cont, "y") && !strings.EqualFold(cont, "yes") {
+						continue
+					}
+				}
+
+				ver, err := downloadAndInstall(k, v)
+
+				if err != nil {
+					fmt.Printf("error occured: %s\n", err.Error())
+				} else {
+					if v != "latest" && force {
+						bundlePlugins[k] = ver
+					}
+				}
+				i += 1
 			}
 		}
-
-		wg.Wait()
 		err = intfile.WritePluginsToBundle(bundlePlugins, "")
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Successfully installed plugins! :)")
+		term.Println(Green("Successfully installed plugins! :)").Bold())
 		return nil
 	},
 }
 
 func downloadAndInstall(pluginName string, bundleVersion string) (string, error) {
+
 	fp := filepath.Join("plugins", pluginName+".jar")
 	latest := strings.EqualFold(bundleVersion, "latest")
 	dl := downloader.New(pluginName, bundleVersion).WithLocation(fp).WithLatest(latest)
@@ -109,4 +117,35 @@ func downloadAndInstall(pluginName string, bundleVersion string) (string, error)
 		return "", err
 	}
 	return dl.Plugin.Version, nil
+}
+
+func changesSinceCurrent(pluginId, pluginName, currentVersion string) error {
+	gs := gate.NewGateService("localhost", "8020")
+	ch := &api.Changelog{PluginId: pluginId}
+
+	resp, err := gs.GetChangelogs(ch)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s %s\n", Blue("Changes Since Last Update"), Blue(pluginName).Bold())
+
+	for _, v := range resp.Changelogs {
+		if versionGreaterThan(v.Version, currentVersion) {
+			fmt.Println(Yellow(v.Version + " -------------------- ").Bold())
+			fmt.Println(Green("Added: ").Bold())
+			for _, v := range v.Added {
+				fmt.Printf("  - %s\n", Green(v))
+			}
+			fmt.Println(Red("Removed: ").Bold())
+			for _, v := range v.Removed {
+				fmt.Printf("  - %s\n", Red(v))
+			}
+			fmt.Println(Blue("Updated: ").Bold())
+			for _, v := range v.Updated {
+				fmt.Printf("  - %s\n", Blue(v))
+			}
+		}
+	}
+	return nil
 }

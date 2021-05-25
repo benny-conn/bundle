@@ -37,6 +37,7 @@ type gateService interface {
 	DeleteBundle(bu *api.Bundle) error
 	UpdateBundle(bu *api.Bundle) error
 	GetChangelog(ch *api.Changelog) (*api.Changelog, error)
+	GetChangelogs(ch *api.Changelog) (*api.Changelogs, error)
 	InsertChangelog(ch *api.Changelog) error
 }
 type gateServiceImpl struct {
@@ -1088,6 +1089,52 @@ func (g *gateServiceImpl) GetChangelog(ch *api.Changelog) (*api.Changelog, error
 	}
 
 	result := &api.Changelog{}
+	err = json.Unmarshal(bs.Bytes(), result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (g *gateServiceImpl) GetChangelogs(ch *api.Changelog) (*api.Changelogs, error) {
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/changelogs", scheme, g.Host, g.Port))
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	q.Add("pluginId", ch.PluginId)
+	u.RawQuery = q.Encode()
+	client := internal.NewBasicClient()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &api.Changelogs{}
 	err = json.Unmarshal(bs.Bytes(), result)
 	if err != nil {
 		return nil, err

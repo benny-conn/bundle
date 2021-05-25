@@ -150,6 +150,7 @@ message Bundle{
 service ChangelogService {
     rpc Get(Changelog) returns (Changelog) {}
     rpc Insert(Changelog) returns (Empty) {}
+    rpc GetAll(Changelog) returns (Changelogs) {}
 }
 
 message Changelog {
@@ -159,6 +160,10 @@ message Changelog {
     repeated string added = 4;
     repeated string removed = 5;
     repeated string updated = 6;
+}
+
+message Changelogs {
+    repeated Changelog changelogs = 1;
 }
 
 // UTIL ----------------------------------------------------------------- ||

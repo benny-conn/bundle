@@ -60,7 +60,7 @@ func (p *PluginsOrm) Insert(pl *api.Plugin) error {
 
 	collection := mgses.Client.Database("plugins").Collection("plugins")
 
-	countName, err := collection.CountDocuments(mgses.Ctx, bson.D{{"name", caseInsensitive(pl.Name)}})
+	countName, err := collection.CountDocuments(mgses.Ctx, bson.D{{"name", pl.Name}}, options.Count().SetCollation(&options.Collation{Locale: "en", Strength: 1}))
 
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	}
 
 	if get.Id == primitive.NilObjectID {
-		res := collection.FindOne(session.Ctx, bson.D{{"name", get.Name}})
+		res := collection.FindOne(session.Ctx, bson.D{{"name", get.Name}}, options.FindOne().SetCollation(&options.Collation{Locale: "en", Strength: 1}))
 		if res.Err() != nil {
 			return nil, res.Err()
 		}

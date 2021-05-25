@@ -13,6 +13,7 @@ require (
 	github.com/johanbrandhorst/certify v1.8.1
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.9
 	github.com/rs/cors v1.7.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/satori/go.uuid v1.2.0
@@ -21,6 +22,7 @@ require (
 	github.com/stripe/stripe-go/v72 v72.45.0
 	go.mongodb.org/mongo-driver v1.5.2
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
+	golang.org/x/net v0.0.0-20210521195947-fe42d452be8f // indirect
 	golang.org/x/sys v0.0.0-20210521203332-0cec03c779c1 // indirect
 	google.golang.org/grpc v1.37.0
 	gopkg.in/yaml.v2 v2.4.0

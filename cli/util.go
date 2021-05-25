@@ -44,3 +44,31 @@ func credentialsPrompt() *api.User {
 func nilCompleter(d prompt.Document) []prompt.Suggest {
 	return nil
 }
+
+func versionGreaterThan(version, than string) bool {
+
+	split := strings.Split(version, ".")
+
+	thanSplit := strings.Split(than, ".")
+
+	if len(split) != len(thanSplit) {
+		if len(split) > len(thanSplit) {
+			return true
+		} else {
+			return false
+		}
+	}
+
+	for i, v := range thanSplit {
+		if len(split) < i+1 {
+			break
+		}
+
+		if split[i] > v {
+			return true
+		}
+	}
+
+	return false
+
+}

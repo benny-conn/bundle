@@ -507,25 +507,45 @@ func changelogHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		pluginId := r.FormValue("pluginId")
 		version := r.FormValue("version")
 
-		req := &api.Changelog{
-			Id:       id,
-			PluginId: pluginId,
-			Version:  version,
-		}
-		ses, err := client.Get(req)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if version == "" {
+			req := &api.Changelog{
+				PluginId: pluginId,
+			}
+			ses, err := client.GetAll(req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			asJSON, err := json.Marshal(ses)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			internal.WriteResponse(w, string(asJSON), http.StatusOK)
+			return
+		} else {
+			req := &api.Changelog{
+				Id:       id,
+				PluginId: pluginId,
+				Version:  version,
+			}
+			ses, err := client.Get(req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			asJSON, err := json.Marshal(ses)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			internal.WriteResponse(w, string(asJSON), http.StatusOK)
 			return
 		}
-
-		asJSON, err := json.Marshal(ses)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		internal.WriteResponse(w, string(asJSON), http.StatusOK)
-		return
 
 	case http.MethodPost:
 

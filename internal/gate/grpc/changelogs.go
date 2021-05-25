@@ -12,6 +12,7 @@ import (
 type changelogsRpcClient interface {
 	Get(req *api.Changelog) (*api.Changelog, error)
 	Insert(req *api.Changelog) error
+	GetAll(req *api.Changelog) (*api.Changelogs, error)
 }
 
 type changelogsRpcClientImpl struct {
@@ -69,4 +70,23 @@ func (r *changelogsRpcClientImpl) Insert(req *api.Changelog) error {
 		return err
 	}
 	return nil
+}
+
+func (r *changelogsRpcClientImpl) GetAll(req *api.Changelog) (*api.Changelogs, error) {
+	creds, err := getCert()
+	if err != nil {
+		return nil, err
+	}
+	addr := fmt.Sprintf("%v:%v", r.Host, r.Port)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	client := api.NewChangelogServiceClient(conn)
+	ses, err := client.GetAll(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return ses, nil
 }

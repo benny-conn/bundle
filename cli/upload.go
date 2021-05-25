@@ -100,25 +100,27 @@ var uploadCmd = &cobra.Command{
 				term.Println("Please specify a path to your readme file or press enter to scan for readme in close directories.")
 				p := prompt.Input(">> ", rdmeFileCompleter.Complete, prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator))
 
-				var rdme *os.File
 				if p == "" {
 					wlk := uploader.NewFileWalker("README.md", plugin.Name)
 					f, err := wlk.Walk()
 					if err != nil {
 						return err
 					}
-					rdme = f
-				} else {
-					f, err := os.Open(path)
+					rdmeUpl := uploader.New(user, f, plugin).WithReadme(true)
+					err = rdmeUpl.Upload()
 					if err != nil {
 						return err
 					}
-					rdme = f
-				}
-				rdmeUpl := uploader.New(user, rdme, plugin).WithReadme(true)
-				err = rdmeUpl.Upload()
-				if err != nil {
-					return err
+				} else {
+					f, err := os.Open(p)
+					if err != nil {
+						return err
+					}
+					rdmeUpl := uploader.New(user, f, plugin).WithReadme(true)
+					err = rdmeUpl.Upload()
+					if err != nil {
+						return err
+					}
 				}
 				term.Println(Green("Successfully uploaded README! :)").Bold())
 			}
@@ -210,15 +212,15 @@ func makeChangelog(pluginId, version string) error {
 	term.Println("Is this correct? [Y/n]")
 	fmt.Println(Green("Added: ").Bold())
 	for _, v := range addedList {
-		fmt.Printf("\t - %s\n", Green(v))
+		fmt.Printf("  - %s\n", Green(v))
 	}
 	fmt.Println(Red("Removed: ").Bold())
 	for _, v := range removedList {
-		fmt.Printf("\t - %s\n", Red(v))
+		fmt.Printf("  - %s\n", Red(v))
 	}
 	fmt.Println(Blue("Updated: ").Bold())
 	for _, v := range updatedList {
-		fmt.Printf("\t - %s\n", Blue(v))
+		fmt.Printf("  - %s\n", Blue(v))
 	}
 
 	correct := prompt.Input(">> ", yesOrNoCompleter)

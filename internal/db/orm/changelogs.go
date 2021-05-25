@@ -76,6 +76,41 @@ func (o *ChangelogOrm) Get(ch *api.Changelog) (*api.Changelog, error) {
 	return ormToApiChangelog(final), nil
 }
 
+func (o *ChangelogOrm) GetAll(ch *api.Changelog) (*api.Changelogs, error) {
+	mgses, err := getMongoSession()
+	if err != nil {
+		return nil, err
+	}
+	defer mgses.Cancel()
+	collection := mgses.Client.Database("plugins").Collection("changelogs")
+
+	s := apiToOrmChangelog(ch)
+	err = validateChangelogGetAll(s)
+	if err != nil {
+		return nil, err
+	}
+	cur, err := collection.Find(mgses.Ctx, s)
+	if err != nil {
+		return nil, err
+	}
+
+	results := []changelog{}
+
+	err = cur.All(mgses.Ctx, &results)
+
+	if err != nil {
+		return nil, err
+	}
+
+	final := &api.Changelogs{}
+
+	for _, v := range results {
+		final.Changelogs = append(final.Changelogs, ormToApiChangelog(v))
+	}
+
+	return final, nil
+}
+
 func validateChangelogInsert(ch changelog) error {
 	if ch.PluginId == primitive.NilObjectID || ch.Version == "" {
 		return errors.New("plugin id and version required")
@@ -89,6 +124,14 @@ func validateChangelogGet(ch changelog) error {
 			return errors.New("id or plugin id required with version")
 		}
 	}
+	return nil
+}
+
+func validateChangelogGetAll(ch changelog) error {
+	if ch.PluginId == primitive.NilObjectID {
+		return errors.New("plugin id required")
+	}
+
 	return nil
 }
 

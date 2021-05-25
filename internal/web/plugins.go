@@ -9,6 +9,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/gate"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/checkout/session"
@@ -133,7 +134,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 			if err == nil {
 				output := blackfriday.Run([]byte(readme.Text))
-				data.Readme = string(output)
+				data.Readme = string(bluemonday.UGCPolicy().SanitizeBytes(output))
 			}
 
 			data.Plugin = plugin

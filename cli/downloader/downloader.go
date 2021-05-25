@@ -42,18 +42,18 @@ func (u *downloader) Download() ([]byte, error) {
 
 	gservice := gate.NewGateService("localhost", "8020")
 
-	if u.options.latest {
-		plugin, err := gservice.GetPlugin(u.Plugin)
-		if err != nil {
+	plugin, err := gservice.GetPlugin(u.Plugin)
+	if err != nil {
+		return nil, err
+	}
 
-			return nil, err
-		}
+	u.Plugin.Id = plugin.Id
+	if u.options.latest {
 		u.Plugin.Version = plugin.Version
 	}
 
 	pl, err := gservice.DownloadPlugin(u.Plugin)
 	if err != nil {
-
 		return nil, err
 	}
 

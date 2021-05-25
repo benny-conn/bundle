@@ -34,6 +34,17 @@ func (s *changelogServer) Insert(ctx context.Context, req *api.Changelog) (*api.
 	return &api.Empty{}, nil
 }
 
+func (s *changelogServer) GetAll(ctx context.Context, req *api.Changelog) (*api.Changelogs, error) {
+
+	pl, err := s.orm.GetAll(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return pl, nil
+
+}
+
 func newChangelogServer() *changelogServer {
 	s := &changelogServer{orm: orm.NewChangelogOrm()}
 	return s
