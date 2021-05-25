@@ -7,8 +7,6 @@ import (
 	"github.com/rs/cors"
 )
 
-// TODO custom routing
-
 func NewWebServer() *http.Server {
 
 	mux := http.NewServeMux()

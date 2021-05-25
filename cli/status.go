@@ -8,7 +8,7 @@ import (
 
 	"github.com/alexeyco/simpletable"
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/cli/intfile"
+	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/cobra"
@@ -18,7 +18,7 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check which plugins have updates.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bundle, err := intfile.GetBundle("")
+		bundle, err := file.GetBundle("")
 		if err != nil {
 			return err
 		}
@@ -49,7 +49,7 @@ var statusCmd = &cobra.Command{
 
 				fp := filepath.Join("plugins", pluginName+".jar")
 
-				res, err := intfile.ParsePluginYml(fp)
+				res, err := file.ParsePluginYml(fp)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "error occurred: %s\n", err.Error())
 				}

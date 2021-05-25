@@ -7,7 +7,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/downloader"
-	"github.com/bennycio/bundle/cli/intfile"
+	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/c-bata/go-prompt"
@@ -33,7 +33,7 @@ var installCmd = &cobra.Command{
 	download to your plugins folder`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		bundle, err := intfile.GetBundle("")
+		bundle, err := file.GetBundle("")
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ var installCmd = &cobra.Command{
 			for k, v := range bundlePlugins {
 
 				fp := filepath.Join("plugins", k+".jar")
-				yml, err := intfile.ParsePluginYml(fp)
+				yml, err := file.ParsePluginYml(fp)
 
 				if err == nil {
 					dbpl, err := gs.GetPlugin(&api.Plugin{Name: yml.Name})
@@ -98,7 +98,7 @@ var installCmd = &cobra.Command{
 				i += 1
 			}
 		}
-		err = intfile.WritePluginsToBundle(bundlePlugins, "")
+		err = file.WritePluginsToBundle(bundlePlugins, "")
 		if err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func changesSinceCurrent(pluginId, pluginName, currentVersion string) error {
 
 	for _, v := range resp.Changelogs {
 		if versionGreaterThan(v.Version, currentVersion) {
-			fmt.Println(Yellow(v.Version + " -------------------- ").Bold())
+			fmt.Println(Yellow(v.Version).Bold())
 			fmt.Println(Green("Added: ").Bold())
 			for _, v := range v.Added {
 				fmt.Printf("  - %s\n", Green(v))

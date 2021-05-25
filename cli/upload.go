@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/cli/intfile"
+	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/cli/uploader"
 	"github.com/bennycio/bundle/internal"
@@ -57,7 +57,7 @@ var uploadCmd = &cobra.Command{
 			plugin = pluginInfoPrompt()
 
 		} else {
-			result, err := intfile.ParsePluginYml(path)
+			result, err := file.ParsePluginYml(path)
 
 			if err != nil {
 				return err

@@ -1,4 +1,4 @@
-package intfile
+package file
 
 import (
 	"bytes"

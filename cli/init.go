@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bennycio/bundle/cli/intfile"
+	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/internal"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ var initCmd = &cobra.Command{
 			return errors.New("invalid path")
 		}
 
-		if intfile.IsBundleInitialized(path) {
+		if file.IsBundleInitialized(path) {
 			return errors.New("there already exists a bundle.yml at this location")
 		}
 
@@ -38,11 +38,11 @@ var initCmd = &cobra.Command{
 			return errors.New("there is no plugin directory in your current directory")
 		}
 
-		err = intfile.Initialize(path)
+		err = file.Initialize(path)
 		if err != nil {
 			return err
 		}
-		fmt.Println("Created file at path " + path + "/" + intfile.BuFileName)
+		fmt.Println("Created file at path " + path + "/" + file.BuFileName)
 		return nil
 	},
 }
