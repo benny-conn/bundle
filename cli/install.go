@@ -17,7 +17,10 @@ import (
 
 func init() {
 	rootCmd.AddCommand(installCmd)
+	installCmd.PersistentFlags().BoolVarP(&force, "force", "f", false, "force installation without approval of changes and forcibly updates versions")
 }
+
+var force bool
 
 // installCmd represents the install command
 var installCmd = &cobra.Command{
@@ -74,10 +77,12 @@ var installCmd = &cobra.Command{
 					if err != nil {
 						return err
 					}
-					term.Println(fmt.Sprintf("Update Plugin %s (%d/%d)? [Y/n]", dbpl.Name, i, len(bundlePlugins)))
-					cont := prompt.Input(">> ", yesOrNoCompleter)
-					if !strings.EqualFold(cont, "y") && !strings.EqualFold(cont, "yes") {
-						continue
+					if !force {
+						term.Println(fmt.Sprintf("Update Plugin %s (%d/%d)? [Y/n]", dbpl.Name, i, len(bundlePlugins)))
+						cont := prompt.Input(">> ", yesOrNoCompleter)
+						if !strings.EqualFold(cont, "y") && !strings.EqualFold(cont, "yes") {
+							continue
+						}
 					}
 				}
 

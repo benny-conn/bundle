@@ -9,6 +9,7 @@ import (
 	"github.com/alexeyco/simpletable"
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/intfile"
+	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/spf13/cobra"
 )
@@ -83,7 +84,7 @@ var statusCmd = &cobra.Command{
 
 		table.SetStyle(simpletable.StyleCompactLite)
 		fmt.Println(table.String())
-		fmt.Println(`Use "bundle install" to update your plugins`)
+		term.Println(`Use "bundle install" to update your plugins`)
 		return nil
 	},
 }
