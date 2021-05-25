@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/term"
+	"github.com/c-bata/go-prompt"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -23,12 +23,11 @@ func isPluginDirectory(path string) bool {
 func credentialsPrompt() *api.User {
 
 	term.Println("Enter your username: ")
-	rd := bufio.NewReader(os.Stdin)
-	username, _ := rd.ReadString(byte('\n'))
-	username = strings.TrimSpace(strings.Trim(username, "\n"))
+
+	username := prompt.Input(">> ", nilCompleter)
 
 	term.Println("Enter Your Password: ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, err := terminal.ReadPassword(syscall.Stdin)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -40,4 +39,8 @@ func credentialsPrompt() *api.User {
 	}
 
 	return user
+}
+
+func nilCompleter(d prompt.Document) []prompt.Suggest {
+	return nil
 }

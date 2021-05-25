@@ -1,6 +1,8 @@
 package downloader
 
 import (
+	"bytes"
+	"io"
 	"os"
 
 	"github.com/bennycio/bundle/api"
@@ -71,7 +73,10 @@ func (d *downloader) Install(bs []byte) error {
 		return err
 	}
 
-	_, err = file.Write(bs)
+	buf := bytes.NewBuffer(bs)
+
+	_, err = io.Copy(file, buf)
+
 	if err != nil {
 		return err
 	}

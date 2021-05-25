@@ -1,10 +1,14 @@
 package term
 
-import "fmt"
+import (
+	"fmt"
 
-func Print(s string) {
-	fmt.Printf("[Bundle] %s", s)
+	. "github.com/logrusorgru/aurora"
+)
+
+func Print(s interface{}) {
+	fmt.Printf("%s %s", Blue("[Bundle]"), s)
 }
-func Println(s string) {
-	fmt.Printf("[Bundle] %s\n", s)
+func Println(s interface{}) {
+	fmt.Printf("%s %s\n", Blue("[Bundle]"), s)
 }

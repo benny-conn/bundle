@@ -11,7 +11,7 @@ import (
 
 type bundlesServer struct {
 	orm *orm.BundlesOrm
-	api.UnimplementedSessionServiceServer
+	api.UnimplementedBundleServiceServer
 }
 
 func (s *bundlesServer) Get(ctx context.Context, req *api.Bundle) (*api.Bundle, error) {

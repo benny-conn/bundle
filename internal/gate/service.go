@@ -36,6 +36,8 @@ type gateService interface {
 	GetBundle(bu *api.Bundle) (*api.Bundle, error)
 	DeleteBundle(bu *api.Bundle) error
 	UpdateBundle(bu *api.Bundle) error
+	GetChangelog(ch *api.Changelog) (*api.Changelog, error)
+	InsertChangelog(ch *api.Changelog) error
 }
 type gateServiceImpl struct {
 	Host string
@@ -75,6 +77,16 @@ func (g *gateServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 	}
 
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
@@ -132,6 +144,16 @@ func (g *gateServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 	}
 
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -199,6 +221,16 @@ func (g *gateServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 	}
 
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -224,6 +256,16 @@ func (g *gateServiceImpl) PaginatePlugins(req *api.PaginatePluginsRequest) ([]*a
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
@@ -259,6 +301,16 @@ func (g *gateServiceImpl) GetPlugin(plugin *api.Plugin) (*api.Plugin, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
@@ -299,6 +351,15 @@ func (g *gateServiceImpl) InsertPlugin(plugin *api.Plugin) error {
 	}
 	defer resp.Body.Close()
 
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -331,6 +392,15 @@ func (g *gateServiceImpl) UpdatePlugin(updatedPlugin *api.Plugin) error {
 	}
 	defer resp.Body.Close()
 
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -356,6 +426,16 @@ func (g *gateServiceImpl) InsertReadme(user *api.User, readme *api.Readme) error
 		return err
 	}
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -376,6 +456,16 @@ func (g *gateServiceImpl) GetReadme(plugin *api.Plugin) (*api.Readme, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
@@ -420,6 +510,16 @@ func (g *gateServiceImpl) UpdateReadme(user *api.User, readme *api.Readme) error
 	}
 
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -457,6 +557,15 @@ func (g *gateServiceImpl) UpdateUser(updatedUser *api.User) error {
 	}
 	defer resp.Body.Close()
 
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -491,6 +600,15 @@ func (g *gateServiceImpl) GetUser(user *api.User) (*api.User, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
 
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, resp.Body)
@@ -543,6 +661,15 @@ func (g *gateServiceImpl) InsertUser(user *api.User) error {
 
 	defer resp.Body.Close()
 
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -576,6 +703,15 @@ func (g *gateServiceImpl) DeleteSession(ses *api.Session) error {
 	}
 
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
 	return nil
 }
 
@@ -606,6 +742,16 @@ func (g *gateServiceImpl) GetSession(ses *api.Session) (*api.Session, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
@@ -654,6 +800,15 @@ func (g *gateServiceImpl) InsertSession(ses *api.Session) (*api.SessionInsertRes
 
 	defer resp.Body.Close()
 
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
 	bs := &bytes.Buffer{}
 
 	if _, err = io.Copy(bs, resp.Body); err != nil {
@@ -699,6 +854,16 @@ func (g *gateServiceImpl) DeleteBundle(bu *api.Bundle) error {
 	}
 
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -732,6 +897,15 @@ func (g *gateServiceImpl) UpdateBundle(bu *api.Bundle) error {
 	}
 
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
 	return nil
 }
 
@@ -762,6 +936,16 @@ func (g *gateServiceImpl) GetBundle(bu *api.Bundle) (*api.Bundle, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
@@ -810,5 +994,103 @@ func (g *gateServiceImpl) InsertBundle(bu *api.Bundle) error {
 	}
 
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
 	return nil
+}
+
+func (g *gateServiceImpl) InsertChangelog(ch *api.Changelog) error {
+
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/changelogs", scheme, g.Host, g.Port))
+	if err != nil {
+		return err
+	}
+
+	asJSON, err := json.Marshal(ch)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.NewBuffer([]byte(asJSON))
+
+	client := internal.NewBasicClient()
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+	return nil
+}
+
+func (g *gateServiceImpl) GetChangelog(ch *api.Changelog) (*api.Changelog, error) {
+	scheme := "https://"
+
+	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/changelogs", scheme, g.Host, g.Port))
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	q.Add("id", ch.Id)
+	q.Add("pluginId", ch.PluginId)
+	q.Add("version", ch.Version)
+	u.RawQuery = q.Encode()
+	client := internal.NewBasicClient()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
+
+	bs := &bytes.Buffer{}
+	_, err = io.Copy(bs, resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &api.Changelog{}
+	err = json.Unmarshal(bs.Bytes(), result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

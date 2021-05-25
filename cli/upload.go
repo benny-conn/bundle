@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"log"
@@ -13,8 +12,25 @@ import (
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/cli/uploader"
 	"github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/gate"
+	"github.com/c-bata/go-prompt"
+	"github.com/c-bata/go-prompt/completer"
+	. "github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
+
+var rdmeFileCompleter = completer.FilePathCompleter{
+	IgnoreCase: true,
+	Filter: func(fi os.FileInfo) bool {
+		if fi.IsDir() {
+			return true
+		}
+		if strings.HasSuffix(fi.Name(), ".md") {
+			return true
+		}
+		return false
+	},
+}
 
 // uploadCmd represents the upload command
 var uploadCmd = &cobra.Command{
@@ -51,8 +67,13 @@ var uploadCmd = &cobra.Command{
 			plugin.Version = result.Version
 			plugin.Description = result.Description
 			plugin.Category = api.Category(result.Category)
-
+			plugin.Conflicts = result.Conflicts
 		}
+
+		gs := gate.NewGateService("localhost", "8020")
+
+		dbPl, err := gs.GetPlugin(plugin)
+		isUpdating := err == nil
 
 		term.Print(fmt.Sprintf("Uploading to Bundle Repository From: %s\n", path))
 
@@ -68,41 +89,48 @@ var uploadCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		term.Println("Successfully uploaded! :)")
-
 		if !isReadme {
+			term.Println(Green("Successfully uploaded plugin! :)").Bold())
+
 			term.Println("Would you like to upload a README as well? [Y/n]")
 
-			var rdmeToo string
-			fmt.Scanln(&rdmeToo)
+			rdmeToo := prompt.Input(">> ", yesOrNoCompleter)
 
 			if strings.EqualFold(rdmeToo, "y") || strings.EqualFold(rdmeToo, "yes") {
 				term.Println("Please specify a path to your readme file or press enter to scan for readme in close directories.")
-				rd := bufio.NewReader(os.Stdin)
-				p, err := rd.ReadString(byte('\n'))
-				if err != nil {
-					return err
-				}
-				p = strings.TrimSpace(strings.Trim(p, "\n"))
-				var readme *os.File
+				p := prompt.Input(">> ", rdmeFileCompleter.Complete, prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator))
+
+				var rdme *os.File
 				if p == "" {
 					wlk := uploader.NewFileWalker("README.md", plugin.Name)
-					readme, err = wlk.Walk()
+					f, err := wlk.Walk()
 					if err != nil {
 						return err
 					}
+					rdme = f
 				} else {
-					readme, err = os.Open(path)
+					f, err := os.Open(path)
 					if err != nil {
 						return err
 					}
+					rdme = f
 				}
-				rdmeUpl := uploader.New(user, readme, plugin).WithReadme(true)
+				rdmeUpl := uploader.New(user, rdme, plugin).WithReadme(true)
 				err = rdmeUpl.Upload()
 				if err != nil {
 					return err
 				}
-				term.Println("Successfully uploaded! :)")
+				term.Println(Green("Successfully uploaded README! :)").Bold())
+			}
+		} else {
+			term.Println(Green("Successfully uploaded README! :)").Bold())
+		}
+
+		if isUpdating {
+			if err = makeChangelog(dbPl.Id, plugin.Version); err != nil {
+				return err
+			} else {
+				term.Println(Green("Successfully uploaded Changelog! :)").Bold())
 			}
 		}
 
@@ -116,8 +144,7 @@ func init() {
 
 func pluginInfoPrompt() *api.Plugin {
 	fmt.Println("Enter plugin name: ")
-	var pluginName string
-	fmt.Scanln(&pluginName)
+	pluginName := prompt.Input(">> ", nilCompleter)
 
 	plugin := &api.Plugin{
 		Name:    pluginName,
@@ -125,4 +152,87 @@ func pluginInfoPrompt() *api.Plugin {
 	}
 
 	return plugin
+}
+
+func yesOrNoCompleter(d prompt.Document) []prompt.Suggest {
+	s := []prompt.Suggest{
+		{Text: "Y"},
+		{Text: "Yes"},
+		{Text: "n"},
+		{Text: "no"},
+	}
+	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+}
+
+func makeChangelog(pluginId, version string) error {
+
+	gs := gate.NewGateService("localhost", "8020")
+	addedList := []string{}
+	updatedList := []string{}
+	removedList := []string{}
+
+	term.Println("What did you add in this version?")
+	term.Println(Gray(12, "Press enter on an empty line to continue"))
+	for {
+		added := prompt.Input(">> ", nilCompleter)
+		if strings.Trim(strings.TrimSpace(added), "\n") == "" {
+			break
+		}
+		addedList = append(addedList, added)
+	}
+	term.Println("What did you remove in this version?")
+	term.Println(Gray(12, "Press enter on an empty line to continue"))
+	for {
+		removed := prompt.Input(">> ", nilCompleter)
+		if strings.Trim(strings.TrimSpace(removed), "\n") == "" {
+			break
+		}
+		removedList = append(removedList, removed)
+	}
+	term.Println("What did you update in this version?")
+	term.Println(Gray(12, "Press enter on an empty line to continue"))
+	for {
+		updated := prompt.Input(">> ", nilCompleter)
+		if strings.Trim(strings.TrimSpace(updated), "\n") == "" {
+			break
+		}
+		updatedList = append(updatedList, updated)
+	}
+
+	changelog := &api.Changelog{
+		PluginId: pluginId,
+		Version:  version,
+		Added:    addedList,
+		Removed:  removedList,
+		Updated:  updatedList,
+	}
+
+	term.Println("Is this correct? [Y/n]")
+	fmt.Println(Green("Added: ").Bold())
+	for _, v := range addedList {
+		fmt.Printf("\t - %s\n", Green(v))
+	}
+	fmt.Println(Red("Removed: ").Bold())
+	for _, v := range removedList {
+		fmt.Printf("\t - %s\n", Red(v))
+	}
+	fmt.Println(Blue("Updated: ").Bold())
+	for _, v := range updatedList {
+		fmt.Printf("\t - %s\n", Blue(v))
+	}
+
+	correct := prompt.Input(">> ", yesOrNoCompleter)
+
+	if strings.EqualFold(correct, "y") || strings.EqualFold(correct, "yes") {
+		err := gs.InsertChangelog(changelog)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := makeChangelog(pluginId, version)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

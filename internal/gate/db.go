@@ -491,3 +491,62 @@ func bundleHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func changelogHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	client := grpc.NewChangelogsClient("", "")
+
+	switch r.Method {
+	case http.MethodGet:
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		id := r.FormValue("id")
+		pluginId := r.FormValue("pluginId")
+		version := r.FormValue("version")
+
+		req := &api.Changelog{
+			Id:       id,
+			PluginId: pluginId,
+			Version:  version,
+		}
+		ses, err := client.Get(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		asJSON, err := json.Marshal(ses)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		internal.WriteResponse(w, string(asJSON), http.StatusOK)
+		return
+
+	case http.MethodPost:
+
+		bs := &bytes.Buffer{}
+		_, err := io.Copy(bs, r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		bu := &api.Changelog{}
+
+		err = json.Unmarshal(bs.Bytes(), bu)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = client.Insert(bu)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+}

@@ -3,14 +3,13 @@ version = 1.0
 
 all: docker-run
 
-docker-build: sass
-	go mod vendor
+docker-build: tidy sass
 	docker-compose build 
 
 docker-run: docker-build
 	docker-compose up -d
 
-dev: clean sass cli
+dev: clean sass cli tidy
 	./dev.sh
 
 sass:
@@ -18,6 +17,10 @@ sass:
 
 cli:
 	go install cmd/cli/bundle.go
+
+tidy:
+	go mod tidy
+	go mod vendor
 
 .ONESHELL: dev clean cert
 

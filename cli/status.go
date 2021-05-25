@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/alexeyco/simpletable"
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/intfile"
 	"github.com/bennycio/bundle/internal/gate"
@@ -23,7 +24,7 @@ var statusCmd = &cobra.Command{
 
 		pls := bundle.Plugins
 
-		pluginsToUpdate := make(map[string]string)
+		pluginsToUpdate := sync.Map{}
 
 		var wg sync.WaitGroup
 
@@ -51,21 +52,38 @@ var statusCmd = &cobra.Command{
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "error occurred: %s\n", err.Error())
 				}
+				pls[pluginName] = res.Version
 				if res.Version != latestVersion {
-					pluginsToUpdate[pluginName] = latestVersion
+					pluginsToUpdate.Store(pluginName, latestVersion)
 				}
 			}(k, v)
 		}
 		wg.Wait()
-		if len(pluginsToUpdate) > 0 {
-			fmt.Println("Plugins To Update:")
-			for k, v := range pluginsToUpdate {
-				fmt.Println(k, " -> ", v)
-			}
-			fmt.Println(`Use "bundle install" to update :)`)
-		} else {
-			fmt.Println("All plugins are up to date :)")
+
+		table := simpletable.New()
+
+		table.Header = &simpletable.Header{
+			Cells: []*simpletable.Cell{
+				{Text: "Plugin"},
+				{Text: "Current"},
+				{Text: "Updated"},
+			},
 		}
+
+		pluginsToUpdate.Range(func(key, value interface{}) bool {
+			r := []*simpletable.Cell{
+				{Text: key.(string)},
+				{Text: pls[key.(string)]},
+				{Text: value.(string)},
+			}
+
+			table.Body.Cells = append(table.Body.Cells, r)
+			return true
+		})
+
+		table.SetStyle(simpletable.StyleCompactLite)
+		fmt.Println(table.String())
+		fmt.Println(`Use "bundle install" to update your plugins`)
 		return nil
 	},
 }

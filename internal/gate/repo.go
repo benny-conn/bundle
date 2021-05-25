@@ -77,10 +77,26 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		plugin.Author = dbUser
-		err = dbcl.Update(plugin)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+
+		dbPlIni, err := dbcl.Get(plugin)
+
+		if err == nil {
+			if dbUser.Id != dbPlIni.Author.Id {
+				http.Error(w, "cannot update another author's plugin", http.StatusUnauthorized)
+				return
+			} else {
+				err = dbcl.Update(plugin)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+			}
+		} else {
+			err = dbcl.Insert(plugin)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 		}
 
 		dbPlugin, err := dbcl.Get(plugin)

@@ -1467,4 +1467,9 @@ body {
   color: grey;
 }
 
+.plugin-page-thumbnail {
+  height: 80px;
+  width: 100%;
+}
+
 /*# sourceMappingURL=styles.css.map */

@@ -22,6 +22,7 @@ type plugin struct {
 	Downloads   int32              `bson:"downloads,omitempty" json:"downloads"`
 	IsPremium   bool               `bson:"isPremium,omitempty" json:"isPremium"`
 	Premium     premium            `bson:"premium,omitempty" json:"premium"`
+	Conflicts   []string           `bson:"conflicts,omitempty" json:"conflicts"`
 	LastUpdated primitive.DateTime `bson:"lastUpdated,omitempty" json:"lastUpdated"`
 }
 
@@ -122,7 +123,6 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 }
 
-// TODO make this not get every plugin that contains the words of a search phrase
 func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	session, err := getMongoSession()
 	if err != nil {
@@ -140,7 +140,7 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	}
 
 	if get.Id == primitive.NilObjectID {
-		res := collection.FindOne(session.Ctx, bson.D{{"name", caseInsensitive(get.Name)}})
+		res := collection.FindOne(session.Ctx, bson.D{{"name", get.Name}})
 		if res.Err() != nil {
 			return nil, res.Err()
 		}
@@ -252,6 +252,7 @@ func ormToApiPl(pl plugin) *api.Plugin {
 			Price:     pl.Premium.Price,
 			Purchases: pl.Premium.Purchases,
 		},
+		Conflicts:   pl.Conflicts,
 		LastUpdated: pl.LastUpdated.Time().Unix(),
 	}
 	a, err := NewUsersOrm().Get(&api.User{Id: pl.Author.Hex()})
@@ -282,6 +283,7 @@ func apiToOrmPl(pl *api.Plugin) plugin {
 		Category:    category(pl.Category),
 		Downloads:   pl.Downloads,
 		IsPremium:   pl.IsPremium,
+		Conflicts:   pl.Conflicts,
 	}
 	pluginID, err := primitive.ObjectIDFromHex(pl.Id)
 	if pluginID != primitive.NilObjectID && err == nil {

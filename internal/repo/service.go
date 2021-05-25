@@ -63,6 +63,15 @@ func (r *repoServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(buf.String())
+	}
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, resp.Body)
 	if err != nil {
@@ -119,13 +128,17 @@ func (r *repoServiceImpl) UploadPlugin(user *api.User, plugin *api.Plugin, data 
 		return err
 	}
 
-	b := &bytes.Buffer{}
-	if _, err = io.Copy(b, resp.Body); err != nil {
-		return err
-	}
-	fmt.Println(b.String())
-
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }
 
@@ -188,12 +201,16 @@ func (r *repoServiceImpl) UploadThumbnail(user *api.User, plugin *api.Plugin, da
 		return err
 	}
 
-	b := &bytes.Buffer{}
-	if _, err = io.Copy(b, resp.Body); err != nil {
-		return err
-	}
-	fmt.Println(b.String())
-
 	defer resp.Body.Close()
+
+	if internal.IsRespError(resp) {
+		buf := &bytes.Buffer{}
+		_, err = io.Copy(buf, resp.Body)
+		if err != nil {
+			return err
+		}
+		return errors.New(buf.String())
+	}
+
 	return nil
 }

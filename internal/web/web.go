@@ -20,7 +20,6 @@ func NewWebServer() *http.Server {
 	thumbnailHandler := http.HandlerFunc(thumbnailHandlerFunc)
 	bundlerHandler := http.HandlerFunc(bundlerHandlerFunc)
 	profileHandler := http.HandlerFunc(profileHandlerFunc)
-	ftpHandler := http.HandlerFunc(ftpHandlerFunc)
 	stripeAuthHandler := http.HandlerFunc(stripeAuthHandlerFunc)
 	stripeReturnHandler := http.HandlerFunc(stripeReturnHandlerFunc)
 
@@ -30,7 +29,6 @@ func NewWebServer() *http.Server {
 	mux.Handle("/plugins/thumbnails", thumbnailHandler)
 	mux.Handle("/plugins/bundler", bundlerHandler)
 	mux.Handle("/profile", loginGate(profileHandler))
-	mux.Handle("/ftp", loginGate(ftpHandler))
 	mux.Handle("/stripe/auth", stripeAuthHandler)
 	mux.Handle("/stripe/return", stripeReturnHandler)
 	mux.Handle("/login", loginHandler)

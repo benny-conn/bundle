@@ -46,7 +46,7 @@ var installCmd = &cobra.Command{
 		}
 
 		wg.Add(length)
-		totalProgressBar := progressbar.Default(int64(length))
+		totalProgressBar := progressbar.NewOptions(length, progressbar.OptionFullWidth(), progressbar.OptionSetItsString("pls"), progressbar.OptionShowCount(), progressbar.OptionShowIts(), progressbar.OptionClearOnFinish())
 		if len(args) > 0 {
 			for _, v := range args {
 				version := "latest"

@@ -184,12 +184,12 @@
     <div class="plugin-info col-9">
       {{if .Plugin.Thumbnail}}
       <img
-        class="plugin-thumbnail img-thumbnail thumbnail"
+        class="plugin-page-thumbnail img-thumbnail thumbnail"
         src="{{.Plugin.Thumbnail}}"
       />
       {{else}}
       <img
-        class="plugin-thumbnail img-thumbnail thumbnail"
+        class="plugin-page-thumbnail img-thumbnail thumbnail"
         src="https://via.placeholder.com/80.png"
       />
       {{ end }}
@@ -197,6 +197,7 @@
         <h2>{{.Plugin.Name}}</h2>
         <h4>- by {{.Plugin.Author.Username}}</h4>
         <h6>{{.Plugin.Description}}</h6>
+        <h6>Version {{.Plugin.Version}}</h6>
       </div>
     </div>
     <div class="col-3">
