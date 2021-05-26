@@ -15,7 +15,6 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Setup structure for running a server with access to the official Bundle Repository",
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		path, err := os.Getwd()
 		if err != nil {
 			return err

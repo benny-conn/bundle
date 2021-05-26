@@ -3,7 +3,7 @@ version = 1.0
 
 all: docker-run
 
-docker-build: tidy sass
+docker-build: tidy sass cli
 	docker-compose build 
 
 docker-run: docker-build

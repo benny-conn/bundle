@@ -3,10 +3,13 @@ package cli
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var configPath string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -23,11 +26,35 @@ func init() {
 }
 
 func initConfig() {
-	viper.SetConfigName("config")        // name of config file (without extension)
-	viper.SetConfigType("yml")           // REQUIRED if the config file does not have the extension in the name  // path to look for the config file in
-	viper.AddConfigPath("$HOME/.bundle") // call multiple times to add many search paths            // optionally look for config in the working directory
-	err := viper.ReadInConfig()          // Find and read the config file
-	if err != nil {                      // Handle errors reading the config file
-		log.Fatal(fmt.Errorf("fatal error config file: %s", err))
+
+	confDir, err := os.UserConfigDir()
+	if err != nil {
+		confDir, err = os.UserHomeDir()
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 	}
+	viper.SetConfigName("config")
+	viper.SetConfigType("yml")
+	viper.AddConfigPath(fmt.Sprintf("%s/.bundle", confDir))
+	viper.SetDefault("FTP", map[string]map[string]string{})
+	if err := viper.SafeWriteConfig(); err != nil {
+		if os.IsNotExist(err) {
+			err = os.Mkdir(fmt.Sprintf("%s/.bundle", confDir), os.ModePerm)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			err = viper.WriteConfigAs(fmt.Sprintf("%s/.bundle/config.yml", confDir))
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+		}
+	}
+	err = viper.ReadInConfig()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	configPath = fmt.Sprintf("%s/.bundle/config.yml", confDir)
+
 }

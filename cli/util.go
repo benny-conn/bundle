@@ -10,7 +10,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/c-bata/go-prompt"
-	"golang.org/x/crypto/ssh/terminal"
+	goterm "golang.org/x/term"
 )
 
 func isPluginDirectory(path string) bool {
@@ -27,7 +27,7 @@ func credentialsPrompt() *api.User {
 	username := prompt.Input(">> ", nilCompleter)
 
 	term.Println("Enter Your Password: ")
-	bytePassword, err := terminal.ReadPassword(syscall.Stdin)
+	bytePassword, err := goterm.ReadPassword(syscall.Stdin)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -71,4 +71,25 @@ func versionGreaterThan(version, than string) bool {
 
 	return false
 
+}
+
+func completerWithOptions(ss ...string) func(prompt.Document) []prompt.Suggest {
+	suggests := []prompt.Suggest{}
+
+	for _, v := range ss {
+		suggests = append(suggests, prompt.Suggest{Text: v})
+	}
+	return func(d prompt.Document) []prompt.Suggest {
+		return prompt.FilterHasPrefix(suggests, d.GetWordBeforeCursor(), true)
+	}
+}
+
+func yesOrNoCompleter(d prompt.Document) []prompt.Suggest {
+	s := []prompt.Suggest{
+		{Text: "y"},
+		{Text: "yes"},
+		{Text: "n"},
+		{Text: "no"},
+	}
+	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }

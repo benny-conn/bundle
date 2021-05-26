@@ -57,7 +57,13 @@ var uploadCmd = &cobra.Command{
 			plugin = pluginInfoPrompt()
 
 		} else {
-			result, err := file.ParsePluginYml(path)
+			plfile, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer plfile.Close()
+
+			result, err := file.ParsePluginYml(plfile)
 
 			if err != nil {
 				return err
@@ -154,16 +160,6 @@ func pluginInfoPrompt() *api.Plugin {
 	}
 
 	return plugin
-}
-
-func yesOrNoCompleter(d prompt.Document) []prompt.Suggest {
-	s := []prompt.Suggest{
-		{Text: "Y"},
-		{Text: "Yes"},
-		{Text: "n"},
-		{Text: "no"},
-	}
-	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
 func makeChangelog(pluginId, version string) error {

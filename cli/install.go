@@ -2,11 +2,12 @@ package cli
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/cli/downloader"
 	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal/gate"
@@ -14,6 +15,11 @@ import (
 	. "github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
+
+type downloadedPlugin struct {
+	Plugin *api.Plugin
+	Data   []byte
+}
 
 func init() {
 	rootCmd.AddCommand(installCmd)
@@ -43,64 +49,24 @@ var installCmd = &cobra.Command{
 			bundlePlugins = make(map[string]string)
 		}
 
-		gs := gate.NewGateService("localhost", "8020")
-
 		if len(args) > 0 {
+
+			plsToInst := map[string]string{}
 			for _, v := range args {
-				version := "latest"
 				spl := strings.Split(v, "@")
-				if len(spl) > 1 {
-					version = spl[1]
-				}
-				ver, err := downloadAndInstall(v, version)
-				if err != nil {
-					fmt.Printf("error occured: %s\n", err.Error())
+				if len(spl) < 2 {
+					plsToInst[spl[0]] = "latest"
 				} else {
-					if version != "latest" && force {
-						bundlePlugins[v] = ver
-					}
+					plsToInst[spl[0]] = spl[1]
 				}
+			}
+			if err := downloadAndInstall(plsToInst); err != nil {
+				return err
 			}
 		} else {
-			i := 1
-			for k, v := range bundlePlugins {
-
-				fp := filepath.Join("plugins", k+".jar")
-				yml, err := file.ParsePluginYml(fp)
-
-				if err == nil {
-					dbpl, err := gs.GetPlugin(&api.Plugin{Name: yml.Name})
-					if err != nil {
-						return err
-					}
-					err = changesSinceCurrent(dbpl.Id, dbpl.Name, yml.Version)
-					if err != nil {
-						return err
-					}
-					if !force {
-						term.Println(fmt.Sprintf("Update Plugin %s (%d/%d)? [Y/n]", dbpl.Name, i, len(bundlePlugins)))
-						cont := prompt.Input(">> ", yesOrNoCompleter)
-						if !strings.EqualFold(cont, "y") && !strings.EqualFold(cont, "yes") {
-							continue
-						}
-					}
-				}
-
-				ver, err := downloadAndInstall(k, v)
-
-				if err != nil {
-					fmt.Printf("error occured: %s\n", err.Error())
-				} else {
-					if v != "latest" && force {
-						bundlePlugins[k] = ver
-					}
-				}
-				i += 1
+			if err := downloadAndInstall(bundlePlugins); err != nil {
+				return err
 			}
-		}
-		err = file.WritePluginsToBundle(bundlePlugins, "")
-		if err != nil {
-			return err
 		}
 
 		term.Println(Green("Successfully installed plugins! :)").Bold())
@@ -108,35 +74,37 @@ var installCmd = &cobra.Command{
 	},
 }
 
-func downloadAndInstall(pluginName string, bundleVersion string) (string, error) {
+// func downloadAndInstall(pluginName string, bundleVersion string) (string, error) {
 
-	fp := filepath.Join("plugins", pluginName+".jar")
-	latest := strings.EqualFold(bundleVersion, "latest")
-	dl := downloader.New(pluginName, bundleVersion).WithLocation(fp).WithLatest(latest)
-	bs, err := dl.Download()
-	if err != nil {
-		return "", err
-	}
-	err = dl.Install(bs)
-	if err != nil {
-		return "", err
-	}
-	return dl.Plugin.Version, nil
-}
+// 	fp := filepath.Join("plugins", pluginName+".jar")
+// 	latest := strings.EqualFold(bundleVersion, "latest")
+// 	dl := downloader.New(pluginName, bundleVersion).WithLocation(fp).WithLatest(latest)
+// 	bs, err := dl.Download()
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	err = dl.Install(bs)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return dl.Plugin.Version, nil
+// }
 
-func changesSinceCurrent(pluginId, pluginName, currentVersion string) error {
+func changesSinceCurrent(pluginId, pluginName, currentVersion string) ([]string, error) {
 	gs := gate.NewGateService("localhost", "8020")
 	ch := &api.Changelog{PluginId: pluginId}
 
 	resp, err := gs.GetChangelogs(ch)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fmt.Printf("%s %s\n", Blue("Changes Since Last Update"), Blue(pluginName).Bold())
 
+	versionsSinceUpdate := []string{"latest"}
 	for _, v := range resp.Changelogs {
 		if versionGreaterThan(v.Version, currentVersion) {
+			versionsSinceUpdate = append(versionsSinceUpdate, v.Version)
 			fmt.Println(Yellow(v.Version).Bold())
 			fmt.Println(Green("Added: ").Bold())
 			for _, v := range v.Added {
@@ -151,6 +119,90 @@ func changesSinceCurrent(pluginId, pluginName, currentVersion string) error {
 				fmt.Printf("  - %s\n", Blue(v))
 			}
 		}
+	}
+	return versionsSinceUpdate, nil
+}
+
+func downloadAndInstall(plugins map[string]string) error {
+	gs := gate.NewGateService("localhost", "8020")
+	installQueue := make(chan downloadedPlugin)
+	i := 0
+	for k, v := range plugins {
+		go func(index int, pluginName, version string) {
+			if len(plugins) < index {
+				defer close(installQueue)
+			}
+			pl := &api.Plugin{Name: pluginName}
+			dbpl, err := gs.GetPlugin(pl)
+			if err != nil {
+				fmt.Printf("error occurred: %s", err.Error())
+				return
+			}
+			pl.Id = dbpl.Id
+			pl.Name = dbpl.Name
+			if strings.EqualFold(version, "latest") || version == "" {
+				pl.Version = dbpl.Version
+			} else {
+				pl.Version = version
+			}
+
+			plfile, err := os.Open(fmt.Sprintf("plugins/%s.jar", pl.Name))
+			if err != nil {
+				fmt.Printf("error occurred: %s", err.Error())
+				return
+			}
+			defer plfile.Close()
+
+			plyml, err := file.ParsePluginYml(plfile)
+			if err != nil {
+				fmt.Printf("error occurred: %s", err.Error())
+				return
+			}
+			missedVers, err := changesSinceCurrent(pl.Id, pl.Name, plyml.Version)
+			if err != nil {
+				fmt.Printf("error occurred: %s", err.Error())
+				return
+			}
+			term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, i, len(plugins)))
+			resVer := prompt.Choose(">> ", missedVers)
+			if !strings.EqualFold(resVer, "latest") {
+				pl.Version = resVer
+			}
+
+			bs, err := gs.DownloadPlugin(pl)
+			if err != nil {
+				fmt.Printf("error occurred: %s", err.Error())
+				return
+			}
+			installQueue <- downloadedPlugin{Plugin: pl, Data: bs}
+		}(i, k, v)
+		i += 1
+	}
+	for v := range installQueue {
+		func() {
+			pr, pw := io.Pipe()
+
+			go func() {
+				defer pw.Close()
+				_, err := pw.Write(v.Data)
+				if err != nil {
+					fmt.Printf("error occurred: %s", err.Error())
+					return
+				}
+			}()
+
+			fp := filepath.Join("plugins", v.Plugin.Name+".jar")
+			fi, err := os.Create(fp)
+			if err != nil {
+				fmt.Printf("error occurred: %s", err.Error())
+				return
+			}
+			_, err = io.Copy(fi, pr)
+			if err != nil {
+				fmt.Printf("error occurred: %s", err.Error())
+				return
+			}
+		}()
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package file
 import (
 	"archive/zip"
 	"bytes"
+	"os"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -16,13 +17,17 @@ type plYml struct {
 	Conflicts   []string `yaml:"conflicts,omitempty"`
 }
 
-func ParsePluginYml(path string) (plYml, error) {
-	reader, err := zip.OpenReader(path)
+func ParsePluginYml(file *os.File) (plYml, error) {
+
+	info, err := file.Stat()
+	if err != nil {
+		return plYml{}, err
+	}
+	reader, err := zip.NewReader(file, info.Size())
 
 	if err != nil {
 		return plYml{}, err
 	}
-	defer reader.Close()
 
 	result := plYml{}
 

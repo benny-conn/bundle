@@ -3,6 +3,7 @@ package file
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	_ "embed"
 
+	"github.com/jlaffaye/ftp"
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,7 +21,7 @@ const (
 )
 
 //go:embed bundle.yml
-var buFile string
+var BuFile string
 
 type BundleFile struct {
 	Plugins map[string]string `yaml:"Plugins,omitempty"`
@@ -30,7 +32,7 @@ func Initialize(path string) error {
 	if err != nil {
 		return err
 	}
-	_, err = file.WriteString(buFile)
+	_, err = file.WriteString(BuFile)
 	if err != nil {
 		return err
 	}
@@ -81,6 +83,28 @@ func GetBundle(path string) (*BundleFile, error) {
 	return result, nil
 }
 
+func GetBundleFtp(conn *ftp.ServerConn) (*BundleFile, error) {
+	resp, err := conn.Retr("bundle.yml")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Close()
+	result := &BundleFile{}
+
+	buf := &bytes.Buffer{}
+
+	_, err = io.Copy(buf, resp)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(buf.Bytes(), result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func WritePluginsToBundle(plugins map[string]string, path string) error {
 	bundle, err := GetBundle(path)
 	if err != nil {
@@ -102,6 +126,37 @@ func WritePluginsToBundle(plugins map[string]string, path string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func WritePluginsToBundleFtp(conn *ftp.ServerConn, plugins map[string]string, path string) error {
+	bundle, err := GetBundleFtp(conn)
+	if err != nil {
+		return err
+	}
+	bundle.Plugins = plugins
+
+	conn.Delete(BuFileName)
+	newFileBytes, err := yaml.Marshal(bundle)
+	if err != nil {
+		return err
+	}
+
+	pr, pw := io.Pipe()
+
+	go func() {
+		defer pw.Close()
+		_, err := pw.Write(newFileBytes)
+		if err != nil {
+			fmt.Printf("error occurred: %s\n", err.Error())
+			return
+		}
+	}()
+
+	if err := conn.Stor(BuFileName, pr); err != nil {
+		return err
+	}
+
 	return nil
 }
 
