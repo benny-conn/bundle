@@ -102,7 +102,7 @@ var uploadCmd = &cobra.Command{
 
 			rdmeToo := prompt.Input(">> ", yesOrNoCompleter)
 
-			if strings.EqualFold(rdmeToo, "y") || strings.EqualFold(rdmeToo, "yes") {
+			if strings.EqualFold(rdmeToo, "y") || strings.EqualFold(rdmeToo, "yes") || rdmeToo == "" {
 				term.Println("Please specify a path to your readme file or press enter to scan for readme in close directories.")
 				p := prompt.Input(">> ", rdmeFileCompleter.Complete, prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator))
 
@@ -221,7 +221,7 @@ func makeChangelog(pluginId, version string) error {
 
 	correct := prompt.Input(">> ", yesOrNoCompleter)
 
-	if strings.EqualFold(correct, "y") || strings.EqualFold(correct, "yes") {
+	if strings.EqualFold(correct, "y") || strings.EqualFold(correct, "yes") || correct == "" {
 		err := gs.InsertChangelog(changelog)
 		if err != nil {
 			return err
