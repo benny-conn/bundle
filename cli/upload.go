@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/file"
@@ -17,6 +18,8 @@ import (
 	"github.com/c-bata/go-prompt/completer"
 	. "github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	goterm "golang.org/x/term"
 )
 
 var rdmeFileCompleter = completer.FilePathCompleter{
@@ -46,7 +49,41 @@ var uploadCmd = &cobra.Command{
 
 		path := args[0]
 
-		user := credentialsPrompt()
+		var user *api.User
+		if viper.IsSet("credentials") {
+			creds := viper.GetStringMap("credentials")
+			user = &api.User{}
+
+			if un, ok := creds["username"].(string); ok {
+				user.Username = un
+			} else {
+				term.Println("Enter your username:")
+				user.Username = prompt.Input(">> ", nilCompleter)
+				return errors.New("username could not be found")
+			}
+
+			if pass, ok := creds["password"].(string); ok {
+				user.Password = pass
+			} else {
+				term.Println("Enter Your Password: ")
+				bytePassword, err := goterm.ReadPassword(syscall.Stdin)
+				if err != nil {
+					log.Fatal(err.Error())
+				}
+				user.Password = string(bytePassword)
+			}
+		} else {
+			user = credentialsPrompt()
+			creds := map[string]string{
+				"username": user.Username,
+				"password": user.Password,
+			}
+			viper.Set("Credentials", creds)
+			err := viper.WriteConfig()
+			if err != nil {
+				return err
+			}
+		}
 
 		plugin := &api.Plugin{}
 
