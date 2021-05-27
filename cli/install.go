@@ -14,6 +14,7 @@ import (
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/c-bata/go-prompt"
 	. "github.com/logrusorgru/aurora"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
 
@@ -91,7 +92,7 @@ var installCmd = &cobra.Command{
 // 	return dl.Plugin.Version, nil
 // }
 
-func changesSinceCurrent(pluginId, pluginName, currentVersion string) ([]string, error) {
+func changesSinceCurrent(pluginId, pluginName, desiredVersion, currentVersion string) ([]string, error) {
 	gs := gate.NewGateService("localhost", "8020")
 	ch := &api.Changelog{PluginId: pluginId}
 
@@ -105,19 +106,21 @@ func changesSinceCurrent(pluginId, pluginName, currentVersion string) ([]string,
 	versionsSinceUpdate := []string{"latest"}
 	for _, v := range resp.Changelogs {
 		if versionGreaterThan(v.Version, currentVersion) {
-			versionsSinceUpdate = append(versionsSinceUpdate, v.Version)
-			fmt.Println(Yellow(v.Version).Bold())
-			fmt.Println(Green("Added: ").Bold())
-			for _, v := range v.Added {
-				fmt.Printf("  - %s\n", Green(v))
-			}
-			fmt.Println(Red("Removed: ").Bold())
-			for _, v := range v.Removed {
-				fmt.Printf("  - %s\n", Red(v))
-			}
-			fmt.Println(Blue("Updated: ").Bold())
-			for _, v := range v.Updated {
-				fmt.Printf("  - %s\n", Blue(v))
+			if versionGreaterThan(desiredVersion, v.Version) || desiredVersion == v.Version {
+				versionsSinceUpdate = append(versionsSinceUpdate, v.Version)
+				fmt.Println(Yellow(v.Version).Bold())
+				fmt.Println(Green("Added: ").Bold())
+				for _, v := range v.Added {
+					fmt.Printf("  - %s\n", Green(v))
+				}
+				fmt.Println(Red("Removed: ").Bold())
+				for _, v := range v.Removed {
+					fmt.Printf("  - %s\n", Red(v))
+				}
+				fmt.Println(Blue("Updated: ").Bold())
+				for _, v := range v.Updated {
+					fmt.Printf("  - %s\n", Blue(v))
+				}
 			}
 		}
 	}
@@ -142,9 +145,7 @@ func downloadAndInstall(plugins map[string]string) error {
 			}
 			pl.Id = dbpl.Id
 			pl.Name = dbpl.Name
-			if version == dbpl.Version {
-				return
-			}
+
 			if strings.EqualFold(version, "latest") || version == "" {
 				pl.Version = dbpl.Version
 			} else {
@@ -161,19 +162,26 @@ func downloadAndInstall(plugins map[string]string) error {
 					return
 				}
 
-				// TODO FIGURE THIS OUT
-				mu.Lock()
-				missedVers, err := changesSinceCurrent(pl.Id, pl.Name, plyml.Version)
-				if err != nil {
-					fmt.Printf("error occurred: %s", err.Error())
+				downloadedVer := plyml.Version
+
+				if downloadedVer == dbpl.Version || downloadedVer == pl.Version {
 					return
 				}
-				term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, index, len(plugins)))
-				resVer := prompt.Choose(">> ", missedVers)
-				if !strings.EqualFold(resVer, "latest") {
-					pl.Version = resVer
-				}
-				mu.Unlock()
+
+				mu.Lock()
+				func() {
+					defer mu.Unlock()
+					missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
+					if err != nil {
+						fmt.Printf("error occurred: %s", err.Error())
+						return
+					}
+					term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, index, len(plugins)))
+					resVer := prompt.Choose(">> ", missedVers)
+					if !strings.EqualFold(resVer, "latest") {
+						pl.Version = resVer
+					}
+				}()
 			}
 
 			bs, err := gs.DownloadPlugin(pl)
@@ -187,11 +195,22 @@ func downloadAndInstall(plugins map[string]string) error {
 	}
 	for v := range installQueue {
 		func() {
+
+			pb := progressbar.NewOptions(
+				len(v.Data),
+				progressbar.OptionClearOnFinish(),
+				progressbar.OptionSetDescription(fmt.Sprintf("Installing %s - %s", v.Plugin.Name, v.Plugin.Version)),
+				progressbar.OptionShowBytes(true),
+				progressbar.OptionShowCount(),
+				progressbar.OptionSetItsString("bytes"),
+			)
 			pr, pw := io.Pipe()
 
 			go func() {
 				defer pw.Close()
-				_, err := pw.Write(v.Data)
+
+				writer := io.MultiWriter(pb, pw)
+				_, err := writer.Write(v.Data)
 				if err != nil {
 					fmt.Printf("error occurred: %s", err.Error())
 					return
@@ -211,7 +230,6 @@ func downloadAndInstall(plugins map[string]string) error {
 				fmt.Printf("error occurred: %s", err.Error())
 				return
 			}
-			fmt.Printf("Installed: %s - %s\n", v.Plugin.Name, v.Plugin.Version)
 		}()
 	}
 	return nil

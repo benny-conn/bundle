@@ -86,6 +86,7 @@ func (p *PluginsOrm) Insert(pl *api.Plugin) error {
 
 }
 
+// TODO something is going wrong here
 func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 	mgses, err := getMongoSession()

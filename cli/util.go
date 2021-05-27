@@ -1,11 +1,14 @@
 package cli
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
+	"unicode"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/term"
@@ -47,26 +50,56 @@ func nilCompleter(d prompt.Document) []prompt.Suggest {
 
 func versionGreaterThan(version, than string) bool {
 
-	split := strings.Split(version, ".")
-
-	thanSplit := strings.Split(than, ".")
-
-	if len(split) != len(thanSplit) {
-		if len(split) > len(thanSplit) {
-			return true
-		} else {
-			return false
+	isNumber := func(r rune) rune {
+		if r == '\u002e' || unicode.IsDigit(r) {
+			return r
 		}
+		return 0
+	}
+
+	versionNoChars := strings.Map(isNumber, version)
+
+	thanNoChars := strings.Map(isNumber, than)
+
+	split := strings.Split(versionNoChars, ".")
+
+	thanSplit := strings.Split(thanNoChars, ".")
+
+	splitInts := make([]int, len(split))
+	thanInts := make([]int, len(thanSplit))
+
+	for i, v := range split {
+		in, err := strconv.Atoi(v)
+		if err != nil {
+			fmt.Println(err.Error())
+			if len(splitInts) >= i+2 {
+				splitInts = append(splitInts[:i], splitInts[i+1:]...)
+			}
+			continue
+		}
+		splitInts[i] = in
 	}
 
 	for i, v := range thanSplit {
+		in, err := strconv.Atoi(v)
+		if err != nil {
+			fmt.Println(err.Error())
+			if len(thanInts) >= i+2 {
+				thanInts = append(thanInts[:i], thanInts[i+1:]...)
+			}
+			continue
+		}
+		thanInts[i] = in
+	}
+
+	for i, v := range thanInts {
 		if len(split) < i+1 {
 			break
 		}
-
-		if split[i] > v {
-			return true
+		if splitInts[i] == v {
+			continue
 		}
+		return splitInts[i] > v
 	}
 
 	return false

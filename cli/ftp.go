@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/bennycio/bundle/api"
@@ -17,6 +18,7 @@ import (
 	"github.com/c-bata/go-prompt"
 	"github.com/jlaffaye/ftp"
 	. "github.com/logrusorgru/aurora"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	goterm "golang.org/x/term"
@@ -309,6 +311,7 @@ func newFtp() error {
 func downloadAndInstallFtp(conn *ftp.ServerConn, plugins map[string]string) error {
 	gs := gate.NewGateService("localhost", "8020")
 	queuedToInstall := make(chan downloadedPlugin)
+	mu := &sync.Mutex{}
 	i := 0
 	for k, v := range plugins {
 		go func(index int, pluginName, version string) {
@@ -348,16 +351,27 @@ func downloadAndInstallFtp(conn *ftp.ServerConn, plugins map[string]string) erro
 					fmt.Printf("error occurred: %s", err.Error())
 					return
 				}
-				missedVers, err := changesSinceCurrent(pl.Id, pl.Name, plyml.Version)
-				if err != nil {
-					fmt.Printf("error occurred: %s", err.Error())
+
+				downloadedVer := plyml.Version
+
+				if downloadedVer == dbpl.Version || downloadedVer == pl.Version {
 					return
 				}
-				term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, i, len(plugins)))
-				resVer := prompt.Choose(">> ", missedVers)
-				if !strings.EqualFold(resVer, "latest") {
-					pl.Version = resVer
-				}
+
+				mu.Lock()
+				func() {
+					defer mu.Unlock()
+					missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
+					if err != nil {
+						fmt.Printf("error occurred: %s", err.Error())
+						return
+					}
+					term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, i, len(plugins)))
+					resVer := prompt.Choose(">> ", missedVers)
+					if !strings.EqualFold(resVer, "latest") {
+						pl.Version = resVer
+					}
+				}()
 			}
 			bs, err := gs.DownloadPlugin(pl)
 			if err != nil {
@@ -370,11 +384,20 @@ func downloadAndInstallFtp(conn *ftp.ServerConn, plugins map[string]string) erro
 	}
 	for v := range queuedToInstall {
 		func() {
+			pb := progressbar.NewOptions(
+				len(v.Data),
+				progressbar.OptionClearOnFinish(),
+				progressbar.OptionSetDescription(fmt.Sprintf("Installing %s - %s", v.Plugin.Name, v.Plugin.Version)),
+				progressbar.OptionShowBytes(true),
+				progressbar.OptionShowCount(),
+				progressbar.OptionSetItsString("bytes"),
+			)
 			pr, pw := io.Pipe()
 
 			go func() {
 				defer pw.Close()
-				_, err := pw.Write(v.Data)
+				writer := io.MultiWriter(pb, pw)
+				_, err := writer.Write(v.Data)
 				if err != nil {
 					fmt.Printf("error occurred: %s", err.Error())
 					return
