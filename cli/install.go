@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/file"
@@ -126,10 +127,11 @@ func changesSinceCurrent(pluginId, pluginName, currentVersion string) ([]string,
 func downloadAndInstall(plugins map[string]string) error {
 	gs := gate.NewGateService("localhost", "8020")
 	installQueue := make(chan downloadedPlugin)
-	i := 0
+	mu := &sync.Mutex{}
+	i := 1
 	for k, v := range plugins {
 		go func(index int, pluginName, version string) {
-			if len(plugins) < index {
+			if len(plugins) <= index {
 				defer close(installQueue)
 			}
 			pl := &api.Plugin{Name: pluginName}
@@ -140,6 +142,9 @@ func downloadAndInstall(plugins map[string]string) error {
 			}
 			pl.Id = dbpl.Id
 			pl.Name = dbpl.Name
+			if version == dbpl.Version {
+				return
+			}
 			if strings.EqualFold(version, "latest") || version == "" {
 				pl.Version = dbpl.Version
 			} else {
@@ -147,26 +152,28 @@ func downloadAndInstall(plugins map[string]string) error {
 			}
 
 			plfile, err := os.Open(fmt.Sprintf("plugins/%s.jar", pl.Name))
-			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
-				return
-			}
-			defer plfile.Close()
+			if err == nil {
+				defer plfile.Close()
 
-			plyml, err := file.ParsePluginYml(plfile)
-			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
-				return
-			}
-			missedVers, err := changesSinceCurrent(pl.Id, pl.Name, plyml.Version)
-			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
-				return
-			}
-			term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, i, len(plugins)))
-			resVer := prompt.Choose(">> ", missedVers)
-			if !strings.EqualFold(resVer, "latest") {
-				pl.Version = resVer
+				plyml, err := file.ParsePluginYml(plfile)
+				if err != nil {
+					fmt.Printf("error occurred: %s", err.Error())
+					return
+				}
+
+				// TODO FIGURE THIS OUT
+				mu.Lock()
+				missedVers, err := changesSinceCurrent(pl.Id, pl.Name, plyml.Version)
+				if err != nil {
+					fmt.Printf("error occurred: %s", err.Error())
+					return
+				}
+				term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, index, len(plugins)))
+				resVer := prompt.Choose(">> ", missedVers)
+				if !strings.EqualFold(resVer, "latest") {
+					pl.Version = resVer
+				}
+				mu.Unlock()
 			}
 
 			bs, err := gs.DownloadPlugin(pl)
@@ -192,16 +199,19 @@ func downloadAndInstall(plugins map[string]string) error {
 			}()
 
 			fp := filepath.Join("plugins", v.Plugin.Name+".jar")
+			os.Remove(fp)
 			fi, err := os.Create(fp)
 			if err != nil {
 				fmt.Printf("error occurred: %s", err.Error())
 				return
 			}
+			defer fi.Close()
 			_, err = io.Copy(fi, pr)
 			if err != nil {
 				fmt.Printf("error occurred: %s", err.Error())
 				return
 			}
+			fmt.Printf("Installed: %s - %s\n", v.Plugin.Name, v.Plugin.Version)
 		}()
 	}
 	return nil
