@@ -24,7 +24,6 @@ type templateData struct {
 	Profile         profile
 	Plugin          *api.Plugin
 	Plugins         []*api.Plugin
-	Bundle          *api.Bundle
 	PurchaseSession string
 	Page            int
 	Math            func(int, int, string) int

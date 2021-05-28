@@ -124,27 +124,6 @@ message SessionInsertResponse {
 }
 
 
-
-// BUNDLES ------------------------------------------------------------- ||
-
-service BundleService {
-    rpc Get(Bundle) returns (Bundle) {}
-    rpc Insert(Bundle) returns (Empty) {}
-    rpc Update(Bundle) returns (Empty) {}
-    rpc Delete(Bundle) returns (Empty) {}
-}
-
-
-message Bundle{
-    string id = 1;
-    string userId = 2;
-    string ftpUser = 3;
-    int32 ftpPort = 4;
-    string ftpHost = 5;
-    repeated string plugins = 6;
-}
-
-
 // CHANGELOGS ------------------------------------------------------------- ||
 
 service ChangelogService {
@@ -165,6 +144,28 @@ message Changelog {
 message Changelogs {
     repeated Changelog changelogs = 1;
 }
+
+// API KEYS -------------------------------------------------------------- ||
+
+service KeyService {
+    rpc Get(Keys) returns (Keys) {}
+    rpc Insert(Key) returns (Empty) {}
+    rpc Update(Keys) returns (Empty) {}
+    rpc Delete(Key) returns (Empty) {}
+}
+
+message Keys {
+    string id = 1;
+    string userId = 2;
+    repeated string keys = 3;
+}
+
+message Key {
+    string id = 1;
+    string userId = 2;
+    string key = 3;
+}
+
 
 // UTIL ----------------------------------------------------------------- ||
 

@@ -28,13 +28,6 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	gs := gate.NewGateService("", "")
 
-	if user.Id != "" {
-		bu, err := gs.GetBundle(&api.Bundle{UserId: user.Id})
-		if err == nil {
-			data.Bundle = bu
-		}
-	}
-
 	data.Contains = internal.Contains
 
 	switch req.Method {
@@ -194,46 +187,6 @@ func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	err = gs.UploadThumbnail(u, p, thumbnail)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
-}
-
-func bundlerHandlerFunc(w http.ResponseWriter, req *http.Request) {
-
-	if req.Method != http.MethodPost {
-		http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
-		return
-	}
-	req.ParseForm()
-
-	user, err := getProfFromCookie(req)
-	if err != nil {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
-		return
-	}
-
-	gs := gate.NewGateService("", "")
-
-	r := &api.Bundle{UserId: user.Id}
-	bu, err := gs.GetBundle(&api.Bundle{UserId: user.Id})
-	if err != nil {
-		bu = r
-	}
-
-	plname := req.FormValue("plugin")
-
-	if plname == "" {
-		http.Error(w, "no plugin name found", http.StatusBadRequest)
-		return
-	}
-
-	bu.Plugins = append(bu.Plugins, plname)
-
-	err = gs.UpdateBundle(bu)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
