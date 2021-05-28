@@ -148,23 +148,16 @@ message Changelogs {
 // API KEYS -------------------------------------------------------------- ||
 
 service KeyService {
-    rpc Get(Keys) returns (Keys) {}
+    rpc Get(Key) returns (Key) {}
     rpc Insert(Key) returns (Empty) {}
-    rpc Update(Keys) returns (Empty) {}
     rpc Delete(Key) returns (Empty) {}
-}
-
-message Keys {
-    string id = 1;
-    string userId = 2;
-    repeated string keys = 3;
 }
 
 message Key {
     string id = 1;
     string userId = 2;
-    string key = 3;
 }
+
 
 
 // UTIL ----------------------------------------------------------------- ||

@@ -103,8 +103,6 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 		return err
 	}
 
-	update.LastUpdated = primitive.NewDateTimeFromTime(time.Now())
-
 	var updateResult *mongo.UpdateResult
 
 	if update.Id != primitive.NilObjectID {
