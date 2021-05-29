@@ -83,10 +83,10 @@ func GetBundle(path string) (*BundleFile, error) {
 	return result, nil
 }
 
-func GetBundleFtp(conn *ftp.ServerConn) (*BundleFile, error) {
+func GetBundleFtp(conn *ftp.ServerConn) (BundleFile, error) {
 	resp, err := conn.Retr("bundle.yml")
 	if err != nil {
-		return nil, err
+		return BundleFile{}, err
 	}
 	defer resp.Close()
 	result := &BundleFile{}
@@ -95,14 +95,14 @@ func GetBundleFtp(conn *ftp.ServerConn) (*BundleFile, error) {
 
 	_, err = io.Copy(buf, resp)
 	if err != nil {
-		return nil, err
+		return BundleFile{}, err
 	}
 
 	err = yaml.Unmarshal(buf.Bytes(), result)
 	if err != nil {
-		return nil, err
+		return BundleFile{}, err
 	}
-	return result, nil
+	return *result, nil
 }
 
 func WritePluginsToBundle(plugins map[string]string, path string) error {
@@ -129,7 +129,7 @@ func WritePluginsToBundle(plugins map[string]string, path string) error {
 	return nil
 }
 
-func WritePluginsToBundleFtp(conn *ftp.ServerConn, plugins map[string]string, path string) error {
+func WritePluginsToBundleFtp(conn *ftp.ServerConn, plugins map[string]string) error {
 	bundle, err := GetBundleFtp(conn)
 	if err != nil {
 		return err

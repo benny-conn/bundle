@@ -153,67 +153,46 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 			} else {
 				pl.Version = version
 			}
-			var plyml file.PlYml
 
-			upPrompt := func() {
-				defer mu.Unlock()
-				missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
-				if err != nil {
-					fmt.Printf("error occurred: %s", err.Error())
-					return
-				}
-				term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nPress enter for the latest version", pl.Name, index, len(plugins)))
-				resVer := prompt.Choose(">> ", missedVers)
-				if resVer != "" {
-					pl.Version = resVer
-				}
-			}
 			if conn == nil {
-				plfile, err := os.Open(fmt.Sprintf("plugins/%s.jar", pl.Name))
-				if err == nil {
-					defer plfile.Close()
-
-					p, err := file.ParsePluginYml(plfile)
-					if err != nil {
-
-						fmt.Printf("error occurred: %s", err.Error())
-						return
-					}
-					plyml = p
-					downloadedVer := plyml.Version
-					if downloadedVer == dbpl.Version || downloadedVer == pl.Version {
+				if plyml, err := file.GetPluginYml(pluginName, nil); err == nil {
+					if plyml.Version == dbpl.Version || plyml.Version == pl.Version {
 						return
 					}
 					mu.Lock()
-					upPrompt()
+					func() {
+						defer mu.Unlock()
+						missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
+						if err != nil {
+							fmt.Printf("error occurred: %s", err.Error())
+							return
+						}
+						term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nPress enter for the latest version", pl.Name, index, len(plugins)))
+						resVer := prompt.Choose(">> ", missedVers)
+						if resVer != "" {
+							pl.Version = resVer
+						}
+					}()
 				}
 			} else {
-				resp, err := conn.Retr(fmt.Sprintf("plugins/%s.jar", pl.Name))
-				if err == nil {
-					tmp, err := os.CreateTemp("", fmt.Sprintf("*%s.jar", pl.Name))
-					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
-						return
-					}
-					defer os.Remove(tmp.Name())
-
-					_, err = io.Copy(tmp, resp)
-					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
-						return
-					}
-					p, err := file.ParsePluginYml(tmp)
-					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
-						return
-					}
-					plyml = p
-					downloadedVer := plyml.Version
-					if downloadedVer == dbpl.Version || downloadedVer == pl.Version {
+				if plyml, err := file.GetPluginYml(pluginName, conn); err == nil {
+					if plyml.Version == dbpl.Version || plyml.Version == pl.Version {
 						return
 					}
 					mu.Lock()
-					upPrompt()
+					func() {
+						defer mu.Unlock()
+						missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
+						if err != nil {
+							fmt.Printf("error occurred: %s", err.Error())
+							return
+						}
+						term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nPress enter for the latest version", pl.Name, index, len(plugins)))
+						resVer := prompt.Choose(">> ", missedVers)
+						if resVer != "" {
+							pl.Version = resVer
+						}
+					}()
 				}
 			}
 

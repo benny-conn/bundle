@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 
 	"github.com/alexeyco/simpletable"
@@ -11,6 +10,7 @@ import (
 	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal/gate"
+	"github.com/jlaffaye/ftp"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ var statusCmd = &cobra.Command{
 			return err
 		}
 
-		findStatuses(bundle.Plugins)
+		printStatus(bundle.Plugins, nil)
 		return nil
 	},
 }
@@ -32,7 +32,7 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 }
 
-func findStatuses(pls map[string]string) {
+func printStatus(pls map[string]string, conn *ftp.ServerConn) {
 
 	pluginsToUpdate := sync.Map{}
 
@@ -57,24 +57,29 @@ func findStatuses(pls map[string]string) {
 
 			latestVersion := plugin.Version
 
-			fp := filepath.Join("plugins", pluginName+".jar")
+			if conn == nil {
+				if res, err := file.GetPluginYml(pluginName, nil); err == nil {
+					pls[pluginName] = res.Version
+					if res.Version != latestVersion {
+						pluginsToUpdate.Store(pluginName, latestVersion)
+					}
+				} else {
+					pls[pluginName] = "Not Installed"
+					pluginsToUpdate.Store(pluginName, latestVersion)
+				}
 
-			plfile, err := os.Open(fp)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "error occurred: %s\n", err.Error())
-				return
+			} else {
+				if res, err := file.GetPluginYml(pluginName, conn); err == nil {
+					pls[pluginName] = res.Version
+					if res.Version != latestVersion {
+						pluginsToUpdate.Store(pluginName, latestVersion)
+					}
+				} else {
+					pls[pluginName] = "Not Installed"
+					pluginsToUpdate.Store(pluginName, latestVersion)
+				}
 			}
-			defer plfile.Close()
 
-			res, err := file.ParsePluginYml(plfile)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "error occurred: %s\n", err.Error())
-				return
-			}
-			pls[pluginName] = res.Version
-			if res.Version != latestVersion {
-				pluginsToUpdate.Store(pluginName, latestVersion)
-			}
 		}(k, v)
 	}
 	wg.Wait()
@@ -102,5 +107,9 @@ func findStatuses(pls map[string]string) {
 
 	table.SetStyle(simpletable.StyleCompactLite)
 	fmt.Println(table.String())
-	term.Println(`Use "bundle install" to update your plugins`)
+	if conn == nil {
+		term.Println(`Use "bundle install" to update your plugins`)
+	} else {
+		term.Println(`Use "install" to update your plugins`)
+	}
 }

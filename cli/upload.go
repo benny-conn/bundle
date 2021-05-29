@@ -95,7 +95,12 @@ var uploadCmd = &cobra.Command{
 		}
 		defer plfile.Close()
 
-		result, err := file.ParsePluginYml(plfile)
+		info, err := plfile.Stat()
+		if err != nil {
+			return err
+		}
+
+		result, err := file.ParsePluginYml(plfile, info.Size())
 
 		if err != nil {
 			return err

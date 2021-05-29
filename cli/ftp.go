@@ -8,8 +8,10 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bennycio/bundle/cli/file"
+	"github.com/bennycio/bundle/cli/logger"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal"
 	"github.com/c-bata/go-prompt"
@@ -31,13 +33,18 @@ type anFtp struct {
 
 var theFtp anFtp
 
+var buFileCache file.BundleFile
+
 var connectCommands []prompt.Suggest = []prompt.Suggest{
 	{Text: "help", Description: "See command options"},
 	{Text: "install", Description: "Install/Update plugins"},
 	{Text: "init", Description: "Create a new bundle file"},
-	{Text: "remove", Description: "Remove a plugin"},
+	{Text: "remove", Description: "Remove a plugin from bundle file"},
+	{Text: "uninstall", Description: "Delete a plugin"},
 	{Text: "status", Description: "Check for updates"},
 	{Text: "exit", Description: "Disconnect from FTP instance"},
+	{Text: "list", Description: "List Plugins in Bundle File"},
+	{Text: "add", Description: "Add plugin to bundle file"},
 }
 
 // testCmd represents the test command
@@ -54,11 +61,11 @@ var ftpCmd = &cobra.Command{
 		} else {
 			keys := []string{"new"}
 			term.Println("Which connection would you like to use?")
-			fmt.Println(" - new (create a new connection)")
 			for k := range ftps {
 				fmt.Printf(" - %s\n", k)
 				keys = append(keys, k)
 			}
+			fmt.Println(" -", Gray(12, "new (create a new connection)"))
 			result := prompt.Choose(">> ", keys)
 
 			if result == "new" {
@@ -115,7 +122,7 @@ var ftpCmd = &cobra.Command{
 			}
 		}
 
-		connection, err := ftp.Dial(fmt.Sprintf("%s:%s", theFtp.Host, theFtp.Port))
+		connection, err := ftp.Dial(fmt.Sprintf("%s:%s", theFtp.Host, theFtp.Port), ftp.DialWithDisabledEPSV(true), ftp.DialWithDisabledMLSD(true))
 		if err != nil {
 			return err
 		}
@@ -128,9 +135,15 @@ var ftpCmd = &cobra.Command{
 		defer connection.Quit()
 		defer connection.Logout()
 
-		fmt.Printf("%s\nType 'help' for commands\nType 'exit' to exit\n", fmt.Sprintf("%s %s", Green("Connected To ").Bold(), Green(theFtp.Name).Bold()))
+		fmt.Printf("%s\nType 'help' for commands\nType 'exit' to exit\n", fmt.Sprintf("%s %s", Green("Connected To").Bold(), Green(theFtp.Name).Bold()))
 
 		theFtp.Conn = connection
+
+		bu, err := file.GetBundleFtp(connection)
+		if err == nil {
+			buFileCache = bu
+		}
+
 		pr := prompt.New(connectedExecutor, connectedCompleter, prompt.OptionPrefix(">> "))
 		pr.Run()
 
@@ -145,14 +158,10 @@ func init() {
 func connectedCompleter(d prompt.Document) []prompt.Suggest {
 	args := strings.Split(d.TextBeforeCursor(), " ")
 	if len(args) > 1 {
-		if args[0] == "remove" {
-			bufile, err := file.GetBundleFtp(theFtp.Conn)
-			if err != nil {
-				return nil
-			}
+		if args[0] == "remove" || args[0] == "uninstall" {
 			s := []prompt.Suggest{}
 
-			for k := range bufile.Plugins {
+			for k := range buFileCache.Plugins {
 				s = append(s, prompt.Suggest{Text: k})
 			}
 			return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
@@ -195,19 +204,19 @@ func connectedExecutor(s string) {
 			}
 			err := downloadAndInstall(plsToInstall, conn)
 			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
+				logger.ErrLog.Println(err.Error())
 				return
 			}
 		} else {
 			result, err := file.GetBundleFtp(conn)
 			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
+				logger.ErrLog.Println(err.Error())
 				return
 			}
-
+			buFileCache = result
 			err = downloadAndInstall(result.Plugins, conn)
 			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
+				logger.ErrLog.Println(err.Error())
 				return
 			}
 		}
@@ -216,7 +225,7 @@ func connectedExecutor(s string) {
 
 		names, err := conn.NameList(".")
 		if err != nil {
-			fmt.Printf("error occurred: %s", err.Error())
+			logger.ErrLog.Println(err.Error())
 			return
 		}
 		if internal.Contains(names, file.BuFileName) {
@@ -230,14 +239,14 @@ func connectedExecutor(s string) {
 			defer pw.Close()
 			_, err := pw.Write([]byte(file.BuFile))
 			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
+				logger.ErrLog.Println(err.Error())
 				return
 			}
 		}()
 
 		err = conn.Stor(file.BuFileName, pr)
 		if err != nil {
-			fmt.Printf("error occurred: %s", err.Error())
+			logger.ErrLog.Println(err.Error())
 			return
 		}
 
@@ -246,31 +255,117 @@ func connectedExecutor(s string) {
 	case "status":
 		bufile, err := file.GetBundleFtp(conn)
 		if err != nil {
-			fmt.Printf("error occurred: %s", err.Error())
+			logger.ErrLog.Println(err.Error())
 			return
 		}
-		findStatuses(bufile.Plugins)
+		buFileCache = bufile
+		printStatus(bufile.Plugins, conn)
+	case "uninstall":
+		if len(args) < 2 {
+			fmt.Println("Please specify a plugin to remove")
+			return
+		}
+		bu, err := file.GetBundleFtp(conn)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		for _, v := range args[1:] {
+			for pl := range bu.Plugins {
+				if strings.EqualFold(v, pl) {
+					err = conn.Delete(fmt.Sprintf("plugins/%s.jar", pl))
+					if err != nil {
+						logger.ErrLog.Println(err.Error())
+						return
+					}
+					time.Sleep(2 * time.Second)
+					delete(bu.Plugins, pl)
+				}
+			}
+		}
+		err = file.WritePluginsToBundleFtp(conn, bu.Plugins)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		new, err := file.GetBundleFtp(conn)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		buFileCache = new
 	case "remove":
 		if len(args) < 2 {
 			fmt.Println("Please specify a plugin to remove")
 			return
 		}
-		pls, err := conn.NameList("plugins")
+		bu, err := file.GetBundleFtp(conn)
 		if err != nil {
-			fmt.Printf("error occurred: %s", err.Error())
+			logger.ErrLog.Println(err.Error())
 			return
 		}
 		for _, v := range args[1:] {
-			for _, pl := range pls {
+			for pl := range bu.Plugins {
 				if strings.EqualFold(v, pl) {
-					err = conn.Delete(pl)
-					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
-						return
-					}
+					delete(bu.Plugins, pl)
 				}
 			}
 		}
+		err = file.WritePluginsToBundleFtp(conn, bu.Plugins)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		new, err := file.GetBundleFtp(conn)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		buFileCache = new
+	case "list":
+		bu, err := file.GetBundleFtp(conn)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		buFileCache = bu
+		i := 1
+		for k, v := range bu.Plugins {
+			fmt.Printf("%d. %s - %s\n", Green(i), Yellow(k).Bold(), Yellow(v))
+			i += 1
+		}
+	case "add":
+		if len(args) < 2 {
+			fmt.Println("Please specify a plugin to add")
+			return
+		}
+		bu, err := file.GetBundleFtp(conn)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		if bu.Plugins == nil {
+			bu.Plugins = map[string]string{}
+		}
+		for _, v := range args[1:] {
+			spl := strings.Split(v, "@")
+			if len(spl) > 1 {
+				bu.Plugins[spl[0]] = spl[1]
+			} else {
+				bu.Plugins[v] = "latest"
+			}
+		}
+		err = file.WritePluginsToBundleFtp(conn, bu.Plugins)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		new, err := file.GetBundleFtp(conn)
+		if err != nil {
+			logger.ErrLog.Println(err.Error())
+			return
+		}
+		buFileCache = new
 	}
 }
 
