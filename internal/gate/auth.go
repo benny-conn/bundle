@@ -1,6 +1,8 @@
 package gate
 
 import (
+	"crypto/aes"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"os"
@@ -126,26 +128,26 @@ func checkScope(tokenString string, scopes ...string) bool {
 	return hasScope
 }
 
-func basicAuth(next http.Handler) http.Handler {
+func basicAuth(next http.Handler, methods ...string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
+		if internal.Contains(methods, r.Method) {
 
 			err := r.ParseMultipartForm(10 << 20)
 
 			if err != nil {
 				err = r.ParseForm()
 				if err != nil {
-					http.Error(w, "invalid user", http.StatusBadRequest)
+					http.Error(w, "invalid auth", http.StatusBadRequest)
 					return
 				}
 			}
 
-			user := &api.User{
-				Username: r.FormValue("username"),
-			}
-
 			gs := NewGateService("", "")
+			un := r.FormValue("username")
 
+			user := &api.User{
+				Username: un,
+			}
 			dbUser, err := gs.GetUser(user)
 
 			if err != nil {
@@ -163,4 +165,33 @@ func basicAuth(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func encryptKey(key string) (string, error) {
+
+	c, err := aes.NewCipher([]byte(os.Getenv("AES_KEY")))
+	if err != nil {
+		return "", err
+	}
+
+	out := make([]byte, len(key))
+
+	c.Encrypt(out, []byte(key))
+
+	return hex.EncodeToString(out), nil
+}
+
+func decryptKey(key string) (string, error) {
+	ciphertext, _ := hex.DecodeString(key)
+
+	c, err := aes.NewCipher([]byte(os.Getenv("AES_KEY")))
+	if err != nil {
+		return "", err
+	}
+
+	pt := make([]byte, len(ciphertext))
+	c.Decrypt(pt, ciphertext)
+
+	return string(pt), nil
+
 }

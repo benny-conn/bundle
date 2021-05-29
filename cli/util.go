@@ -1,11 +1,9 @@
 package cli
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"unicode"
@@ -51,7 +49,7 @@ func nilCompleter(d prompt.Document) []prompt.Suggest {
 func versionGreaterThan(version, than string) bool {
 
 	isNumber := func(r rune) rune {
-		if r == '\u002e' || unicode.IsDigit(r) {
+		if unicode.IsDigit(r) {
 			return r
 		}
 		return 0
@@ -61,39 +59,21 @@ func versionGreaterThan(version, than string) bool {
 
 	thanNoChars := strings.Map(isNumber, than)
 
-	split := strings.Split(versionNoChars, ".")
+	splitInts := make([]int, len(versionNoChars))
+	thanInts := make([]int, len(thanNoChars))
 
-	thanSplit := strings.Split(thanNoChars, ".")
-
-	splitInts := make([]int, len(split))
-	thanInts := make([]int, len(thanSplit))
-
-	for i, v := range split {
-		in, err := strconv.Atoi(v)
-		if err != nil {
-			fmt.Println(err.Error())
-			if len(splitInts) >= i+2 {
-				splitInts = append(splitInts[:i], splitInts[i+1:]...)
-			}
-			continue
-		}
+	for i, v := range versionNoChars {
+		in := int(v - '0')
 		splitInts[i] = in
 	}
 
-	for i, v := range thanSplit {
-		in, err := strconv.Atoi(v)
-		if err != nil {
-			fmt.Println(err.Error())
-			if len(thanInts) >= i+2 {
-				thanInts = append(thanInts[:i], thanInts[i+1:]...)
-			}
-			continue
-		}
+	for i, v := range thanNoChars {
+		in := int(v - '0')
 		thanInts[i] = in
 	}
 
 	for i, v := range thanInts {
-		if len(split) < i+1 {
+		if len(versionNoChars) < i+1 {
 			break
 		}
 		if splitInts[i] == v {

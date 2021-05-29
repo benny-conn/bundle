@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -87,38 +89,28 @@ var uploadCmd = &cobra.Command{
 
 		plugin := &api.Plugin{}
 
-		isReadme := strings.HasSuffix(path, "README.md")
-
-		if isReadme {
-
-			plugin = pluginInfoPrompt()
-
-		} else {
-			plfile, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			defer plfile.Close()
-
-			result, err := file.ParsePluginYml(plfile)
-
-			if err != nil {
-				return err
-			}
-
-			plugin.Name = result.Name
-			plugin.Version = result.Version
-			plugin.Description = result.Description
-			plugin.Category = api.Category(result.Category)
-			plugin.Conflicts = result.Conflicts
+		plfile, err := os.Open(path)
+		if err != nil {
+			return err
 		}
+		defer plfile.Close()
+
+		result, err := file.ParsePluginYml(plfile)
+
+		if err != nil {
+			return err
+		}
+
+		plugin.Name = result.Name
+		plugin.Version = result.Version
+		plugin.Description = result.Description
+		plugin.Category = api.Category(result.Category)
+		plugin.Conflicts = result.Conflicts
 
 		gs := gate.NewGateService("localhost", "8020")
 
 		dbPl, err := gs.GetPlugin(plugin)
 		isUpdating := err == nil
-
-		term.Print(fmt.Sprintf("Uploading to Bundle Repository From: %s\n", path))
 
 		fi, err := os.Open(path)
 		if err != nil {
@@ -126,57 +118,74 @@ var uploadCmd = &cobra.Command{
 		}
 		defer fi.Close()
 
-		upl := uploader.New(user, fi, plugin).WithReadme(isReadme)
-
-		err = upl.Upload()
-		if err != nil {
-			return err
+		upl := &uploader.Uploader{
+			PluginFile: fi,
+			Plugin:     plugin,
+			User:       user,
 		}
-		if !isReadme {
-			term.Println(Green("Successfully uploaded plugin! :)").Bold())
 
-			term.Println("Would you like to upload a README as well? [Y/n]")
+		term.Println(Green("Queued Plugin for Upload! :)! :)").Bold())
 
-			rdmeToo := prompt.Input(">> ", yesOrNoCompleter)
+		term.Println("Would you like to upload a README as well? [Y/n]")
 
-			if strings.EqualFold(rdmeToo, "y") || strings.EqualFold(rdmeToo, "yes") || rdmeToo == "" {
-				term.Println("Please specify a path to your readme file or press enter to scan for readme in close directories.")
-				p := prompt.Input(">> ", rdmeFileCompleter.Complete, prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator))
+		rdmeToo := prompt.Input(">> ", yesOrNoCompleter)
 
-				if p == "" {
-					wlk := uploader.NewFileWalker("README.md", plugin.Name)
-					f, err := wlk.Walk()
-					if err != nil {
-						return err
-					}
-					rdmeUpl := uploader.New(user, f, plugin).WithReadme(true)
-					err = rdmeUpl.Upload()
-					if err != nil {
-						return err
-					}
-				} else {
-					f, err := os.Open(p)
-					if err != nil {
-						return err
-					}
-					rdmeUpl := uploader.New(user, f, plugin).WithReadme(true)
-					err = rdmeUpl.Upload()
-					if err != nil {
-						return err
-					}
+		if strings.EqualFold(rdmeToo, "y") || strings.EqualFold(rdmeToo, "yes") || rdmeToo == "" {
+			term.Println("Please specify a path to your readme file or press enter to scan for readme in close directories.")
+			p := prompt.Input(">> ", rdmeFileCompleter.Complete, prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator))
+
+			if p == "" {
+				wlk := uploader.NewFileWalker("README.md", plugin.Name)
+				f, err := wlk.Walk()
+				if err != nil {
+					return err
 				}
-				term.Println(Green("Successfully uploaded README! :)").Bold())
+				defer f.Close()
+				buf := &bytes.Buffer{}
+
+				_, err = io.Copy(buf, f)
+				if err != nil {
+					return err
+				}
+
+				rdme := &api.Readme{
+					Plugin: plugin,
+					Text:   buf.String(),
+				}
+				upl.Readme = rdme
+			} else {
+				f, err := os.Open(p)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				buf := &bytes.Buffer{}
+
+				_, err = io.Copy(buf, f)
+				if err != nil {
+					return err
+				}
+
+				rdme := &api.Readme{
+					Plugin: plugin,
+					Text:   buf.String(),
+				}
+				upl.Readme = rdme
 			}
-		} else {
-			term.Println(Green("Successfully uploaded README! :)").Bold())
+			term.Println(Green("Queued Readme for Upload! :)").Bold())
 		}
 
 		if isUpdating {
-			if err = makeChangelog(dbPl.Id, plugin.Version); err != nil {
+			if ch, err := makeChangelog(dbPl.Id, plugin.Version); err != nil {
 				return err
 			} else {
-				term.Println(Green("Successfully uploaded Changelog! :)").Bold())
+				upl.Changelog = ch
+				term.Println(Green("Queued Changelog for Upload! :)").Bold())
 			}
+		}
+
+		if err = upl.Upload(); err != nil {
+			return err
 		}
 
 		return nil
@@ -187,21 +196,7 @@ func init() {
 	rootCmd.AddCommand(uploadCmd)
 }
 
-func pluginInfoPrompt() *api.Plugin {
-	fmt.Println("Enter plugin name: ")
-	pluginName := prompt.Input(">> ", nilCompleter)
-
-	plugin := &api.Plugin{
-		Name:    pluginName,
-		Version: "README",
-	}
-
-	return plugin
-}
-
-func makeChangelog(pluginId, version string) error {
-
-	gs := gate.NewGateService("localhost", "8020")
+func makeChangelog(pluginId, version string) (*api.Changelog, error) {
 	addedList := []string{}
 	updatedList := []string{}
 	removedList := []string{}
@@ -259,15 +254,13 @@ func makeChangelog(pluginId, version string) error {
 	correct := prompt.Input(">> ", yesOrNoCompleter)
 
 	if strings.EqualFold(correct, "y") || strings.EqualFold(correct, "yes") || correct == "" {
-		err := gs.InsertChangelog(changelog)
-		if err != nil {
-			return err
-		}
+		return changelog, nil
 	} else {
-		err := makeChangelog(pluginId, version)
+		c, err := makeChangelog(pluginId, version)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		changelog = c
 	}
-	return nil
+	return changelog, nil
 }

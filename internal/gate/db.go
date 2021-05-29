@@ -422,6 +422,7 @@ func changelogHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 			asJSON, err := json.Marshal(ses)
 			if err != nil {
+				fmt.Println(err.Error())
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
@@ -442,6 +443,7 @@ func changelogHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 			asJSON, err := json.Marshal(ses)
 			if err != nil {
+				fmt.Println(err.Error())
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
@@ -462,6 +464,7 @@ func changelogHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		err = json.Unmarshal(bs.Bytes(), bu)
 		if err != nil {
+			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

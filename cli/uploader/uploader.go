@@ -1,59 +1,51 @@
 package uploader
 
 import (
-	"bytes"
-	"io"
 	"os"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
+	"github.com/schollz/progressbar/v3"
 )
 
-type uploader struct {
-	file   *os.File
-	user   *api.User
-	plugin *api.Plugin
-	opts   options
+type Uploader struct {
+	PluginFile *os.File
+	User       *api.User
+	Plugin     *api.Plugin
+	Readme     *api.Readme
+	Changelog  *api.Changelog
 }
 
-type options struct {
-	isReadme bool
-}
-
-func New(user *api.User, file *os.File, plugin *api.Plugin) *uploader {
-	return &uploader{
-		user:   user,
-		file:   file,
-		plugin: plugin,
-	}
-}
-
-func (u *uploader) WithReadme(isReadme bool) *uploader {
-	u.opts.isReadme = isReadme
-	return u
-}
-
-func (u *uploader) Upload() error {
+func (u *Uploader) Upload() error {
 	gservice := gate.NewGateService("localhost", "8020")
-	if u.opts.isReadme {
-		buf := &bytes.Buffer{}
-		_, err := io.Copy(buf, u.file)
+	if u.Plugin != nil && u.PluginFile != nil {
+		fi, err := u.PluginFile.Stat()
 		if err != nil {
 			return err
 		}
-		readme := &api.Readme{
-			Plugin: u.plugin,
-			Text:   buf.String(),
-		}
-		err = gservice.InsertReadme(u.user, readme)
+		pb := progressbar.DefaultBytes(fi.Size(), "Uploading Plugin...")
+
+		rdr := progressbar.NewReader(u.PluginFile, pb)
+
+		err = gservice.UploadPlugin(u.User, u.Plugin, &rdr)
 		if err != nil {
 			return err
 		}
-	} else {
-		err := gservice.UploadPlugin(u.user, u.plugin, u.file)
-		if err != nil {
+	}
+	if u.Readme != nil {
+
+		pb := progressbar.Default(1, "Uploading Readme...")
+		if err := gservice.InsertReadme(u.User, u.Readme); err != nil {
 			return err
 		}
+		pb.Add(1)
+	}
+	if u.Changelog != nil {
+		pb := progressbar.Default(1, "Uploading Changelog...")
+		if err := gservice.InsertChangelog(u.User, u.Changelog); err != nil {
+			return err
+		}
+		pb.Add(1)
 	}
 	return nil
 }

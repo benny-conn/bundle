@@ -32,10 +32,9 @@ type gateService interface {
 	InsertSession(ses *api.Session) (*api.SessionInsertResponse, error)
 	GetSession(ses *api.Session) (*api.Session, error)
 	DeleteSession(ses *api.Session) error
-
 	GetChangelog(ch *api.Changelog) (*api.Changelog, error)
 	GetChangelogs(ch *api.Changelog) (*api.Changelogs, error)
-	InsertChangelog(ch *api.Changelog) error
+	InsertChangelog(user *api.User, ch *api.Changelog) error
 }
 type gateServiceImpl struct {
 	Host string
@@ -822,7 +821,7 @@ func (g *gateServiceImpl) InsertSession(ses *api.Session) (*api.SessionInsertRes
 	return result, nil
 }
 
-func (g *gateServiceImpl) InsertChangelog(ch *api.Changelog) error {
+func (g *gateServiceImpl) InsertChangelog(user *api.User, ch *api.Changelog) error {
 
 	scheme := "https://"
 
@@ -831,21 +830,20 @@ func (g *gateServiceImpl) InsertChangelog(ch *api.Changelog) error {
 		return err
 	}
 
+	values := url.Values{}
+
 	asJSON, err := json.Marshal(ch)
 	if err != nil {
 		return err
 	}
 
-	buf := bytes.NewBuffer([]byte(asJSON))
+	values.Set("changelog", string(asJSON))
+	values.Set("username", user.Username)
+	values.Set("password", user.Password)
 
 	client := internal.NewBasicClient()
 
-	req, err := http.NewRequest(http.MethodPost, u.String(), buf)
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Do(req)
+	resp, err := client.PostForm(u.String(), values)
 	if err != nil {
 		return err
 	}
