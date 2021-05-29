@@ -33,7 +33,6 @@ func (u *Uploader) Upload() error {
 		}
 	}
 	if u.Readme != nil {
-
 		pb := progressbar.Default(1, "Uploading Readme...")
 		if err := gservice.InsertReadme(u.User, u.Readme); err != nil {
 			return err

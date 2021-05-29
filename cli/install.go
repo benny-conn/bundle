@@ -7,12 +7,14 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/c-bata/go-prompt"
+	"github.com/jlaffaye/ftp"
 	. "github.com/logrusorgru/aurora"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
@@ -62,11 +64,11 @@ var installCmd = &cobra.Command{
 					plsToInst[spl[0]] = spl[1]
 				}
 			}
-			if err := downloadAndInstall(plsToInst); err != nil {
+			if err := downloadAndInstall(plsToInst, nil); err != nil {
 				return err
 			}
 		} else {
-			if err := downloadAndInstall(bundlePlugins); err != nil {
+			if err := downloadAndInstall(bundlePlugins, nil); err != nil {
 				return err
 			}
 		}
@@ -103,7 +105,7 @@ func changesSinceCurrent(pluginId, pluginName, desiredVersion, currentVersion st
 
 	fmt.Printf("%s %s\n", Blue("Changes Since Last Update"), Blue(pluginName).Bold())
 
-	versionsSinceUpdate := []string{"latest"}
+	versionsSinceUpdate := []string{}
 	for _, v := range resp.Changelogs {
 		if versionGreaterThan(v.Version, currentVersion) {
 			if versionGreaterThan(desiredVersion, v.Version) || desiredVersion == v.Version {
@@ -127,19 +129,19 @@ func changesSinceCurrent(pluginId, pluginName, desiredVersion, currentVersion st
 	return versionsSinceUpdate, nil
 }
 
-func downloadAndInstall(plugins map[string]string) error {
+func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 	gs := gate.NewGateService("localhost", "8020")
 	installQueue := make(chan downloadedPlugin)
 	mu := &sync.Mutex{}
+	left := int64(len(plugins))
 	i := 1
 	for k, v := range plugins {
 		go func(index int, pluginName, version string) {
-			if len(plugins) <= index {
-				defer close(installQueue)
-			}
+			defer atomic.AddInt64(&left, -1)
 			pl := &api.Plugin{Name: pluginName}
 			dbpl, err := gs.GetPlugin(pl)
 			if err != nil {
+
 				fmt.Printf("error occurred: %s", err.Error())
 				return
 			}
@@ -151,41 +153,73 @@ func downloadAndInstall(plugins map[string]string) error {
 			} else {
 				pl.Version = version
 			}
+			var plyml file.PlYml
 
-			plfile, err := os.Open(fmt.Sprintf("plugins/%s.jar", pl.Name))
-			if err == nil {
-				defer plfile.Close()
-
-				plyml, err := file.ParsePluginYml(plfile)
+			upPrompt := func() {
+				defer mu.Unlock()
+				missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
 				if err != nil {
 					fmt.Printf("error occurred: %s", err.Error())
 					return
 				}
-
-				downloadedVer := plyml.Version
-
-				if downloadedVer == dbpl.Version || downloadedVer == pl.Version {
-					return
+				term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nPress enter for the latest version", pl.Name, index, len(plugins)))
+				resVer := prompt.Choose(">> ", missedVers)
+				if resVer != "" {
+					pl.Version = resVer
 				}
+			}
+			if conn == nil {
+				plfile, err := os.Open(fmt.Sprintf("plugins/%s.jar", pl.Name))
+				if err == nil {
+					defer plfile.Close()
 
-				mu.Lock()
-				func() {
-					defer mu.Unlock()
-					missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
+					p, err := file.ParsePluginYml(plfile)
+					if err != nil {
+
+						fmt.Printf("error occurred: %s", err.Error())
+						return
+					}
+					plyml = p
+					downloadedVer := plyml.Version
+					if downloadedVer == dbpl.Version || downloadedVer == pl.Version {
+						return
+					}
+					mu.Lock()
+					upPrompt()
+				}
+			} else {
+				resp, err := conn.Retr(fmt.Sprintf("plugins/%s.jar", pl.Name))
+				if err == nil {
+					tmp, err := os.CreateTemp("", fmt.Sprintf("*%s.jar", pl.Name))
 					if err != nil {
 						fmt.Printf("error occurred: %s", err.Error())
 						return
 					}
-					term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, index, len(plugins)))
-					resVer := prompt.Choose(">> ", missedVers)
-					if !strings.EqualFold(resVer, "latest") {
-						pl.Version = resVer
+					defer os.Remove(tmp.Name())
+
+					_, err = io.Copy(tmp, resp)
+					if err != nil {
+						fmt.Printf("error occurred: %s", err.Error())
+						return
 					}
-				}()
+					p, err := file.ParsePluginYml(tmp)
+					if err != nil {
+						fmt.Printf("error occurred: %s", err.Error())
+						return
+					}
+					plyml = p
+					downloadedVer := plyml.Version
+					if downloadedVer == dbpl.Version || downloadedVer == pl.Version {
+						return
+					}
+					mu.Lock()
+					upPrompt()
+				}
 			}
 
 			bs, err := gs.DownloadPlugin(pl)
 			if err != nil {
+
 				fmt.Printf("error occurred: %s", err.Error())
 				return
 			}
@@ -193,44 +227,52 @@ func downloadAndInstall(plugins map[string]string) error {
 		}(i, k, v)
 		i += 1
 	}
-	for v := range installQueue {
-		func() {
+	for {
+		select {
+		case v := <-installQueue:
+			func() {
+				pb := progressbar.DefaultBytes(int64(len(v.Data)), fmt.Sprintf("Installing %s - %s", v.Plugin.Name, v.Plugin.Version))
+				pr, pw := io.Pipe()
 
-			pb := progressbar.NewOptions(
-				len(v.Data),
-				progressbar.OptionClearOnFinish(),
-				progressbar.OptionSetDescription(fmt.Sprintf("Installing %s - %s", v.Plugin.Name, v.Plugin.Version)),
-				progressbar.OptionShowBytes(true),
-				progressbar.OptionShowCount(),
-				progressbar.OptionSetItsString("bytes"),
-			)
-			pr, pw := io.Pipe()
+				go func() {
+					defer pw.Close()
 
-			go func() {
-				defer pw.Close()
+					writer := io.MultiWriter(pb, pw)
+					_, err := writer.Write(v.Data)
+					if err != nil {
+						fmt.Printf("error occurred: %s", err.Error())
+						return
+					}
+				}()
 
-				writer := io.MultiWriter(pb, pw)
-				_, err := writer.Write(v.Data)
-				if err != nil {
-					fmt.Printf("error occurred: %s", err.Error())
-					return
+				fp := filepath.Join("plugins", v.Plugin.Name+".jar")
+				if conn == nil {
+					os.Remove(fp)
+					fi, err := os.Create(fp)
+					if err != nil {
+						fmt.Printf("error occurred: %s", err.Error())
+						return
+					}
+					defer fi.Close()
+					_, err = io.Copy(fi, pr)
+					if err != nil {
+						fmt.Printf("error occurred: %s", err.Error())
+						return
+					}
+				} else {
+					err := conn.Stor(fp, pr)
+					if err != nil {
+						fmt.Printf("error occurred: %s", err.Error())
+						return
+					}
 				}
 			}()
-
-			fp := filepath.Join("plugins", v.Plugin.Name+".jar")
-			os.Remove(fp)
-			fi, err := os.Create(fp)
-			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
-				return
-			}
-			defer fi.Close()
-			_, err = io.Copy(fi, pr)
-			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
-				return
-			}
-		}()
+		default:
+		}
+		if left < 1 {
+			break
+		}
 	}
+
 	return nil
 }

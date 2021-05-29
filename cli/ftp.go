@@ -7,18 +7,14 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 	"syscall"
 
-	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/gate"
 	"github.com/c-bata/go-prompt"
 	"github.com/jlaffaye/ftp"
 	. "github.com/logrusorgru/aurora"
-	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	goterm "golang.org/x/term"
@@ -197,7 +193,7 @@ func connectedExecutor(s string) {
 					plsToInstall[spl[0]] = spl[1]
 				}
 			}
-			err := downloadAndInstallFtp(conn, plsToInstall)
+			err := downloadAndInstall(plsToInstall, conn)
 			if err != nil {
 				fmt.Printf("error occurred: %s", err.Error())
 				return
@@ -209,7 +205,7 @@ func connectedExecutor(s string) {
 				return
 			}
 
-			err = downloadAndInstallFtp(conn, result.Plugins)
+			err = downloadAndInstall(result.Plugins, conn)
 			if err != nil {
 				fmt.Printf("error occurred: %s", err.Error())
 				return
@@ -304,111 +300,6 @@ func newFtp() error {
 	err = viper.WriteConfig()
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-func downloadAndInstallFtp(conn *ftp.ServerConn, plugins map[string]string) error {
-	gs := gate.NewGateService("localhost", "8020")
-	queuedToInstall := make(chan downloadedPlugin)
-	mu := &sync.Mutex{}
-	i := 0
-	for k, v := range plugins {
-		go func(index int, pluginName, version string) {
-			if len(plugins) < index {
-				defer close(queuedToInstall)
-			}
-			pl := &api.Plugin{Name: pluginName}
-			dbpl, err := gs.GetPlugin(pl)
-			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
-				return
-			}
-			pl.Id = dbpl.Id
-			pl.Name = dbpl.Name
-			if strings.EqualFold(version, "latest") || version == "" {
-				pl.Version = dbpl.Version
-			} else {
-				pl.Version = version
-			}
-
-			resp, err := conn.Retr(fmt.Sprintf("plugins/%s.jar", pl.Name))
-			if err == nil {
-				tmp, err := os.CreateTemp("", fmt.Sprintf("*%s.jar", pl.Name))
-				if err != nil {
-					fmt.Printf("error occurred: %s", err.Error())
-					return
-				}
-				defer os.Remove(tmp.Name())
-
-				_, err = io.Copy(tmp, resp)
-				if err != nil {
-					fmt.Printf("error occurred: %s", err.Error())
-					return
-				}
-				plyml, err := file.ParsePluginYml(tmp)
-				if err != nil {
-					fmt.Printf("error occurred: %s", err.Error())
-					return
-				}
-
-				downloadedVer := plyml.Version
-
-				if downloadedVer == dbpl.Version || downloadedVer == pl.Version {
-					return
-				}
-
-				mu.Lock()
-				func() {
-					defer mu.Unlock()
-					missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
-					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
-						return
-					}
-					term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nType 'latest' for the latest version", pl.Name, i, len(plugins)))
-					resVer := prompt.Choose(">> ", missedVers)
-					if !strings.EqualFold(resVer, "latest") {
-						pl.Version = resVer
-					}
-				}()
-			}
-			bs, err := gs.DownloadPlugin(pl)
-			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
-				return
-			}
-			queuedToInstall <- downloadedPlugin{Plugin: pl, Data: bs}
-		}(i, k, v)
-		i += 1
-	}
-	for v := range queuedToInstall {
-		func() {
-			pb := progressbar.NewOptions(
-				len(v.Data),
-				progressbar.OptionClearOnFinish(),
-				progressbar.OptionSetDescription(fmt.Sprintf("Installing %s - %s", v.Plugin.Name, v.Plugin.Version)),
-				progressbar.OptionShowBytes(true),
-				progressbar.OptionShowCount(),
-				progressbar.OptionSetItsString("bytes"),
-			)
-			pr, pw := io.Pipe()
-
-			go func() {
-				defer pw.Close()
-				writer := io.MultiWriter(pb, pw)
-				_, err := writer.Write(v.Data)
-				if err != nil {
-					fmt.Printf("error occurred: %s", err.Error())
-					return
-				}
-			}()
-			err := conn.Stor(v.Plugin.Name, pr)
-			if err != nil {
-				fmt.Printf("error occurred: %s", err.Error())
-				return
-			}
-		}()
 	}
 	return nil
 }

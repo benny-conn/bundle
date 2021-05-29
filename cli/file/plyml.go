@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type plYml struct {
+type PlYml struct {
 	Name        string   `yaml:"name"`
 	Version     string   `yaml:"version"`
 	Description string   `yaml:"description,omitempty"`
@@ -17,31 +17,31 @@ type plYml struct {
 	Conflicts   []string `yaml:"conflicts,omitempty"`
 }
 
-func ParsePluginYml(file *os.File) (plYml, error) {
+func ParsePluginYml(file *os.File) (PlYml, error) {
 
 	info, err := file.Stat()
 	if err != nil {
-		return plYml{}, err
+		return PlYml{}, err
 	}
 	reader, err := zip.NewReader(file, info.Size())
 
 	if err != nil {
-		return plYml{}, err
+		return PlYml{}, err
 	}
 
-	result := plYml{}
+	result := PlYml{}
 
 	for _, file := range reader.File {
 		if strings.HasSuffix(file.Name, "plugin.yml") {
 			rc, err := file.Open()
 			if err != nil {
-				return plYml{}, err
+				return PlYml{}, err
 			}
 			buf := bytes.Buffer{}
 			buf.ReadFrom(rc)
 			err = yaml.Unmarshal(buf.Bytes(), &result)
 			if err != nil {
-				return plYml{}, err
+				return PlYml{}, err
 			}
 		}
 	}

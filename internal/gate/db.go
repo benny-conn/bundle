@@ -454,15 +454,13 @@ func changelogHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 
-		bs := &bytes.Buffer{}
-		_, err := io.Copy(bs, r.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+		r.ParseForm()
+
+		chForm := r.FormValue("changelog")
+
 		bu := &api.Changelog{}
 
-		err = json.Unmarshal(bs.Bytes(), bu)
+		err := json.Unmarshal([]byte(chForm), bu)
 		if err != nil {
 			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)

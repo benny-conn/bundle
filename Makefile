@@ -9,7 +9,7 @@ docker-build: tidy sass cli
 docker-run: docker-build
 	docker-compose up -d
 
-dev: clean sass cli tidy
+dev: tidy clean sass cli
 	./dev.sh
 
 sass:

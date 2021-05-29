@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -56,30 +57,20 @@ func versionGreaterThan(version, than string) bool {
 	}
 
 	versionNoChars := strings.Map(isNumber, version)
+	fmt.Println(versionNoChars)
 
 	thanNoChars := strings.Map(isNumber, than)
-
-	splitInts := make([]int, len(versionNoChars))
-	thanInts := make([]int, len(thanNoChars))
-
-	for i, v := range versionNoChars {
-		in := int(v - '0')
-		splitInts[i] = in
-	}
+	fmt.Println(thanNoChars)
 
 	for i, v := range thanNoChars {
-		in := int(v - '0')
-		thanInts[i] = in
-	}
-
-	for i, v := range thanInts {
 		if len(versionNoChars) < i+1 {
 			break
 		}
-		if splitInts[i] == v {
+		fmt.Printf("Ver - %v Than - %v", rune(versionNoChars[i]), v)
+		if rune(versionNoChars[i]) == v {
 			continue
 		}
-		return splitInts[i] > v
+		return rune(versionNoChars[i]) > v
 	}
 
 	return false
