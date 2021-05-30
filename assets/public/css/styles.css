@@ -1468,8 +1468,8 @@ body {
 }
 
 .plugin-page-thumbnail {
-  height: 80px;
-  width: 80px;
+  height: 150px;
+  max-width: 150px;
 }
 
 /*# sourceMappingURL=styles.css.map */

@@ -17,3 +17,5 @@ cert/
 localhost/
 vendor/
 *.conf
+*.log
+mongo.sh

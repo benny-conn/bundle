@@ -25,4 +25,4 @@ MONGO_AUTH=TRUE
 REDIS_PASS=
 JWT_PASS=
 STRIPE_TEST_KEY=
-AES_KEY=
+ERR_LOG="~/workspace/bundle/errors.log"

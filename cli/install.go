@@ -11,6 +11,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/file"
+	"github.com/bennycio/bundle/cli/logger"
 	"github.com/bennycio/bundle/cli/term"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/c-bata/go-prompt"
@@ -78,22 +79,6 @@ var installCmd = &cobra.Command{
 	},
 }
 
-// func downloadAndInstall(pluginName string, bundleVersion string) (string, error) {
-
-// 	fp := filepath.Join("plugins", pluginName+".jar")
-// 	latest := strings.EqualFold(bundleVersion, "latest")
-// 	dl := downloader.New(pluginName, bundleVersion).WithLocation(fp).WithLatest(latest)
-// 	bs, err := dl.Download()
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	err = dl.Install(bs)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return dl.Plugin.Version, nil
-// }
-
 func changesSinceCurrent(pluginId, pluginName, desiredVersion, currentVersion string) ([]string, error) {
 	gs := gate.NewGateService("localhost", "8020")
 	ch := &api.Changelog{PluginId: pluginId}
@@ -142,7 +127,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 			dbpl, err := gs.GetPlugin(pl)
 			if err != nil {
 
-				fmt.Printf("error occurred: %s", err.Error())
+				logger.ErrLog.Println(err.Error())
 				return
 			}
 			pl.Id = dbpl.Id
@@ -164,7 +149,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 						defer mu.Unlock()
 						missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
 						if err != nil {
-							fmt.Printf("error occurred: %s", err.Error())
+							logger.ErrLog.Println(err.Error())
 							return
 						}
 						term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nPress enter for the latest version", pl.Name, index, len(plugins)))
@@ -184,7 +169,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 						defer mu.Unlock()
 						missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
 						if err != nil {
-							fmt.Printf("error occurred: %s", err.Error())
+							logger.ErrLog.Println(err.Error())
 							return
 						}
 						term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nPress enter for the latest version", pl.Name, index, len(plugins)))
@@ -199,7 +184,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 			bs, err := gs.DownloadPlugin(pl)
 			if err != nil {
 
-				fmt.Printf("error occurred: %s", err.Error())
+				logger.ErrLog.Println(err.Error())
 				return
 			}
 			installQueue <- downloadedPlugin{Plugin: pl, Data: bs}
@@ -219,7 +204,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 					writer := io.MultiWriter(pb, pw)
 					_, err := writer.Write(v.Data)
 					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
+						logger.ErrLog.Println(err.Error())
 						return
 					}
 				}()
@@ -229,19 +214,19 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 					os.Remove(fp)
 					fi, err := os.Create(fp)
 					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
+						logger.ErrLog.Println(err.Error())
 						return
 					}
 					defer fi.Close()
 					_, err = io.Copy(fi, pr)
 					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
+						logger.ErrLog.Println(err.Error())
 						return
 					}
 				} else {
 					err := conn.Stor(fp, pr)
 					if err != nil {
-						fmt.Printf("error occurred: %s", err.Error())
+						logger.ErrLog.Println(err.Error())
 						return
 					}
 				}

@@ -2,11 +2,10 @@ package db
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/db/orm"
+	"github.com/bennycio/bundle/internal/logger"
 )
 
 type changelogServer struct {
@@ -28,7 +27,7 @@ func (s *changelogServer) Get(ctx context.Context, req *api.Changelog) (*api.Cha
 func (s *changelogServer) Insert(ctx context.Context, req *api.Changelog) (*api.Empty, error) {
 	err := s.orm.Insert(req)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		logger.ErrLog.Println(err.Error())
 		return nil, err
 	}
 	return &api.Empty{}, nil

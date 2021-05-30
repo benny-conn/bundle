@@ -190,14 +190,14 @@
       {{else}}
       <img
         class="plugin-page-thumbnail img-thumbnail thumbnail"
-        src="https://via.placeholder.com/80.png"
+        src="https://via.placeholder.com/150.png"
       />
       {{ end }}
-      <div class="text">
+      <div class="text mx-4">
         <h2>{{.Plugin.Name}}</h2>
         <h4>- by {{.Plugin.Author.Username}}</h4>
+        <h5>Version {{.Plugin.Version}}</h5>
         <h6>{{.Plugin.Description}}</h6>
-        <h6>Version {{.Plugin.Version}}</h6>
       </div>
     </div>
     <div class="col-3">
@@ -236,18 +236,19 @@
   <div class="plugin-info">
     {{if .Plugin.Thumbnail}}
     <img
-      class="plugin-thumbnail img-thumbnail thumbnail"
+      class="plugin-page-thumbnail img-thumbnail thumbnail"
       src="{{.Plugin.Thumbnail}}"
     />
     {{else}}
     <img
-      class="plugin-thumbnail img-thumbnail thumbnail"
-      src="https://via.placeholder.com/80.png"
+      class="plugin-page-thumbnail img-thumbnail thumbnail"
+      src="https://via.placeholder.com/150.png"
     />
     {{ end }}
-    <div class="text">
+    <div class="text mx-4">
       <h2>{{.Plugin.Name}}</h2>
       <h4>- by {{.Plugin.Author.Username}}</h4>
+      <h5>Version {{.Plugin.Version}}</h5>
       <h6>{{.Plugin.Description}}</h6>
     </div>
   </div>
@@ -259,42 +260,6 @@
         bundle install {{.Plugin.Name}}
       </code>
     </div>
-    <!-- <div class="col">
-      <h4>Install By Bundler</h4>
-      {{if .Bundle}}
-      {{if call .Contains .Bundle.Plugins .Plugin.Name}}
-      <p><em>Already Being Bundled</em></p>
-      {{ else }}
-      <form action="/plugins/bundler" method="POST" id="addBundle">
-        <input
-          type="hidden"
-          value="{{.Plugin.Name}}"
-          name="plugin"
-          id="bundle-add"
-        />
-        <button type="submit" class="btn btn-primary btn-sm">
-          Add To Bundle
-        </button>
-      </form>
-      {{ end }}
-      {{ else }}
-      {{if .Profile.Id}}
-      <form action="/plugins/bundler" method="POST" id="addBundle">
-        <input
-          type="hidden"
-          value="{{.Plugin.Name}}"
-          name="plugin"
-          id="bundle-add"
-        />
-        <button type="submit" class="btn btn-primary btn-sm">
-          Add To Bundle
-        </button>
-      </form>
-      {{else}}
-      <a href="/login">Login To Bundle</a>
-      {{ end }}
-      {{ end }}
-    </div> -->
   </div>
 </div>
 

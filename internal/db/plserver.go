@@ -2,11 +2,10 @@ package db
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/db/orm"
+	"github.com/bennycio/bundle/internal/logger"
 )
 
 type pluginsServer struct {
@@ -28,7 +27,7 @@ func (s *pluginsServer) Get(ctx context.Context, req *api.Plugin) (*api.Plugin, 
 func (s *pluginsServer) Update(ctx context.Context, req *api.Plugin) (*api.Empty, error) {
 	err := s.orm.Update(req)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		logger.ErrLog.Println(err.Error())
 		return nil, err
 	}
 	return &api.Empty{}, nil
@@ -37,7 +36,7 @@ func (s *pluginsServer) Update(ctx context.Context, req *api.Plugin) (*api.Empty
 func (s *pluginsServer) Insert(ctx context.Context, plugin *api.Plugin) (*api.Empty, error) {
 	err := s.orm.Insert(plugin)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		logger.ErrLog.Println(err.Error())
 		return nil, err
 	}
 	return &api.Empty{}, nil
