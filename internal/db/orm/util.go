@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,6 +16,8 @@ type Mongo struct {
 	Ctx    context.Context
 	Cancel context.CancelFunc
 }
+
+var caseInsensitive = &options.Collation{Locale: "en", Strength: 1}
 
 func getMongoSession() (*Mongo, error) {
 	mg := &Mongo{}
@@ -77,10 +78,6 @@ func removeZeroOrNilValues(val bson.D) bson.D {
 func remove(s bson.D, i int) bson.D {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
-}
-
-func caseInsensitive(value string) primitive.Regex {
-	return primitive.Regex{Pattern: value, Options: "i"}
 }
 
 func boolin(b bool) *bool {

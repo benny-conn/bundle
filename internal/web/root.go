@@ -22,6 +22,6 @@ func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	err = tpl.ExecuteTemplate(w, "index", data)
 	if err != nil {
-		logger.ErrLog.Panic(err.Error())
+		logger.ErrLog.Print(err.Error())
 	}
 }

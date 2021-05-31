@@ -2,11 +2,13 @@ package gate
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 
-	"github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal/gate/grpc"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/webhook"
 )
@@ -16,7 +18,7 @@ func checkoutCompleteHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	req.Body = http.MaxBytesReader(w, req.Body, MaxBodyBytes)
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		internal.HttpError(w, err, http.StatusServiceUnavailable)
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 
@@ -31,7 +33,7 @@ func checkoutCompleteHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	event, err := webhook.ConstructEvent(body, req.Header.Get("Stripe-Signature"), endpointSecret)
 
 	if err != nil {
-		internal.HttpError(w, err, http.StatusBadRequest) // Return a 400 error on a bad signature.
+		http.Error(w, err.Error(), http.StatusBadRequest) // Return a 400 error on a bad signature.
 		return
 	}
 
@@ -39,13 +41,45 @@ func checkoutCompleteHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		var session stripe.CheckoutSession
 		err := json.Unmarshal(event.Data.Raw, &session)
 		if err != nil {
-			internal.HttpError(w, err, http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		handleCompletedCheckoutSession(session)
+		err = handleCompletedCheckoutSession(session)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 }
 
-func handleCompletedCheckoutSession(ses stripe.CheckoutSession) {
+func handleCompletedCheckoutSession(ses stripe.CheckoutSession) error {
+	userClient := grpc.NewUserClient("", "")
+	plClient := grpc.NewPluginClient("", "")
+	cu := ses.CustomerEmail
+	dbus, err := userClient.Get(&api.User{Email: cu})
+	if err != nil {
+		return err
+	}
 
+	item := ses.Object
+
+	dbpl, err := plClient.Get(&api.Plugin{Name: item})
+	if err != nil {
+		return err
+	}
+
+	if dbus.Purchases == nil {
+		return fmt.Errorf("user does not have any pending or non-pending purchases")
+	}
+	for _, v := range dbus.Purchases {
+		if v.ObjectId == dbpl.Id {
+			v.Complete = true
+		}
+	}
+
+	err = userClient.Update(dbus)
+	if err != nil {
+		return err
+	}
+	return nil
 }

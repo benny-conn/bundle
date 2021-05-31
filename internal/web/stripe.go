@@ -26,6 +26,7 @@ func stripeAuthHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	us, err := gs.GetUser(&api.User{Id: pro.Id})
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
@@ -35,20 +36,22 @@ func stripeAuthHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	if us.StripeId == "" {
 
 		params := &stripe.AccountParams{
-			Type:  stripe.String(string(stripe.AccountTypeExpress)),
-			Email: stripe.String(pro.Email),
+			Type:         stripe.String(string(stripe.AccountTypeExpress)),
+			Email:        stripe.String(pro.Email),
+			BusinessType: stripe.String("individual"),
 		}
 		acct, err := account.New(params)
 
 		if err != nil {
+			logger.ErrLog.Print(err.Error())
 			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 		us.StripeId = acct.ID
-
 		err = gs.UpdateUser(us)
 
 		if err != nil {
+			logger.ErrLog.Print(err.Error())
 			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
@@ -56,12 +59,13 @@ func stripeAuthHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	p := &stripe.AccountLinkParams{
 		Account:    stripe.String(us.StripeId),
-		RefreshURL: stripe.String("https://" + os.Getenv("WEB_HOST") + "/stripe/auth"),
-		ReturnURL:  stripe.String("https://" + os.Getenv("WEB_HOST") + "/stripe/return"),
+		RefreshURL: stripe.String(fmt.Sprintf("https://%s:%s/stripe/auth", os.Getenv("WEB_HOST"), os.Getenv("WEB_PORT"))),
+		ReturnURL:  stripe.String(fmt.Sprintf("https://%s:%s/stripe/return", os.Getenv("WEB_HOST"), os.Getenv("WEB_PORT"))),
 		Type:       stripe.String("account_onboarding"),
 	}
 	acc, err := accountlink.New(p)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
@@ -74,6 +78,7 @@ func stripeReturnHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	pro, err := getProfFromCookie(r)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
@@ -88,21 +93,25 @@ func stripeReturnHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	us, err := gs.GetUser(&api.User{Id: pro.Id})
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	acct, err := account.GetByID(us.Id, nil)
+	acct, err := account.GetByID(us.StripeId, nil)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		handleError(w, err, http.StatusNotFound)
 		return
 	}
 	data.Profile.StripeInfo.ChargesEnabled = acct.ChargesEnabled
 	data.Profile.StripeInfo.DetailsSubmitted = acct.DetailsSubmitted
 
+	fmt.Println(acct)
+
 	err = tpl.ExecuteTemplate(w, "profile", data)
 	if err != nil {
-		logger.ErrLog.Panic(err.Error())
+		logger.ErrLog.Print(err.Error())
 	}
 }
 
@@ -141,6 +150,8 @@ func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		data.Plugin = dbpl
+
 		if dbpl.Author == nil {
 			err = fmt.Errorf("author is nil")
 			logger.ErrLog.Print(err.Error())
@@ -152,6 +163,14 @@ func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			err = fmt.Errorf("author is not striped up")
 			logger.ErrLog.Print(err.Error())
 			handleError(w, err, http.StatusNotFound)
+			return
+		}
+
+		dbUser, err := gs.GetUser(&api.User{Id: pro.Id})
+
+		if err != nil {
+			logger.ErrLog.Print(err.Error())
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -168,15 +187,16 @@ func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 					Quantity: stripe.Int64(1),
 				},
 			},
+			CustomerEmail: stripe.String(dbUser.Email),
 			PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
-				ApplicationFeeAmount: stripe.Int64(int64(dbpl.Premium.Price / 20)),
+				ApplicationFeeAmount: stripe.Int64(int64((dbpl.Premium.Price / 15))),
 				TransferData: &stripe.CheckoutSessionPaymentIntentDataTransferDataParams{
 					Destination: stripe.String(dbpl.Author.StripeId),
 				},
 			},
 			Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
-			SuccessURL: stripe.String(fmt.Sprintf("https://%splugins?plugin=%s", os.Getenv("WEB_HOST"), plugin)),
-			CancelURL:  stripe.String(fmt.Sprintf("https://%splugins?plugin=%s", os.Getenv("WEB_HOST"), plugin)),
+			SuccessURL: stripe.String(fmt.Sprintf("https://%s:%s/plugins?plugin=%s", os.Getenv("WEB_HOST"), os.Getenv("WEB_PORT"), dbpl.Name)),
+			CancelURL:  stripe.String(fmt.Sprintf("https://%s:%s/plugins?plugin=%s", os.Getenv("WEB_HOST"), os.Getenv("WEB_PORT"), dbpl.Name)),
 		}
 
 		session, err := session.New(params)
@@ -187,9 +207,28 @@ func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 		data.PurchaseSession = session.ID
 
+		pur := &api.Purchase{
+			ObjectId: dbpl.Id,
+			Complete: false,
+		}
+
+		if dbUser.Purchases != nil {
+			dbUser.Purchases = append(dbUser.Purchases, pur)
+		} else {
+			dbUser.Purchases = []*api.Purchase{pur}
+		}
+
+		err = gs.UpdateUser(dbUser)
+		if err != nil {
+			logger.ErrLog.Print(err.Error())
+			handleError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		data = fillFunctions(data)
 		err = tpl.ExecuteTemplate(w, "purchase", data)
 		if err != nil {
-			logger.ErrLog.Panic(err.Error())
+			logger.ErrLog.Print(err.Error())
 		}
 	}
 

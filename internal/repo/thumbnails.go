@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 )
 
 func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +19,7 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		err := r.ParseMultipartForm(32 << 20)
 		if err != nil {
-			internal.HttpError(w, err, http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -28,13 +27,13 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		plugin := r.FormValue("plugin")
 		file, h, err := r.FormFile("thumbnail")
 		if err != nil {
-			internal.HttpError(w, err, http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		if h.Size > (1 << 20) {
 			err = fmt.Errorf("file too large")
-			internal.HttpError(w, err, http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -44,7 +43,7 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			author := r.FormValue("author")
 			if author == "" {
 				err = fmt.Errorf("no author specified")
-				internal.HttpError(w, err, http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 			pl := &api.Plugin{
@@ -56,7 +55,7 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 			loc, err = uploadPluginThumbnail(pl, file)
 			if err != nil {
-				internal.HttpError(w, err, http.StatusServiceUnavailable)
+				http.Error(w, err.Error(), http.StatusServiceUnavailable)
 				return
 			}
 			fmt.Println("Successfully uploaded to " + loc)
@@ -66,7 +65,7 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			}
 			loc, err = uploadUserThumbnail(u, file)
 			if err != nil {
-				internal.HttpError(w, err, http.StatusServiceUnavailable)
+				http.Error(w, err.Error(), http.StatusServiceUnavailable)
 				return
 			}
 		}

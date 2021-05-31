@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/gate"
 	"github.com/bennycio/bundle/logger"
 	"github.com/microcosm-cc/bluemonday"
@@ -26,8 +25,6 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	gs := gate.NewGateService("", "")
-
-	data.Contains = internal.Contains
 
 	switch req.Method {
 
@@ -78,28 +75,6 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 			data.Page = pageNumber
 
-			math := func(i int, p int, op string) int {
-				result := 0
-				switch op {
-				case "add":
-					result = i + p
-				case "sub":
-					result = i - p
-				case "mul":
-					result = i * p
-				case "div":
-					result = i / p
-				}
-				return result
-			}
-			data.Math = math
-
-			date := func(i int64) string {
-				d := time.Unix(i, 0)
-				return d.Format("Mon Jan 2 15:04:05 MST")
-			}
-			data.Date = date
-
 			req := &api.PaginatePluginsRequest{
 				Count:    perPageCount,
 				Search:   search,
@@ -139,9 +114,10 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	data = fillFunctions(data)
 	err = tpl.ExecuteTemplate(w, "plugins", data)
 	if err != nil {
-		logger.ErrLog.Panic(err.Error())
+		logger.ErrLog.Print(err.Error())
 	}
 
 }
@@ -256,15 +232,30 @@ func premiumHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	priceNum, err := strconv.Atoi(price)
+	spl := strings.Split(price, ".")
+
+	finalPrice := price
+	if len(spl) > 1 {
+		dec := spl[1]
+		if len(dec) > 2 {
+			dec = dec[:2]
+		}
+		finalPrice = strings.Join([]string{spl[0], dec}, ".")
+	}
+
+	priceNum, err := strconv.ParseFloat(finalPrice, 64)
 	if err != nil {
-		logger.ErrLog.Print(err.Error())
-		handleError(w, err, http.StatusBadRequest)
-		return
+		p, err := strconv.Atoi(price)
+		if err != nil {
+			logger.ErrLog.Print(err.Error())
+			handleError(w, err, http.StatusBadRequest)
+			return
+		}
+		priceNum = float64(p)
 	}
 
 	prem := &api.Premium{
-		Price: int32(priceNum),
+		Price: int32(priceNum * 100),
 	}
 
 	p := &api.Plugin{

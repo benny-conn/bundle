@@ -102,7 +102,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		err := r.ParseForm()
 		if err != nil {
-			logger.ErrLog.Panic(err.Error())
+			logger.ErrLog.Print(err.Error())
 		}
 
 		pluginName := r.FormValue("name")

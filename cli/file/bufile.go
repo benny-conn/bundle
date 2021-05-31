@@ -61,7 +61,7 @@ func getBundleFileBytes(path string) ([]byte, error) {
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, fi)
 	if err != nil {
-		logger.ErrLog.Panic(err.Error())
+		logger.ErrLog.Print(err.Error())
 	}
 	return bs.Bytes(), nil
 }
@@ -78,7 +78,7 @@ func GetBundle(path string) (*BundleFile, error) {
 	err = yaml.Unmarshal(fileBytes, result)
 
 	if err != nil {
-		logger.ErrLog.Panic(err.Error())
+		logger.ErrLog.Print(err.Error())
 	}
 
 	return result, nil

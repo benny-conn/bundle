@@ -20,7 +20,7 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	err = tpl.ExecuteTemplate(w, "profile", data)
 	if err != nil {
-		logger.ErrLog.Panic(err.Error())
+		logger.ErrLog.Print(err.Error())
 	}
 
 }

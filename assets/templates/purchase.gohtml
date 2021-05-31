@@ -1,11 +1,58 @@
 {{define "purchase"}}
 <!DOCTYPE html>
 <html>
-  {{template "head" .}}
-  <body>
-    <input id="checkoutSessionId" type="hidden" value="{{.PurchaseSession}}" />
-    <button class="btn btn-lg btn-primary" id="checkoutButton">Checkout</button>
-  </body>
-  {{template "footer" .}}
+{{template "head" .}}
+
+<body>
+  <main class="page">
+    <section class="shopping-cart dark">
+      <div class="container">
+        <div class="block-heading">
+          <h2>Purchase Plugin</h2>
+        </div>
+        <div class="content">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="items">
+                <div class="product">
+                  <div class="row">
+                    <div class="col-md-3">
+                      {{if .Plugin.Thumbnail}}
+                      <img class="img-fluid mx-auto d-block image" src="{{.Plugin.Thumbnail}}" />
+                      {{else}}
+                        <img class="img-fluid mx-auto d-block image" src="https://via.placeholder.com/150.png" />
+                        {{ end }}
+                    </div>
+                    <div class="col-md-8">
+                      <div class="info">
+                        <div class="product-name">
+                          <div class="product-name">
+                            <h1>{{.Plugin.Name}}</h1>
+                            <div class="product-info">
+                              <div>Description: <span class="value">{{.Plugin.Description}}</span></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="summary">
+                <h3>Summary</h3>
+                <div class="summary-item"><span class="text">Total</span><span
+                    class="price">{{call .Functions.FmtMoney .Plugin.Premium.Price}}</span></div>
+                <input id="checkoutSessionId" type="hidden" value="{{.PurchaseSession}}" />
+                <button class="btn btn-lg btn-primary btn-block" id="checkoutButton">Checkout</button>
+              </div>
+            </div>
+          </div>
+    </section>
+  </main>
+</body>
+{{template "footer" .}}
+
 </html>
 {{ end }}

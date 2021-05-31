@@ -20,9 +20,8 @@ type plugin struct {
 	Version     string             `bson:"version,omitempty" json:"version"`
 	Thumbnail   string             `bson:"thumbnail,omitempty" json:"thumbnail"`
 	Category    category           `bson:"category,omitempty" json:"category"`
-	Downloads   int32              `bson:"downloads,omitempty" json:"downloads"`
+	Metadata    metadata           `bson:"metadata,omitempty" json:"metadata"`
 	Premium     premium            `bson:"premium,omitempty" json:"premium"`
-	Conflicts   []string           `bson:"conflicts,omitempty" json:"conflicts"`
 	LastUpdated primitive.DateTime `bson:"lastUpdated,omitempty" json:"lastUpdated"`
 }
 
@@ -31,6 +30,10 @@ type premium struct {
 	Purchases int32 `bson:"purchases,omitempty" json:"purchases"`
 }
 
+type metadata struct {
+	Downloads int64    `bson:"downloads,omitempty" json:"price"`
+	Conflicts []string `bson:"conflicts,omitempty" json:"purchases"`
+}
 type category int32
 
 const (
@@ -260,12 +263,14 @@ func ormToApiPl(pl plugin) *api.Plugin {
 		Version:     pl.Version,
 		Thumbnail:   pl.Thumbnail,
 		Category:    api.Category(pl.Category),
-		Downloads:   pl.Downloads,
+		Metadata: &api.PluginMetadata{
+			Downloads: pl.Metadata.Downloads,
+			Conflicts: pl.Metadata.Conflicts,
+		},
 		Premium: &api.Premium{
 			Price:     pl.Premium.Price,
 			Purchases: pl.Premium.Purchases,
 		},
-		Conflicts:   pl.Conflicts,
 		LastUpdated: pl.LastUpdated.Time().Unix(),
 	}
 	a, err := NewUsersOrm().Get(&api.User{Id: pl.Author.Hex()})
@@ -294,8 +299,6 @@ func apiToOrmPl(pl *api.Plugin) plugin {
 		Thumbnail:   pl.Thumbnail,
 		LastUpdated: lastUpdated,
 		Category:    category(pl.Category),
-		Downloads:   pl.Downloads,
-		Conflicts:   pl.Conflicts,
 	}
 	pluginID, err := primitive.ObjectIDFromHex(pl.Id)
 	if pluginID != primitive.NilObjectID && err == nil {
@@ -311,6 +314,12 @@ func apiToOrmPl(pl *api.Plugin) plugin {
 		result.Premium = premium{
 			Price:     pl.Premium.Price,
 			Purchases: pl.Premium.Purchases,
+		}
+	}
+	if pl.Metadata != nil {
+		result.Metadata = metadata{
+			Downloads: pl.Metadata.Downloads,
+			Conflicts: pl.Metadata.Conflicts,
 		}
 	}
 

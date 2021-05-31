@@ -22,6 +22,12 @@ message User {
     string tag = 6;
     string thumbnail = 7;
     string stripeId = 8;
+    repeated Purchase purchases = 9;
+}
+
+message Purchase {
+    string objectId = 1;
+    bool complete = 3;
 }
 
 // PLUGINS --------------------------------------------------------------------- ||
@@ -55,10 +61,14 @@ message Plugin {
     string description = 5;
     string thumbnail = 6;
     Category category = 7;
-    int32 downloads = 8;
+    PluginMetadata metadata = 8;
     Premium premium = 9;
-    repeated string conflicts = 10;
-    int64 lastUpdated = 11;
+    int64 lastUpdated = 10;
+}
+
+message PluginMetadata {
+    int64 downloads = 1;
+    repeated string conflicts = 2;
 }
 
 message Premium {

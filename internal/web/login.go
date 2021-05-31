@@ -30,7 +30,7 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 				Message: cleanError(err).Error(),
 			}})
 			if err != nil {
-				logger.ErrLog.Panic(err.Error())
+				logger.ErrLog.Print(err.Error())
 			}
 			return
 		}
@@ -43,7 +43,7 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 				Message: cleanError(err).Error(),
 			}})
 			if err != nil {
-				logger.ErrLog.Panic(err.Error())
+				logger.ErrLog.Print(err.Error())
 			}
 			return
 		}
@@ -55,7 +55,7 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 				Message: cleanError(err).Error(),
 			}})
 			if err != nil {
-				logger.ErrLog.Panic(err.Error())
+				logger.ErrLog.Print(err.Error())
 			}
 			return
 		}
@@ -74,7 +74,7 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 		err = tpl.ExecuteTemplate(w, "login", templateData{Referrer: referer})
 		if err != nil {
-			logger.ErrLog.Panic(err.Error())
+			logger.ErrLog.Print(err.Error())
 		}
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,6 +22,12 @@ type user struct {
 	Scopes    []string           `bson:"scopes,omitempty" json:"scopes"`
 	Thumbnail string             `bson:"thumbnail,omitempty" json:"thumbnail"`
 	StripeId  string             `bson:"stripeId,omitempty" json:"stripeId"`
+	Purchases []purchase         `bson:"purchases,omitempty" json:"purchasedPlugins"`
+}
+
+type purchase struct {
+	ObjectId primitive.ObjectID `bson:"objectId" json:"objectId"`
+	Complete bool               `bson:"complete" json:"complete"`
 }
 
 type UsersOrm struct{}
@@ -47,7 +54,7 @@ func (u *UsersOrm) Insert(us *api.User) error {
 
 	collection := session.Client.Database("users").Collection("users")
 
-	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", caseInsensitive(us.Username)}})
+	countUserName, err := collection.CountDocuments(session.Ctx, bson.D{{"username", us.Username}}, options.Count().SetCollation(caseInsensitive))
 
 	if err != nil {
 		logger.ErrLog.Print(err.Error())
@@ -60,7 +67,7 @@ func (u *UsersOrm) Insert(us *api.User) error {
 		return err
 	}
 
-	countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", caseInsensitive(us.Email)}})
+	countEmail, err := collection.CountDocuments(session.Ctx, bson.D{{"email", us.Email}}, options.Count().SetCollation(caseInsensitive))
 
 	if err != nil {
 		logger.ErrLog.Print(err.Error())
@@ -122,14 +129,14 @@ func (u *UsersOrm) Get(req *api.User) (*api.User, error) {
 		}
 		res.Decode(decodedUser)
 	case get.Username == "":
-		res := collection.FindOne(session.Ctx, bson.D{{"email", caseInsensitive(get.Email)}})
+		res := collection.FindOne(session.Ctx, bson.D{{"email", get.Email}}, options.FindOne().SetCollation(caseInsensitive))
 		if res.Err() != nil {
 			logger.ErrLog.Print(res.Err().Error())
 			return nil, res.Err()
 		}
 		res.Decode(decodedUser)
 	default:
-		res := collection.FindOne(session.Ctx, bson.D{{"username", get.Username}, {"email", caseInsensitive(get.Email)}})
+		res := collection.FindOne(session.Ctx, bson.D{{"username", get.Username}, {"email", get.Email}}, options.FindOne().SetCollation(caseInsensitive))
 		if res.Err() != nil {
 			logger.ErrLog.Print(res.Err().Error())
 			return nil, res.Err()
@@ -224,11 +231,24 @@ func apiToOrmUser(us *api.User) user {
 	if userID != primitive.NilObjectID && err == nil {
 		result.Id = userID
 	}
+	if us.Purchases != nil {
+		p := make([]purchase, len(us.Purchases))
+		for i, v := range us.Purchases {
+			prim, err := primitive.ObjectIDFromHex(v.ObjectId)
+			if prim != primitive.NilObjectID && err == nil {
+				p[i] = purchase{
+					ObjectId: prim,
+					Complete: v.Complete,
+				}
+			}
+		}
+		result.Purchases = p
+	}
 	return result
 }
 
 func ormToApiUser(us user) *api.User {
-	return &api.User{
+	u := &api.User{
 		Id:        us.Id.Hex(),
 		Username:  us.Username,
 		Email:     us.Email,
@@ -238,4 +258,13 @@ func ormToApiUser(us user) *api.User {
 		Thumbnail: us.Thumbnail,
 		StripeId:  us.StripeId,
 	}
+	p := make([]*api.Purchase, len(us.Purchases))
+	for i, v := range us.Purchases {
+		p[i] = &api.Purchase{
+			ObjectId: v.ObjectId.Hex(),
+			Complete: v.Complete,
+		}
+	}
+	u.Purchases = p
+	return u
 }

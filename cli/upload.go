@@ -110,7 +110,9 @@ var uploadCmd = &cobra.Command{
 		plugin.Version = result.Version
 		plugin.Description = result.Description
 		plugin.Category = api.Category(result.Category)
-		plugin.Conflicts = result.Conflicts
+		plugin.Metadata = &api.PluginMetadata{
+			Conflicts: result.Conflicts,
+		}
 
 		gs := gate.NewGateService("localhost", "8020")
 

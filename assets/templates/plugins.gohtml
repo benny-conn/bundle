@@ -1,19 +1,20 @@
 {{define "plugins"}}
 <!DOCTYPE html>
 <html>
-  {{template "head" .}}
-  {{template "header" .}}
-  {{if .Plugin }}
-  {{ template "plugin-page" .}}
-  {{else}}
+{{template "head" .}}
+{{template "header" .}}
+{{if .Plugin }}
+{{ template "plugin-page" .}}
+{{else}}
   {{template "plugins-home" .}}
-  <!-- prettier-ignore -->
   {{end}}
   {{template "footer" .}}
+
 </html>
 {{ end }}
 
 {{define "plugins-home"}}
+
 <body>
   <div class="container">
     <h1 class="mb-1 mt-4">Plugins</h1>
@@ -22,19 +23,9 @@
       <div class="search col-sm-12 col-md-3">
         <form action="/plugins" class="search-field">
           <div class="input-group mb-3">
-            <input
-              type="text"
-              class="form-control"
-              name="search"
-              placeholder="Search"
-              aria-label="Search"
-              aria-describedby="button-addon2"
-            />
-            <button
-              class="btn btn-outline-secondary"
-              type="submit"
-              id="button-addon2"
-            >
+            <input type="text" class="form-control" name="search" placeholder="Search" aria-label="Search"
+              aria-describedby="button-addon2" />
+            <button class="btn btn-outline-secondary" type="submit" id="button-addon2">
               <i class="fa fa-search"></i>
             </button>
           </div>
@@ -44,7 +35,7 @@
     <div class="row">
       <div class="col-sm-12 col-md-9">
         <div class="plugins-container row row-cols-1 row-cols-md-3 g-4">
-          {{ $date := .Date }}
+          {{ $date := .Functions.Date }}
           <!-- prettier-ignore -->
           {{ range .Plugins }}
           <a href="?plugin={{.Name}}" class="plugin-link col">
@@ -52,21 +43,16 @@
               {{if .Thumbnail}}
               <img class="card-img-top plugin-thumbnail" src="{{.Thumbnail}}" />
               {{else}}
-              <img
-                class="card-img-top plugin-thumbnail"
-                src="https://via.placeholder.com/154.png"
-              />
-              {{ end }}
-              <div class="card-body">
-                <h4 class="card-title">{{.Name}}</h4>
-                <h5 class="card-text">Author: {{.Author.Username}}</h5>
-                <p class="card-text">{{.Description}}</p>
-              </div>
-              <div class="card-footer">
-                <small class="text-muted"
-                  >Last updated {{ call $date .LastUpdated }}</small
-                >
-              </div>
+                <img class="card-img-top plugin-thumbnail" src="https://via.placeholder.com/154.png" />
+                {{ end }}
+                <div class="card-body">
+                  <h4 class="card-title">{{.Name}}</h4>
+                  <h5 class="card-text">Author: {{.Author.Username}}</h5>
+                  <p class="card-text">{{.Description}}</p>
+                </div>
+                <div class="card-footer">
+                  <small class="text-muted">Last updated {{ call $date .LastUpdated }}</small>
+                </div>
             </div>
           </a>
           {{ end }}
@@ -121,9 +107,9 @@
       </div>
     </div>
 
-    {{$previous := call .Math .Page 1 "sub" }}
-    {{$next := call .Math .Page 1 "add" }}
-    {{$nextNext := call .Math .Page 2 "add" }}
+    {{$previous := call .Functions.Math .Page 1 "sub" }}
+    {{$next := call .Functions.Math .Page 1 "add" }}
+    {{$nextNext := call .Functions.Math .Page 2 "add" }}
 
     <nav aria-label="Page navigation example">
       <ul class="pagination justify-content-center">
@@ -132,30 +118,30 @@
           <a aria-disabled="true" class="page-link">Previous</a>
         </li>
         {{else}}
-        <li class="page-item">
-          <a class="page-link" href="/plugins?page={{ $previous }}">
-            Previous
-          </a>
-          {{ end }}
-        </li>
-        <li class="page-item disabled">
-          <a class="page-link" href="#">
-            {{.Page}}
-          </a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="/plugins?page={{ $next }}">
-            {{ $next }}
-          </a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="/plugins?page={{ $nextNext }}">
-            {{ $nextNext }}
-          </a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" href="/plugins?page={{ $next }}">Next</a>
-        </li>
+          <li class="page-item">
+            <a class="page-link" href="/plugins?page={{ $previous }}">
+              Previous
+            </a>
+            {{ end }}
+          </li>
+          <li class="page-item disabled">
+            <a class="page-link" href="#">
+              {{.Page}}
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/plugins?page={{ $next }}">
+              {{ $next }}
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/plugins?page={{ $nextNext }}">
+              {{ $nextNext }}
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/plugins?page={{ $next }}">Next</a>
+          </li>
       </ul>
     </nav>
   </div>
@@ -164,8 +150,9 @@
 {{ end }}
 
 {{define "plugin-page"}}
+
 <body>
-  <div class="container">
+  <div class="plugin-info-page container">
     {{template "plugin-header" .}}
     {{if .Readme}}
     <div class="readme">
@@ -173,7 +160,7 @@
     </div>
     {{else}}
 
-    {{ end }}
+      {{ end }}
   </div>
   {{template "foot" .}}
 </body>
@@ -185,57 +172,32 @@
   <div class="row justify-content-between">
     <div class="plugin-info col-9">
       {{if .Plugin.Thumbnail}}
-      <img
-        class="plugin-page-thumbnail img-thumbnail thumbnail"
-        src="{{.Plugin.Thumbnail}}"
-      />
+      <img class="plugin-page-thumbnail img-thumbnail thumbnail" src="{{.Plugin.Thumbnail}}" />
       {{else}}
-      <img
-        class="plugin-page-thumbnail img-thumbnail thumbnail"
-        src="https://via.placeholder.com/150.png"
-      />
-      {{ end }}
-      <div class="text mx-4">
-        <h2>{{.Plugin.Name}}</h2>
-        <h4>- by {{.Plugin.Author.Username}}</h4>
-        <h5>Version {{.Plugin.Version}}</h5>
-        <h6>{{.Plugin.Description}}</h6>
-      </div>
+        <img class="plugin-page-thumbnail img-thumbnail thumbnail" src="https://via.placeholder.com/150.png" />
+        {{ end }}
+        <div class="text mx-4">
+          <h2>{{.Plugin.Name}}</h2>
+          <h4>- by {{.Plugin.Author.Username}}</h4>
+          <h5>Version {{.Plugin.Version}}</h5>
+          <h6>{{.Plugin.Description}}</h6>
+        </div>
     </div>
     <div class="col-3">
-      <form
-        id="thumbnail-form"
-        action="/plugins/thumbnails"
-        method="POST"
-        enctype="multipart/form-data"
-      >
+      <form id="thumbnail-form" action="/plugins/thumbnails" method="POST" enctype="multipart/form-data">
         <label for="thumbnail" class="form-label">Upload Thumbnail</label>
-        <input
-          type="file"
-          id="thumbnail-upload"
-          class="form-control"
-          name="thumbnail"
-          accept=".png,.jpg,.jpeg,.webp"
-        />
+        <input type="file" id="thumbnail-upload" class="form-control" name="thumbnail" accept=".png,.jpg,.jpeg,.webp" />
         <div class="mt-2">
-          <input
-            class="btn btn-secondary btn-sm"
-            type="submit"
-            value="Upload"
-          />
+          <input class="btn btn-secondary btn-sm" type="submit" value="Upload" />
         </div>
         <input type="hidden" id="plugin" name="plugin" value="{{.Plugin.Id}}" />
       </form>
-      <form id="premium-form" action="/plugins/premium" method="POST">
+      <form id="premiumForm" action="/plugins/premium" method="POST">
         <label for="price" class="form-label">Set Price</label>
         <div class="input-group">
           <span class="input-group-text">$</span>
-          <input
-            type="text"
-            class="form-control"
-            name="price"
-            aria-label="Price"
-          />
+          <input id="priceInput" type="number" min="0.50" max="50.00" step="any" class="form-control" name="price"
+            aria-label="Price" />
         </div>
         <div class="mt-2">
           <input class="btn btn-primary btn-sm" type="submit" value="Submit" />
@@ -247,46 +209,41 @@
   {{ else }}
   <div class="plugin-info">
     {{if .Plugin.Thumbnail}}
-    <img
-      class="plugin-page-thumbnail img-thumbnail thumbnail"
-      src="{{.Plugin.Thumbnail}}"
-    />
+    <img class="plugin-page-thumbnail img-thumbnail thumbnail" src="{{.Plugin.Thumbnail}}" />
     {{else}}
-    <img
-      class="plugin-page-thumbnail img-thumbnail thumbnail"
-      src="https://via.placeholder.com/150.png"
-    />
-    {{ end }}
-    <div class="text mx-4">
-      <h2>{{.Plugin.Name}}</h2>
-      <h4>- by {{.Plugin.Author.Username}}</h4>
-      <h5>Version {{.Plugin.Version}}</h5>
-      <h6>{{.Plugin.Description}}</h6>
-    </div>
+      <img class="plugin-page-thumbnail img-thumbnail thumbnail" src="https://via.placeholder.com/150.png" />
+      {{ end }}
+      <div class="text mx-4">
+        <h2>{{.Plugin.Name}}</h2>
+        <h4>- by {{.Plugin.Author.Username}}</h4>
+        <h5>Version {{.Plugin.Version}}</h5>
+        <h6>{{.Plugin.Description}}</h6>
+      </div>
   </div>
   {{ end }}
   <div class="plugin-download my-4 row">
     <div class="col">
       {{if .Plugin.Premium}}
-      {{if gt .Plugin.Premium.Price 0}}
-      <a
-        href="/plugins/purchase?plugin={{.Plugin.Id}}"
-        class="btn btn-primary btn-lg"
-      >
-        Purchase Plugin
+      <!-- checks if plugin has a premium price and if the user has the plugin -->
+      {{$priced := gt .Plugin.Premium.Price 0}}
+      {{$hasPlugin := call .Functions.Contains .Profile.PurchasedPlugins .Plugin.Id}}
+      {{$notHave := not $hasPlugin}}
+      {{if and $priced $notHave}}
+      <a href="/plugins/purchase?plugin={{.Plugin.Id}}" class="btn btn-primary btn-lg">
+        Purchase Plugin for {{ call .Functions.FmtMoney .Plugin.Premium.Price }}
       </a>
       {{else}}
-      <h4>Install By CLI</h4>
-      <code class="py-1 px-3 user-select-all">
+        <h4>Install By CLI</h4>
+        <code class="py-1 px-3 user-select-all">
         bundle install {{.Plugin.Name}}
       </code>
-      {{ end }}
-      {{else}}
-      <h4>Install By CLI</h4>
-      <code class="py-1 px-3 user-select-all">
+        {{ end }}
+        {{else}}
+          <h4>Install By CLI</h4>
+          <code class="py-1 px-3 user-select-all">
         bundle install {{.Plugin.Name}}
       </code>
-      {{ end }}
+          {{ end }}
     </div>
   </div>
 </div>

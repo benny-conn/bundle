@@ -46,7 +46,7 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	err := tpl.ExecuteTemplate(w, "register", templateData{Referrer: referer})
 	if err != nil {
-		logger.ErrLog.Panic(err.Error())
+		logger.ErrLog.Print(err.Error())
 	}
 
 }

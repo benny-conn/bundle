@@ -36,6 +36,11 @@ $(document).ready(() => {
     setBundles();
   });
 
+  $("#priceInput").change((e) => {
+    val = $(e.target).val();
+    $(e.target).val(parseFloat(val).toFixed(2));
+  });
+
   $("#pluginAdd").click((e) => {
     e.preventDefault();
     const val = $("#pluginInput").val();
