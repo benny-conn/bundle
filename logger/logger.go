@@ -24,7 +24,7 @@ func init() {
 		log.Fatalln(err.Error())
 		return
 	}
-	logPath := filepath.Join(logFolder, fmt.Sprintf("%s.log", time.Now().Format("Jan-2-15:04:05")))
+	logPath := filepath.Join(logFolder, fmt.Sprintf("%s.log", time.Now().Format("Jan-2-15:04")))
 	f, err := os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalln(err.Error())
