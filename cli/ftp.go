@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/cli/file"
 	"github.com/bennycio/bundle/cli/logger"
 	"github.com/bennycio/bundle/cli/term"
@@ -35,6 +36,8 @@ var theFtp anFtp
 
 var buFileCache file.BundleFile
 
+var curUser *api.User
+
 var connectCommands []prompt.Suggest = []prompt.Suggest{
 	{Text: "help", Description: "See command options"},
 	{Text: "install", Description: "Install/Update plugins"},
@@ -52,6 +55,14 @@ var ftpCmd = &cobra.Command{
 	Use:   "ftp",
 	Short: "Connect to an instance of an FTP server to run bundle commands from",
 	RunE: func(cmd *cobra.Command, args []string) error {
+
+		user, err := getCurrentUser()
+		if err != nil {
+			return err
+		}
+
+		curUser = user
+
 		ftps := viper.GetStringMap("FTP")
 
 		if len(ftps) < 1 {
@@ -202,7 +213,7 @@ func connectedExecutor(s string) {
 					plsToInstall[spl[0]] = spl[1]
 				}
 			}
-			err := downloadAndInstall(plsToInstall, conn)
+			err := downloadAndInstall(plsToInstall, curUser, conn)
 			if err != nil {
 				logger.ErrLog.Print(err.Error())
 				return
@@ -214,7 +225,7 @@ func connectedExecutor(s string) {
 				return
 			}
 			buFileCache = result
-			err = downloadAndInstall(result.Plugins, conn)
+			err = downloadAndInstall(result.Plugins, curUser, conn)
 			if err != nil {
 				logger.ErrLog.Print(err.Error())
 				return

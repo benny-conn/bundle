@@ -16,7 +16,7 @@ import (
 )
 
 type gateService interface {
-	DownloadPlugin(plugin *api.Plugin) ([]byte, error)
+	DownloadPlugin(plugin *api.Plugin, user *api.User) ([]byte, error)
 	UploadPlugin(user *api.User, plugin *api.Plugin, data io.Reader) error
 	UploadThumbnail(user *api.User, plugin *api.Plugin, data io.Reader) error
 	PaginatePlugins(req *api.PaginatePluginsRequest) ([]*api.Plugin, error)
@@ -54,16 +54,22 @@ func NewGateService(host string, port string) gateService {
 	}
 }
 
-func (g *gateServiceImpl) DownloadPlugin(plugin *api.Plugin) ([]byte, error) {
+func (g *gateServiceImpl) DownloadPlugin(plugin *api.Plugin, user *api.User) ([]byte, error) {
 
 	scheme := "https://"
 	u, err := url.Parse(fmt.Sprintf("%s%s:%s/api/repo/plugins", scheme, g.Host, g.Port))
 	if err != nil {
 		return nil, err
 	}
+
+	usJson, err := json.Marshal(user)
+	if err != nil {
+		return nil, err
+	}
 	q := u.Query()
 	q.Add("name", plugin.Name)
 	q.Add("version", plugin.Version)
+	q.Add("user", string(usJson))
 	u.RawQuery = q.Encode()
 
 	client := internal.NewBasicClient()

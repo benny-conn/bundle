@@ -54,6 +54,11 @@ var installCmd = &cobra.Command{
 			bundlePlugins = make(map[string]string)
 		}
 
+		user, err := getCurrentUser()
+		if err != nil {
+			return err
+		}
+
 		if len(args) > 0 {
 
 			plsToInst := map[string]string{}
@@ -65,11 +70,11 @@ var installCmd = &cobra.Command{
 					plsToInst[spl[0]] = spl[1]
 				}
 			}
-			if err := downloadAndInstall(plsToInst, nil); err != nil {
+			if err := downloadAndInstall(plsToInst, user, nil); err != nil {
 				return err
 			}
 		} else {
-			if err := downloadAndInstall(bundlePlugins, nil); err != nil {
+			if err := downloadAndInstall(bundlePlugins, user, nil); err != nil {
 				return err
 			}
 		}
@@ -114,7 +119,7 @@ func changesSinceCurrent(pluginId, pluginName, desiredVersion, currentVersion st
 	return versionsSinceUpdate, nil
 }
 
-func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
+func downloadAndInstall(plugins map[string]string, user *api.User, conn *ftp.ServerConn) error {
 	gs := gate.NewGateService("localhost", "8020")
 	installQueue := make(chan downloadedPlugin)
 	mu := &sync.Mutex{}
@@ -177,9 +182,8 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 				}
 			}
 
-			bs, err := gs.DownloadPlugin(pl)
+			bs, err := gs.DownloadPlugin(pl, user)
 			if err != nil {
-
 				logger.ErrLog.Print(err.Error())
 				return
 			}

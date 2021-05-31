@@ -11,8 +11,7 @@ import (
 // signupCmd represents the signup command
 var signupCmd = &cobra.Command{
 	Use:   "signup",
-	Short: "Sign up for Bundle MC, allowing you to upload plugins to the official repository",
-	Long:  "Sign up for Bundle MC and gain upload access to the official repository. Use flags \"-u\" \"-e\" and \"-p\" to specify username, email, and password ",
+	Short: "Sign up for Bundle MC, allowing you to interface with the official repository",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		err := openBrowser("https://bundlemc.io/signup")

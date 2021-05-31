@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -36,6 +37,38 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if dbPl.Premium != nil {
+			if dbPl.Premium.Price > 0 {
+				uclient := grpc.NewUserClient("", "")
+				user := r.FormValue("user")
+				u := &api.User{}
+				err = json.Unmarshal([]byte(user), u)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+				dbUser, err := uclient.Get(u)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+				if dbUser.Purchases == nil {
+					http.Error(w, "user does not own premium plugin", http.StatusUnauthorized)
+					return
+				}
+				can := false
+				for _, v := range dbUser.Purchases {
+					if v.ObjectId == dbPl.Id && v.Complete {
+						can = true
+					}
+				}
+				if !can {
+					http.Error(w, "user does not own premium plugin", http.StatusUnauthorized)
+					return
+				}
+			}
+		}
+
 		if version != "latest" && version != "" {
 			dbPl.Version = version
 		}
@@ -44,6 +77,7 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		w.WriteHeader(http.StatusOK)
 		w.Write(pl)
 		return
 
