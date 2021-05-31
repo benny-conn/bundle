@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 )
 
 func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {

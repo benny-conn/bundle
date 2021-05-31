@@ -9,7 +9,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/gate"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
 )
@@ -292,5 +292,9 @@ func premiumHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
+	if dbpl.Author.StripeId == "" {
+		http.Redirect(w, req, "/stripe/auth", http.StatusFound)
+	} else {
+		http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
+	}
 }

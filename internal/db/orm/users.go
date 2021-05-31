@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

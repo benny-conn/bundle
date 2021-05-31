@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 )
 
 type errorData struct {

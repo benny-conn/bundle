@@ -5,7 +5,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 )
 
 func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {

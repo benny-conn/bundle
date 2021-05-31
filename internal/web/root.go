@@ -3,7 +3,7 @@ package web
 import (
 	"net/http"
 
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 )
 
 func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {

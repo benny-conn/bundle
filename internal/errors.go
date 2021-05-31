@@ -3,7 +3,7 @@ package internal
 import (
 	"net/http"
 
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 )
 
 func HttpError(w http.ResponseWriter, err error, status int) {

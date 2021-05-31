@@ -7,7 +7,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 	stripe "github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/account"
 	"github.com/stripe/stripe-go/v72/accountlink"
@@ -30,7 +30,7 @@ func stripeAuthHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stripe.Key = os.Getenv("STRIPE_TEST_KEY")
+	stripe.Key = os.Getenv("STRIPE_KEY")
 
 	if us.StripeId == "" {
 
@@ -82,7 +82,7 @@ func stripeReturnHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		Profile: pro,
 	}
 
-	stripe.Key = os.Getenv("STRIPE_TEST_KEY")
+	stripe.Key = os.Getenv("STRIPE_KEY")
 
 	gs := gate.NewGateService("", "")
 

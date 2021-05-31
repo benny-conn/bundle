@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -309,8 +309,8 @@ func apiToOrmPl(pl *api.Plugin) plugin {
 	}
 	if pl.Premium != nil {
 		result.Premium = premium{
-			Price:     result.Premium.Price,
-			Purchases: result.Premium.Purchases,
+			Price:     pl.Premium.Price,
+			Purchases: pl.Premium.Purchases,
 		}
 	}
 

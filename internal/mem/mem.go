@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

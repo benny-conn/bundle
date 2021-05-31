@@ -4,7 +4,7 @@ import (
 	"github.com/bennycio/bundle/cli"
 )
 
-// TODO prune command,
+// TODO prune command
 
 func main() {
 	cli.Execute()

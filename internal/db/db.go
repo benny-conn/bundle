@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 	"github.com/johanbrandhorst/certify"
 	"github.com/johanbrandhorst/certify/issuers/vault"
 	"google.golang.org/grpc"

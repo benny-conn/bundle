@@ -19,7 +19,7 @@ func NewGateServer() *http.Server {
 
 	checkoutCompleteHandler := http.HandlerFunc(checkoutCompleteHandlerFunc)
 
-	mux.Handle("/api/plugins", basicAuth(pluginsHandler, http.MethodPatch))
+	mux.Handle("/api/plugins", pluginsHandler)
 	mux.Handle("/api/purchases/complete", checkoutCompleteHandler)
 	mux.Handle("/api/changelogs", basicAuth(changelogsHandler, http.MethodPost))
 	mux.Handle("/api/users", scopedAuth(usersHandler, "users"))

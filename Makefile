@@ -16,7 +16,7 @@ sass:
 	sass ./assets/public/scss/styles.scss ./assets/public/css/styles.css
 
 cli:
-	go install cmd/cli/bundle.go
+	go install bundle.go
 
 tidy:
 	go mod tidy

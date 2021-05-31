@@ -11,7 +11,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/gate/grpc"
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 )
 
 func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {

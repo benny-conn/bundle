@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 	"golang.org/x/crypto/acme/autocert"
 )
 

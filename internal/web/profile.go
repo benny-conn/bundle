@@ -3,7 +3,7 @@ package web
 import (
 	"net/http"
 
-	"github.com/bennycio/bundle/internal/logger"
+	"github.com/bennycio/bundle/logger"
 )
 
 func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
