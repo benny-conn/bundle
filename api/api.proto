@@ -56,10 +56,9 @@ message Plugin {
     string thumbnail = 6;
     Category category = 7;
     int32 downloads = 8;
-    bool isPremium = 9;
-    Premium premium = 10;
-    repeated string conflicts = 11;
-    int64 lastUpdated = 12;
+    Premium premium = 9;
+    repeated string conflicts = 10;
+    int64 lastUpdated = 11;
 }
 
 message Premium {

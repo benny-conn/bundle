@@ -54,4 +54,17 @@ $(document).ready(() => {
     $("#pluginInput").val("");
     setBundles();
   });
+
+  const stripe = Stripe(
+    "pk_test_51IrBnXFNgmFlFbhMgWJyzrYXOEo9E8OOV33RAhccfGygNZT6fwOUhvcTk4UOlPekZoW3zQ3l4W9kAnUwsUwvqHnF00lXVnaiLM"
+  );
+
+  $("#checkoutButton").click(() => {
+    stripe.redirectToCheckout({
+      sessionId: $("#checkoutSessionId").val(),
+    });
+    // If `redirectToCheckout` fails due to a browser or network
+    // error, display the localized error message to your customer
+    // using `error.message`.
+  });
 });

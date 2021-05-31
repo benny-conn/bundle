@@ -159,6 +159,7 @@
       </ul>
     </nav>
   </div>
+  {{template "foot" .}}
 </body>
 {{ end }}
 
@@ -174,6 +175,7 @@
 
     {{ end }}
   </div>
+  {{template "foot" .}}
 </body>
 {{ end }}
 
@@ -222,12 +224,26 @@
             value="Upload"
           />
         </div>
-        <input
-          type="hidden"
-          id="username"
-          name="user"
-          value="{{.Profile.Id}}"
-        />
+        <input type="hidden" id="plugin" name="plugin" value="{{.Plugin.Id}}" />
+      </form>
+      <form id="premium-form" action="/plugins/premium" method="POST">
+        <label for="price" class="form-label">Set Price</label>
+        <div class="input-group">
+          <span class="input-group-text">$</span>
+          <input
+            type="text"
+            class="form-control"
+            name="price"
+            aria-label="Price"
+          />
+        </div>
+        <div class="mt-2">
+          <input
+            class="btn btn-secondary btn-sm"
+            type="submit"
+            value="Submit"
+          />
+        </div>
         <input type="hidden" id="plugin" name="plugin" value="{{.Plugin.Id}}" />
       </form>
     </div>
@@ -255,10 +271,26 @@
   {{ end }}
   <div class="plugin-download my-4 row">
     <div class="col">
+      {{if .Plugin.Premium}}
+      {{if gt .Plugin.Premium.Price 0}}
+      <a
+        href="/plugins/purchase?plugin={{.Plugin.Id}}"
+        class="btn btn-primary btn-lg"
+      >
+        Purchase Plugin
+      </a>
+      {{else}}
       <h4>Install By CLI</h4>
       <code class="py-1 px-3 user-select-all">
         bundle install {{.Plugin.Name}}
       </code>
+      {{ end }}
+      {{else}}
+      <h4>Install By CLI</h4>
+      <code class="py-1 px-3 user-select-all">
+        bundle install {{.Plugin.Name}}
+      </code>
+      {{ end }}
     </div>
   </div>
 </div>

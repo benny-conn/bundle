@@ -10,6 +10,7 @@
   {{template "index-features" . }}
   {{template "index-info" . }}
   {{template "index-testamonials" . }}
+  {{template "foot" .}}
   <a class="scropll-top-btn" id="scrollTop" href="#" style="text-decoration: none"><i class="fa fa-arrow-up"></i></a>
 </body>
 {{template "footer" .}}
@@ -247,36 +248,7 @@
       </div>
     </div>
   </div>
-  {{template "index-stats" .}}
 </div>
 {{ end }}
 
-{{define "index-stats"}}
 
-<div class="container my-6">
-  <div class="row  gx-4">
-    <div class="col-sm-4 text-center">
-      <div class="cool-card mx-3">
-        <i class="fa fa-users py-3" style="font-size: 40px;"></i>
-        <h4>1000</h4>
-        <h3>Total Users</h3>
-      </div>
-    </div>
-    <div class="col-sm-4 text-center">
-      <div class="cool-card mx-3"><i class="fa fa-puzzle-piece py-3" style="font-size: 40px;"></i>
-        <h4>1000</h4>
-        <h3>Total Plugins</h3>
-      </div>
-
-    </div>
-    <div class="col-sm-4 text-center">
-      <div class="cool-card mx-3">
-        <i class="fa fa-fire py-3" style="font-size: 40px;"></i>
-        <h4>9999</h4>
-        <h3>Total Cool</h3>
-      </div>
-    </div>
-  </div>
-</div>
-
-{{end}}

@@ -1,6 +1,8 @@
 package main
 
-import "github.com/bennycio/bundle/cli"
+import (
+	"github.com/bennycio/bundle/cli"
+)
 
 // TODO prune command,
 

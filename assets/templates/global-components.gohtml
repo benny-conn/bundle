@@ -92,13 +92,19 @@
 {{ end }}
 
 {{define "err-popup"}}
-{{if .Error}}
-<div class="container">
-  <div class="alert alert-danger fixed-bottom" role="alert">
+{{if .Error.Message}}
+<div class="container fixed-bottom">
+  <div class="alert alert-danger" role="alert">
     {{.Error.Message}}
   </div>
 </div>
 {{ end }}
+{{ end }}
+
+{{define "foot"}}
+<div class="foot">
+  <p>© Copyright BundleMC 2021</p>
+</div>
 {{ end }}
 
 {{define "footer"}}
@@ -113,6 +119,7 @@
     integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
     crossorigin="anonymous"
   ></script>
+  <script src="https://js.stripe.com/v3/"></script>
   <script src="/public/js/index.js?r=s"></script>
 </footer>
 {{ end }}

@@ -27,7 +27,7 @@ func RunServer() error {
 
 	grpcServer := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterSessionServiceServer(grpcServer, newSessionsServer())
-	logger.InfoLog.Printf("Started Memory Storage Server on port %v", port)
+	logger.InfoLog.Printf("Started Memory Storage Server on :%v", port)
 
 	grpcServer.Serve(lis)
 	return nil

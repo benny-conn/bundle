@@ -1,0 +1,11 @@
+{{define "purchase"}}
+<!DOCTYPE html>
+<html>
+  {{template "head" .}}
+  <body>
+    <input id="checkoutSessionId" type="hidden" value="{{.PurchaseSession}}" />
+    <button class="btn btn-lg btn-primary" id="checkoutButton">Checkout</button>
+  </body>
+  {{template "footer" .}}
+</html>
+{{ end }}

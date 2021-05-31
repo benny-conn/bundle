@@ -16,7 +16,11 @@ func NewGateServer() *http.Server {
 	readmesHandler := http.HandlerFunc(readmesHandlerFunc)
 	sessionsHandler := http.HandlerFunc(sessionHandlerFunc)
 	changelogsHandler := http.HandlerFunc(changelogHandlerFunc)
-	mux.Handle("/api/plugins", pluginsHandler)
+
+	checkoutCompleteHandler := http.HandlerFunc(checkoutCompleteHandlerFunc)
+
+	mux.Handle("/api/plugins", basicAuth(pluginsHandler, http.MethodPatch))
+	mux.Handle("/api/purchases/complete", checkoutCompleteHandler)
 	mux.Handle("/api/changelogs", basicAuth(changelogsHandler, http.MethodPost))
 	mux.Handle("/api/users", scopedAuth(usersHandler, "users"))
 	mux.Handle("/api/readmes", basicAuth(readmesHandler, http.MethodPost, http.MethodPatch))

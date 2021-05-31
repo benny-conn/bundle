@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal/logger"
 	"github.com/johanbrandhorst/certify"
 	"github.com/johanbrandhorst/certify/issuers/vault"
 	"google.golang.org/grpc"
@@ -51,7 +52,7 @@ func RunServer() error {
 	api.RegisterPluginsServiceServer(grpcServer, newPluginsServer())
 	api.RegisterReadmeServiceServer(grpcServer, newReadmesServer())
 	api.RegisterChangelogServiceServer(grpcServer, newChangelogServer())
-	fmt.Printf("Started Database Server on port %v\n", port)
+	logger.InfoLog.Printf("Started Database Server on :%v", port)
 
 	grpcServer.Serve(lis)
 	return nil

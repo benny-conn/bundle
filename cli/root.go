@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/bennycio/bundle/cli/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,12 +26,11 @@ func init() {
 }
 
 func initConfig() {
-
 	confDir, err := os.UserConfigDir()
 	if err != nil {
 		confDir, err = os.UserHomeDir()
 		if err != nil {
-			log.Fatal(err.Error())
+			logger.ErrLog.Fatal(err.Error())
 		}
 	}
 	viper.SetConfigName("config")
@@ -42,17 +41,17 @@ func initConfig() {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(fmt.Sprintf("%s/.bundle", confDir), os.ModePerm)
 			if err != nil {
-				log.Fatal(err.Error())
+				logger.ErrLog.Fatal(err.Error())
 			}
 			err = viper.WriteConfigAs(fmt.Sprintf("%s/.bundle/config.yml", confDir))
 			if err != nil {
-				log.Fatal(err.Error())
+				logger.ErrLog.Fatal(err.Error())
 			}
 		}
 	}
 	err = viper.ReadInConfig()
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.ErrLog.Fatal(err.Error())
 	}
 
 	configPath = fmt.Sprintf("%s/.bundle/config.yml", confDir)

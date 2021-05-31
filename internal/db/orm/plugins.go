@@ -21,7 +21,6 @@ type plugin struct {
 	Thumbnail   string             `bson:"thumbnail,omitempty" json:"thumbnail"`
 	Category    category           `bson:"category,omitempty" json:"category"`
 	Downloads   int32              `bson:"downloads,omitempty" json:"downloads"`
-	IsPremium   bool               `bson:"isPremium,omitempty" json:"isPremium"`
 	Premium     premium            `bson:"premium,omitempty" json:"premium"`
 	Conflicts   []string           `bson:"conflicts,omitempty" json:"conflicts"`
 	LastUpdated primitive.DateTime `bson:"lastUpdated,omitempty" json:"lastUpdated"`
@@ -262,7 +261,6 @@ func ormToApiPl(pl plugin) *api.Plugin {
 		Thumbnail:   pl.Thumbnail,
 		Category:    api.Category(pl.Category),
 		Downloads:   pl.Downloads,
-		IsPremium:   pl.IsPremium,
 		Premium: &api.Premium{
 			Price:     pl.Premium.Price,
 			Purchases: pl.Premium.Purchases,
@@ -297,7 +295,6 @@ func apiToOrmPl(pl *api.Plugin) plugin {
 		LastUpdated: lastUpdated,
 		Category:    category(pl.Category),
 		Downloads:   pl.Downloads,
-		IsPremium:   pl.IsPremium,
 		Conflicts:   pl.Conflicts,
 	}
 	pluginID, err := primitive.ObjectIDFromHex(pl.Id)
@@ -310,7 +307,7 @@ func apiToOrmPl(pl *api.Plugin) plugin {
 			result.Author = authorID
 		}
 	}
-	if pl.Premium != nil && pl.IsPremium {
+	if pl.Premium != nil {
 		result.Premium = premium{
 			Price:     result.Premium.Price,
 			Purchases: result.Premium.Purchases,

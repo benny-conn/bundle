@@ -3,7 +3,6 @@ package web
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/bennycio/bundle/internal/logger"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
-	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/checkout/session"
 )
 
 const perPageCount = 15
@@ -151,18 +148,24 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
+	prof, err := getProfFromCookie(req)
+	if err != nil {
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusUnauthorized)
+	}
 	if req.Method != http.MethodPost {
-		http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
+		err := fmt.Errorf("only method post allowed")
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
 		return
 	}
 	gs := gate.NewGateService("", "")
-	err := req.ParseMultipartForm(32 << 20)
+	err = req.ParseMultipartForm(32 << 20)
 	if err != nil {
 		logger.ErrLog.Print(err.Error())
 		handleError(w, err, http.StatusBadRequest)
 		return
 	}
-	user := req.FormValue("user")
 	plugin := req.FormValue("plugin")
 
 	thumbnail, h, err := req.FormFile("thumbnail")
@@ -179,7 +182,7 @@ func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if user == "" {
+	if prof.Id == "" {
 		err = fmt.Errorf("no user specified")
 		logger.ErrLog.Print(err.Error())
 		handleError(w, err, http.StatusBadRequest)
@@ -193,10 +196,23 @@ func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	}
 
 	u := &api.User{
-		Id: user,
+		Id: prof.Id,
 	}
 	p := &api.Plugin{
 		Id: plugin,
+	}
+
+	dbpl, err := gs.GetPlugin(p)
+	if err != nil {
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
+		return
+	}
+	if dbpl.Author.Id != u.Id {
+		err = fmt.Errorf("must be plugin author")
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
+		return
 	}
 
 	err = gs.UploadThumbnail(u, p, thumbnail)
@@ -209,95 +225,72 @@ func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
 }
 
-func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func premiumHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
-	pro, err := getProfFromCookie(r)
+	prof, err := getProfFromCookie(req)
 	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusUnauthorized)
+	}
+
+	if req.Method != http.MethodPost {
+		err := fmt.Errorf("only method post allowed")
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
+		return
+	}
+	gs := gate.NewGateService("", "")
+	err = req.ParseForm()
+	if err != nil {
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
+		return
+	}
+	plugin := req.FormValue("plugin")
+	price := req.FormValue("price")
+
+	if prof.Id == "" || plugin == "" || price == "" {
+		err = fmt.Errorf("user, plugin, and price must be specified")
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
 		return
 	}
 
-	data := templateData{
-		Profile: pro,
+	priceNum, err := strconv.Atoi(price)
+	if err != nil {
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
+		return
 	}
 
-	switch r.Method {
-
-	case http.MethodGet:
-
-		r.ParseForm()
-
-		plugin := r.FormValue("plugin")
-
-		if plugin == "" {
-			http.Redirect(w, r, "/plugins", http.StatusNotFound)
-			return
-		}
-
-		gs := gate.NewGateService("", "")
-
-		dbpl, err := gs.GetPlugin(&api.Plugin{Id: plugin})
-
-		if err != nil {
-			logger.ErrLog.Print(err.Error())
-			handleError(w, err, http.StatusNotFound)
-			return
-		}
-
-		if dbpl.Author == nil {
-			err = fmt.Errorf("author is nil")
-			logger.ErrLog.Print(err.Error())
-			handleError(w, err, http.StatusNotFound)
-			return
-		}
-
-		if dbpl.Author.StripeId == "" {
-			err = fmt.Errorf("author is not striped up")
-			logger.ErrLog.Print(err.Error())
-			handleError(w, err, http.StatusNotFound)
-			return
-		}
-
-		stripe.Key = os.Getenv("STRIPE_TEST_KEY")
-		params := &stripe.CheckoutSessionParams{
-			PaymentMethodTypes: stripe.StringSlice([]string{
-				"card",
-			}),
-			LineItems: []*stripe.CheckoutSessionLineItemParams{
-				{
-					Name:     stripe.String(dbpl.Name),
-					Amount:   stripe.Int64(int64(dbpl.Premium.Price)),
-					Currency: stripe.String(string(stripe.CurrencyUSD)),
-					Quantity: stripe.Int64(1),
-				},
-			},
-			PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
-				ApplicationFeeAmount: stripe.Int64(int64(dbpl.Premium.Price / 20)),
-				TransferData: &stripe.CheckoutSessionPaymentIntentDataTransferDataParams{
-					Destination: stripe.String(dbpl.Author.StripeId),
-				},
-			},
-			Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
-			SuccessURL: stripe.String("https://" + os.Getenv("WEB_HOST") + "plugins/payment_success"),
-			CancelURL:  stripe.String("https://" + os.Getenv("WEB_HOST") + "plugins/payment_cancel"),
-		}
-
-		session, err := session.New(params)
-		if err != nil {
-			logger.ErrLog.Print(err.Error())
-			handleError(w, err, http.StatusInternalServerError)
-			return
-		}
-		data.PurchaseSession = session.ID
-
-		err = tpl.ExecuteTemplate(w, "purchase", data)
-		if err != nil {
-			logger.ErrLog.Panic(err.Error())
-		}
+	prem := &api.Premium{
+		Price: int32(priceNum),
 	}
 
-}
+	p := &api.Plugin{
+		Id: plugin,
+	}
+	dbpl, err := gs.GetPlugin(p)
+	if err != nil {
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
+		return
+	}
+	if dbpl.Author.Id != prof.Id {
+		err = fmt.Errorf("must be plugin author")
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
+		return
+	}
 
-func paymentSuccessHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	p.Premium = prem
 
+	err = gs.UpdatePlugin(p)
+	if err != nil {
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	http.Redirect(w, req, req.Header.Get("Referer"), http.StatusFound)
 }
