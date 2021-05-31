@@ -36,7 +36,9 @@ func initConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yml")
 	viper.AddConfigPath(fmt.Sprintf("%s/.bundle", confDir))
-	viper.SetDefault("FTP", map[string]map[string]string{})
+	viper.SetDefault("ftp", map[string]map[string]string{})
+	viper.SetDefault("debug", false)
+	viper.SetDefault("credentials", map[string]string{})
 	if err := viper.SafeWriteConfig(); err != nil {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(fmt.Sprintf("%s/.bundle", confDir), os.ModePerm)

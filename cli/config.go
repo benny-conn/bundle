@@ -1,7 +1,8 @@
 package cli
 
 import (
-	"github.com/bennycio/bundle/cli/term"
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -10,7 +11,7 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Print path to config file",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		term.Println(configPath)
+		fmt.Println(configPath)
 		return nil
 	},
 }
