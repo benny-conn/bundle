@@ -126,9 +126,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 			pl := &api.Plugin{Name: pluginName}
 			dbpl, err := gs.GetPlugin(pl)
 			if err != nil {
-
-				logger.ErrLog.Println(err.Error())
-				return
+				logger.ErrLog.Panic(err.Error())
 			}
 			pl.Id = dbpl.Id
 			pl.Name = dbpl.Name
@@ -149,8 +147,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 						defer mu.Unlock()
 						missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
 						if err != nil {
-							logger.ErrLog.Println(err.Error())
-							return
+							logger.ErrLog.Panic(err.Error())
 						}
 						term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nPress enter for the latest version", pl.Name, index, len(plugins)))
 						resVer := prompt.Choose(">> ", missedVers)
@@ -169,8 +166,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 						defer mu.Unlock()
 						missedVers, err := changesSinceCurrent(pl.Id, pl.Name, pl.Version, plyml.Version)
 						if err != nil {
-							logger.ErrLog.Println(err.Error())
-							return
+							logger.ErrLog.Panic(err.Error())
 						}
 						term.Println(fmt.Sprintf("Which version would you like to update to for the plugin: %s (%d/%d)?\nPress enter for the latest version", pl.Name, index, len(plugins)))
 						resVer := prompt.Choose(">> ", missedVers)
@@ -184,7 +180,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 			bs, err := gs.DownloadPlugin(pl)
 			if err != nil {
 
-				logger.ErrLog.Println(err.Error())
+				logger.ErrLog.Print(err.Error())
 				return
 			}
 			installQueue <- downloadedPlugin{Plugin: pl, Data: bs}
@@ -204,8 +200,7 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 					writer := io.MultiWriter(pb, pw)
 					_, err := writer.Write(v.Data)
 					if err != nil {
-						logger.ErrLog.Println(err.Error())
-						return
+						logger.ErrLog.Panic(err.Error())
 					}
 				}()
 
@@ -214,20 +209,17 @@ func downloadAndInstall(plugins map[string]string, conn *ftp.ServerConn) error {
 					os.Remove(fp)
 					fi, err := os.Create(fp)
 					if err != nil {
-						logger.ErrLog.Println(err.Error())
-						return
+						logger.ErrLog.Panic(err.Error())
 					}
 					defer fi.Close()
 					_, err = io.Copy(fi, pr)
 					if err != nil {
-						logger.ErrLog.Println(err.Error())
-						return
+						logger.ErrLog.Panic(err.Error())
 					}
 				} else {
 					err := conn.Stor(fp, pr)
 					if err != nil {
-						logger.ErrLog.Println(err.Error())
-						return
+						logger.ErrLog.Panic(err.Error())
 					}
 				}
 			}()

@@ -12,6 +12,7 @@ import (
 
 	_ "embed"
 
+	"github.com/bennycio/bundle/cli/logger"
 	"github.com/jlaffaye/ftp"
 	"gopkg.in/yaml.v2"
 )
@@ -60,7 +61,7 @@ func getBundleFileBytes(path string) ([]byte, error) {
 	bs := &bytes.Buffer{}
 	_, err = io.Copy(bs, fi)
 	if err != nil {
-		panic(err)
+		logger.ErrLog.Panic(err.Error())
 	}
 	return bs.Bytes(), nil
 }
@@ -77,7 +78,7 @@ func GetBundle(path string) (*BundleFile, error) {
 	err = yaml.Unmarshal(fileBytes, result)
 
 	if err != nil {
-		panic(err)
+		logger.ErrLog.Panic(err.Error())
 	}
 
 	return result, nil

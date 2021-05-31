@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal"
 )
 
 func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -19,8 +20,7 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		err := r.ParseMultipartForm(32 << 20)
 		if err != nil {
-
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			internal.HttpError(w, err, http.StatusBadRequest)
 			return
 		}
 
@@ -28,12 +28,13 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		plugin := r.FormValue("plugin")
 		file, h, err := r.FormFile("thumbnail")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			internal.HttpError(w, err, http.StatusBadRequest)
 			return
 		}
 
 		if h.Size > (1 << 20) {
-			http.Error(w, "file too large", http.StatusBadRequest)
+			err = fmt.Errorf("file too large")
+			internal.HttpError(w, err, http.StatusBadRequest)
 			return
 		}
 
@@ -42,7 +43,8 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		if plugin != "" {
 			author := r.FormValue("author")
 			if author == "" {
-				http.Error(w, "no author specified", http.StatusBadRequest)
+				err = fmt.Errorf("no author specified")
+				internal.HttpError(w, err, http.StatusBadRequest)
 				return
 			}
 			pl := &api.Plugin{
@@ -54,7 +56,7 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 			loc, err = uploadPluginThumbnail(pl, file)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusServiceUnavailable)
+				internal.HttpError(w, err, http.StatusServiceUnavailable)
 				return
 			}
 			fmt.Println("Successfully uploaded to " + loc)
@@ -64,7 +66,7 @@ func thumbnailsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 			}
 			loc, err = uploadUserThumbnail(u, file)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusServiceUnavailable)
+				internal.HttpError(w, err, http.StatusServiceUnavailable)
 				return
 			}
 		}

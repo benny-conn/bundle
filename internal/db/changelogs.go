@@ -5,7 +5,6 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/db/orm"
-	"github.com/bennycio/bundle/internal/logger"
 )
 
 type changelogServer struct {
@@ -17,6 +16,7 @@ func (s *changelogServer) Get(ctx context.Context, req *api.Changelog) (*api.Cha
 
 	pl, err := s.orm.Get(req)
 	if err != nil {
+
 		return nil, err
 	}
 
@@ -27,7 +27,6 @@ func (s *changelogServer) Get(ctx context.Context, req *api.Changelog) (*api.Cha
 func (s *changelogServer) Insert(ctx context.Context, req *api.Changelog) (*api.Empty, error) {
 	err := s.orm.Insert(req)
 	if err != nil {
-		logger.ErrLog.Println(err.Error())
 		return nil, err
 	}
 	return &api.Empty{}, nil

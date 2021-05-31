@@ -30,6 +30,8 @@ type templateData struct {
 	Date            func(int64) string
 	Contains        func([]string, string) bool
 	Readme          string
+	Error           errorData
+	Referrer        string
 }
 
 var tpl *template.Template

@@ -6,6 +6,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
+	"github.com/bennycio/bundle/internal/logger"
 	stripe "github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/account"
 	"github.com/stripe/stripe-go/v72/accountlink"
@@ -23,7 +24,7 @@ func stripeAuthHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	us, err := gs.GetUser(&api.User{Id: pro.Id})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -38,7 +39,7 @@ func stripeAuthHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		acct, err := account.New(params)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 		us.StripeId = acct.ID
@@ -46,7 +47,7 @@ func stripeAuthHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		err = gs.UpdateUser(us)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -59,7 +60,7 @@ func stripeAuthHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 	acc, err := accountlink.New(p)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -71,7 +72,7 @@ func stripeReturnHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	pro, err := getProfFromCookie(r)
 	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -85,13 +86,13 @@ func stripeReturnHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	us, err := gs.GetUser(&api.User{Id: pro.Id})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	acct, err := account.GetByID(us.Id, nil)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		handleError(w, err, http.StatusNotFound)
 		return
 	}
 	data.Profile.StripeInfo.ChargesEnabled = acct.ChargesEnabled
@@ -99,7 +100,6 @@ func stripeReturnHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	err = tpl.ExecuteTemplate(w, "profile", data)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		logger.ErrLog.Panic(err.Error())
 	}
 }

@@ -3,13 +3,12 @@ package internal
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/bennycio/bundle/internal/logger"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -56,7 +55,7 @@ func RunPublicServer(srv *http.Server, addr string, service string) {
 		go func() {
 			err := srv.ListenAndServeTLS("", "")
 			if err != nil {
-				log.Fatalf("httpsSrv.ListendAndServeTLS() failed with %s", err)
+				logger.ErrLog.Fatalf("httpsSrv.ListendAndServeTLS() failed with %s", err)
 			}
 		}()
 		if service == "web" {
@@ -65,17 +64,17 @@ func RunPublicServer(srv *http.Server, addr string, service string) {
 				srv.Handler = m.HTTPHandler(srv.Handler)
 			}
 			srv.Handler = m.HTTPHandler(srv.Handler)
-			fmt.Printf("Started %s server on %s\n", service, addr)
+			logger.InfoLog.Printf("Started %s server on %s\n", service, addr)
 			err := srv.ListenAndServe()
 			if err != nil {
-				log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+				logger.ErrLog.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
 			}
 		}
 	} else {
-		fmt.Printf("Started %s server on %s\n", service, addr)
+		logger.InfoLog.Printf("Started %s server on %s\n", service, addr)
 		err := srv.ListenAndServeTLS("out/server.crt", "out/server.key")
 		if err != nil {
-			log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+			logger.ErrLog.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
 		}
 	}
 }
@@ -84,7 +83,7 @@ func RunInternalServer(srv *http.Server, addr string, service string) {
 
 	caCertFile, err := ioutil.ReadFile("out/Bundle.crt")
 	if err != nil {
-		log.Fatalf("error reading CA certificate: %v", err)
+		logger.ErrLog.Fatalf("error reading CA certificate: %v", err)
 	}
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(caCertFile)
@@ -96,11 +95,11 @@ func RunInternalServer(srv *http.Server, addr string, service string) {
 		MinVersion: tls.VersionTLS12,
 	}
 
-	fmt.Printf("Started %s server on %s\n", service, addr)
+	logger.InfoLog.Printf("Started %s server on %s\n", service, addr)
 
 	err = srv.ListenAndServeTLS("out/server.crt", "out/server.key")
 	if err != nil {
-		log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+		logger.ErrLog.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
 	}
 
 }
@@ -109,14 +108,14 @@ func NewTlsClient() http.Client {
 
 	cert, err := ioutil.ReadFile("out/Bundle.crt")
 	if err != nil {
-		log.Fatalf("could not open certificate file: %v", err)
+		logger.ErrLog.Fatalf("could not open certificate file: %v", err)
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(cert)
 
 	clientCert, err := tls.LoadX509KeyPair("out/client.crt", "out/client.key")
 	if err != nil {
-		log.Fatalf("could not load certificate: %v", err)
+		logger.ErrLog.Fatalf("could not load certificate: %v", err)
 	}
 
 	tlsConfig := &tls.Config{

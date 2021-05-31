@@ -11,6 +11,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/gate/grpc"
+	"github.com/bennycio/bundle/internal/logger"
 )
 
 func usersHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -101,7 +102,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		err := r.ParseForm()
 		if err != nil {
-			panic(err)
+			logger.ErrLog.Panic(err.Error())
 		}
 
 		pluginName := r.FormValue("name")

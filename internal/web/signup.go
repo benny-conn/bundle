@@ -5,6 +5,7 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
+	"github.com/bennycio/bundle/internal/logger"
 )
 
 func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -21,17 +22,17 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		err := gs.InsertUser(user)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 		dbUser, err := gs.GetUser(user)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 		token, err := newSession(userToProfile(dbUser))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 		tokenCookie := newAccessCookie(token.Id)
@@ -43,10 +44,9 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	referer := r.Referer()
 
-	err := tpl.ExecuteTemplate(w, "register", referer)
+	err := tpl.ExecuteTemplate(w, "register", templateData{Referrer: referer})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		logger.ErrLog.Panic(err.Error())
 	}
 
 }

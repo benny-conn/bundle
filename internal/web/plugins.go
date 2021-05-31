@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal"
 	"github.com/bennycio/bundle/internal/gate"
+	"github.com/bennycio/bundle/internal/logger"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
 	"github.com/stripe/stripe-go/v72"
@@ -35,7 +37,8 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	case http.MethodGet:
 		err := req.ParseForm()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			logger.ErrLog.Print(err.Error())
+			handleError(w, err, http.StatusBadRequest)
 			return
 		}
 
@@ -59,17 +62,20 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 			pageNumber, err := strconv.Atoi(page)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusNotFound)
+				logger.ErrLog.Print(err.Error())
+				handleError(w, err, http.StatusNotFound)
 				return
 			}
 			sortNumber, err := strconv.Atoi(sort)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusNotFound)
+				logger.ErrLog.Print(err.Error())
+				handleError(w, err, http.StatusNotFound)
 				return
 			}
 			categoryNum, err := strconv.Atoi(category)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusNotFound)
+				logger.ErrLog.Print(err.Error())
+				handleError(w, err, http.StatusNotFound)
 				return
 			}
 
@@ -107,7 +113,8 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 			plugins, err := gs.PaginatePlugins(req)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusNotFound)
+				logger.ErrLog.Print(err.Error())
+				handleError(w, err, http.StatusNotFound)
 				return
 			}
 
@@ -119,7 +126,8 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 			}
 			plugin, err := gs.GetPlugin(req)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusNotFound)
+				logger.ErrLog.Print(err.Error())
+				handleError(w, err, http.StatusNotFound)
 				return
 			}
 
@@ -136,8 +144,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	err = tpl.ExecuteTemplate(w, "plugins", data)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		logger.ErrLog.Panic(err.Error())
 	}
 
 }
@@ -151,7 +158,8 @@ func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	gs := gate.NewGateService("", "")
 	err := req.ParseMultipartForm(32 << 20)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
 		return
 	}
 	user := req.FormValue("user")
@@ -159,21 +167,28 @@ func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	thumbnail, h, err := req.FormFile("thumbnail")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
 		return
 	}
 
 	if h.Size > (1 << 20) {
-		http.Error(w, "file too large", http.StatusBadRequest)
+		err = fmt.Errorf("file too large")
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
 		return
 	}
 
 	if user == "" {
-		http.Error(w, "no user specified", http.StatusBadRequest)
+		err = fmt.Errorf("no user specified")
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
 		return
 	}
 	if plugin == "" {
-		http.Error(w, "no user specified", http.StatusBadRequest)
+		err = fmt.Errorf("no plugin specified")
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -186,7 +201,8 @@ func thumbnailHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	err = gs.UploadThumbnail(u, p, thumbnail)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		logger.ErrLog.Print(err.Error())
+		handleError(w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -223,17 +239,22 @@ func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		dbpl, err := gs.GetPlugin(&api.Plugin{Id: plugin})
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			logger.ErrLog.Print(err.Error())
+			handleError(w, err, http.StatusNotFound)
 			return
 		}
 
 		if dbpl.Author == nil {
-			http.Error(w, "author is nil", http.StatusNotFound)
+			err = fmt.Errorf("author is nil")
+			logger.ErrLog.Print(err.Error())
+			handleError(w, err, http.StatusNotFound)
 			return
 		}
 
 		if dbpl.Author.StripeId == "" {
-			http.Error(w, "author is not striped up", http.StatusNotFound)
+			err = fmt.Errorf("author is not striped up")
+			logger.ErrLog.Print(err.Error())
+			handleError(w, err, http.StatusNotFound)
 			return
 		}
 
@@ -263,15 +284,15 @@ func purchasePluginHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		session, err := session.New(params)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.ErrLog.Print(err.Error())
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 		data.PurchaseSession = session.ID
 
 		err = tpl.ExecuteTemplate(w, "purchase", data)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			logger.ErrLog.Panic(err.Error())
 		}
 	}
 

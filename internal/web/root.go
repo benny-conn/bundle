@@ -2,6 +2,8 @@ package web
 
 import (
 	"net/http"
+
+	"github.com/bennycio/bundle/internal/logger"
 )
 
 func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -20,6 +22,6 @@ func rootHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	err = tpl.ExecuteTemplate(w, "index", data)
 	if err != nil {
-		panic(err)
+		logger.ErrLog.Panic(err.Error())
 	}
 }

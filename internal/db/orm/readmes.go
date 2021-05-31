@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -21,6 +22,7 @@ func (p *ReadmesOrm) Insert(rdme *api.Readme) error {
 
 	session, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	defer session.Cancel()
@@ -28,23 +30,28 @@ func (p *ReadmesOrm) Insert(rdme *api.Readme) error {
 	collection := session.Client.Database("plugins").Collection("readmes")
 
 	if rdme.Plugin == nil {
-		return errors.New("plugin not specified")
+		err = errors.New("plugin not specified")
+		logger.ErrLog.Print(err.Error())
+		return err
 	}
 	var plId primitive.ObjectID
 	if rdme.Plugin.Id == "" {
 		dbpl, err := NewPluginsOrm().Get(rdme.Plugin)
 
 		if err != nil {
+			logger.ErrLog.Print(err.Error())
 			return err
 		}
 
 		plId, err = primitive.ObjectIDFromHex(dbpl.Id)
 		if err != nil {
+			logger.ErrLog.Print(err.Error())
 			return err
 		}
 	} else {
 		plId, err = primitive.ObjectIDFromHex(rdme.Plugin.Id)
 		if err != nil {
+			logger.ErrLog.Print(err.Error())
 			return err
 		}
 
@@ -52,11 +59,13 @@ func (p *ReadmesOrm) Insert(rdme *api.Readme) error {
 	count, err := collection.CountDocuments(session.Ctx, bson.D{{"plugin", plId}})
 
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
 	if count > 0 {
 		err = errors.New("plugin already has a readme, please update instead")
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
@@ -64,12 +73,14 @@ func (p *ReadmesOrm) Insert(rdme *api.Readme) error {
 
 	err = validateReadmeInsert(insert)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
 	_, err = collection.InsertOne(session.Ctx, insert)
 
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	return nil
@@ -80,6 +91,7 @@ func (p *ReadmesOrm) Update(req *api.Readme) error {
 
 	session, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	defer session.Cancel()
@@ -90,15 +102,19 @@ func (p *ReadmesOrm) Update(req *api.Readme) error {
 
 	err = validateReadmeUpdate(updated)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
 	updateResult, err := collection.UpdateByID(session.Ctx, req.Id, bson.D{{"$set", updated}})
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	if updateResult.MatchedCount < 1 {
-		return errors.New("no plugin found")
+		err = errors.New("no plugin found")
+		logger.ErrLog.Print(err.Error())
+		return err
 	}
 	return nil
 
@@ -108,6 +124,7 @@ func (p *ReadmesOrm) Get(req *api.Plugin) (*api.Readme, error) {
 
 	session, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 	defer session.Cancel()
@@ -120,16 +137,19 @@ func (p *ReadmesOrm) Get(req *api.Plugin) (*api.Readme, error) {
 		dbpl, err := NewPluginsOrm().Get(req)
 
 		if err != nil {
+			logger.ErrLog.Print(err.Error())
 			return nil, err
 		}
 
 		plId, err = primitive.ObjectIDFromHex(dbpl.Id)
 		if err != nil {
+			logger.ErrLog.Print(err.Error())
 			return nil, err
 		}
 	} else {
 		plId, err = primitive.ObjectIDFromHex(req.Id)
 		if err != nil {
+			logger.ErrLog.Print(err.Error())
 			return nil, err
 		}
 
@@ -137,6 +157,7 @@ func (p *ReadmesOrm) Get(req *api.Plugin) (*api.Readme, error) {
 
 	err = collection.FindOne(session.Ctx, bson.D{{"plugin", plId}}).Decode(decodedReadmeResult)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 

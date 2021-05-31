@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal/logger"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -23,6 +24,7 @@ func (o *ChangelogOrm) Insert(ch *api.Changelog) error {
 
 	mgses, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	defer mgses.Cancel()
@@ -32,17 +34,21 @@ func (o *ChangelogOrm) Insert(ch *api.Changelog) error {
 	s := apiToOrmChangelog(ch)
 	err = validateChangelogInsert(s)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
 	res, err := collection.InsertOne(mgses.Ctx, s)
 
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
 	if res.InsertedID == primitive.NilObjectID {
-		return errors.New("could not insert with new id")
+		err = errors.New("could not insert with new id")
+		logger.ErrLog.Print(err.Error())
+		return err
 	}
 
 	return nil
@@ -51,6 +57,7 @@ func (o *ChangelogOrm) Insert(ch *api.Changelog) error {
 func (o *ChangelogOrm) Get(ch *api.Changelog) (*api.Changelog, error) {
 	mgses, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 	defer mgses.Cancel()
@@ -59,10 +66,12 @@ func (o *ChangelogOrm) Get(ch *api.Changelog) (*api.Changelog, error) {
 	s := apiToOrmChangelog(ch)
 	err = validateChangelogGet(s)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 	result := collection.FindOne(mgses.Ctx, s)
 	if result.Err() != nil {
+		logger.ErrLog.Print(result.Err().Error())
 		return nil, result.Err()
 	}
 	final := changelog{}
@@ -70,6 +79,7 @@ func (o *ChangelogOrm) Get(ch *api.Changelog) (*api.Changelog, error) {
 	err = result.Decode(&final)
 
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 
@@ -79,6 +89,7 @@ func (o *ChangelogOrm) Get(ch *api.Changelog) (*api.Changelog, error) {
 func (o *ChangelogOrm) GetAll(ch *api.Changelog) (*api.Changelogs, error) {
 	mgses, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 	defer mgses.Cancel()
@@ -87,10 +98,12 @@ func (o *ChangelogOrm) GetAll(ch *api.Changelog) (*api.Changelogs, error) {
 	s := apiToOrmChangelog(ch)
 	err = validateChangelogGetAll(s)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 	cur, err := collection.Find(mgses.Ctx, s)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 
@@ -99,6 +112,7 @@ func (o *ChangelogOrm) GetAll(ch *api.Changelog) (*api.Changelogs, error) {
 	err = cur.All(mgses.Ctx, &results)
 
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 

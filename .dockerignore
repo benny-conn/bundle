@@ -5,3 +5,4 @@ Makefile
 docker-compose.yml
 .git
 *.log
+logs/

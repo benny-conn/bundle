@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -26,7 +27,7 @@ func RunServer() error {
 
 	grpcServer := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterSessionServiceServer(grpcServer, newSessionsServer())
-	fmt.Printf("Started Memory Storage Server on port %v\n", port)
+	logger.InfoLog.Printf("Started Memory Storage Server on port %v", port)
 
 	grpcServer.Serve(lis)
 	return nil

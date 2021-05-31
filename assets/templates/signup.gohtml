@@ -78,11 +78,17 @@
         <button class="w-100 btn btn-lg btn-primary" type="submit">
           Sign Up
         </button>
-        <input type="hidden" id="referer" name="referer" value="{{.}}" />
+        <input
+          type="hidden"
+          id="referer"
+          name="referer"
+          value="{{.Referrer}}"
+        />
       </form>
-      <p class="my-1">
+      <p class="my-2">
         Already have an account? <a class="text-primary" href="/login">Login</a>
       </p>
+      <p class="my-2">Back home? <a class="text-primary" href="/">Home</a></p>
     </main>
   </body>
   <script>

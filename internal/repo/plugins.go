@@ -12,6 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal"
+	"github.com/bennycio/bundle/internal/logger"
 )
 
 func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +22,7 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		err := r.ParseForm()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			internal.HttpError(w, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -34,16 +36,18 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		pl, err := downloadPluginFromRepo(req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			internal.HttpError(w, err, http.StatusServiceUnavailable)
 			return
 		}
+
+		logger.DebugLog.Printf("downloading %v", req)
 
 		w.Write(pl)
 	case http.MethodPost:
 
 		err := r.ParseMultipartForm(32 << 20)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			internal.HttpError(w, err, http.StatusBadRequest)
 			return
 		}
 
@@ -57,23 +61,23 @@ func pluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 		f, h, err := r.FormFile("plugin")
 		if err != nil {
-			fmt.Println(err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			internal.HttpError(w, err, http.StatusBadRequest)
 			return
 		}
 
 		if h.Size > (1024 << 20) {
-			http.Error(w, "file too large", http.StatusBadRequest)
+			err = fmt.Errorf("file too large")
+			internal.HttpError(w, err, http.StatusBadRequest)
 			return
 		}
 
 		loc, err := uploadPluginToRepo(req, f)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			internal.HttpError(w, err, http.StatusBadRequest)
 			return
 		}
 
-		fmt.Println("Successfully uploaded to " + loc)
+		logger.InfoLog.Printf("uploaded plugin with id: %s to %s", r.FormValue("id"), loc)
 	}
 
 }

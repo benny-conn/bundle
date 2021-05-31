@@ -2,6 +2,8 @@ package web
 
 import (
 	"net/http"
+
+	"github.com/bennycio/bundle/internal/logger"
 )
 
 func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
@@ -18,7 +20,7 @@ func profileHandlerFunc(w http.ResponseWriter, req *http.Request) {
 
 	err = tpl.ExecuteTemplate(w, "profile", data)
 	if err != nil {
-		panic(err)
+		logger.ErrLog.Panic(err.Error())
 	}
 
 }

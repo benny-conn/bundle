@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/bennycio/bundle/api"
+	"github.com/bennycio/bundle/internal/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -54,6 +55,7 @@ func NewPluginsOrm() *PluginsOrm { return &PluginsOrm{} }
 func (p *PluginsOrm) Insert(pl *api.Plugin) error {
 	mgses, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	defer mgses.Cancel()
@@ -68,29 +70,32 @@ func (p *PluginsOrm) Insert(pl *api.Plugin) error {
 
 	if countName > 0 {
 		err = errors.New("plugin already exists with given name")
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
 	insertion := apiToOrmPl(pl)
 	err = validatePluginInsert(insertion)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
 	_, err = collection.InsertOne(mgses.Ctx, insertion)
 
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	return nil
 
 }
 
-// TODO something is going wrong here
 func (p *PluginsOrm) Update(req *api.Plugin) error {
 
 	mgses, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	defer mgses.Cancel()
@@ -100,6 +105,7 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 	update := apiToOrmPl(req)
 	err = validatePluginUpdate(update)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 
@@ -112,10 +118,13 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 	}
 
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return err
 	}
 	if updateResult.ModifiedCount < 1 && updateResult.UpsertedCount < 1 {
-		return errors.New("no plugin found")
+		err = errors.New("no plugin found")
+		logger.ErrLog.Print(err.Error())
+		return err
 	}
 
 	return nil
@@ -125,6 +134,7 @@ func (p *PluginsOrm) Update(req *api.Plugin) error {
 func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	session, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 	defer session.Cancel()
@@ -135,18 +145,21 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 	get := apiToOrmPl(req)
 	err = validatePluginGet(get)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 
 	if get.Id == primitive.NilObjectID {
 		res := collection.FindOne(session.Ctx, bson.D{{"name", get.Name}}, options.FindOne().SetCollation(&options.Collation{Locale: "en", Strength: 1}))
 		if res.Err() != nil {
+			logger.ErrLog.Print(res.Err().Error())
 			return nil, res.Err()
 		}
 		res.Decode(decodedPluginResult)
 	} else {
 		res := collection.FindOne(session.Ctx, bson.D{{"_id", get.Id}})
 		if res.Err() != nil {
+			logger.ErrLog.Print(res.Err().Error())
 			return nil, res.Err()
 		}
 		res.Decode(decodedPluginResult)
@@ -159,6 +172,7 @@ func (p *PluginsOrm) Get(req *api.Plugin) (*api.Plugin, error) {
 func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, error) {
 	mgses, err := getMongoSession()
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 	defer mgses.Cancel()
@@ -193,6 +207,7 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, e
 
 	cur, err := collection.Find(mgses.Ctx, fil, findOptions)
 	if err != nil {
+		logger.ErrLog.Print(err.Error())
 		return nil, err
 	}
 
@@ -201,6 +216,7 @@ func (p *PluginsOrm) Paginate(req *api.PaginatePluginsRequest) ([]*api.Plugin, e
 	for cur.Next(mgses.Ctx) {
 		pl := &plugin{}
 		if err = cur.Decode(&pl); err != nil {
+			logger.ErrLog.Print(err.Error())
 			return nil, err
 		}
 		results = append(results, ormToApiPl(*pl))

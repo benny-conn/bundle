@@ -5,11 +5,13 @@ import (
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
+	"github.com/bennycio/bundle/internal/logger"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
+	referer := req.Referer()
 
 	if req.Method == http.MethodPost {
 
@@ -23,20 +25,38 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 		dbUser, err := gs.GetUser(user)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			err = tpl.ExecuteTemplate(w, "login", templateData{Referrer: referer, Error: errorData{
+				Code:    http.StatusUnauthorized,
+				Message: cleanError(err).Error(),
+			}})
+			if err != nil {
+				logger.ErrLog.Panic(err.Error())
+			}
 			return
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			err = tpl.ExecuteTemplate(w, "login", templateData{Referrer: referer, Error: errorData{
+				Code:    http.StatusUnauthorized,
+				Message: cleanError(err).Error(),
+			}})
+			if err != nil {
+				logger.ErrLog.Panic(err.Error())
+			}
 			return
 		}
 
 		token, err := newSession(userToProfile(dbUser))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			err = tpl.ExecuteTemplate(w, "login", templateData{Referrer: referer, Error: errorData{
+				Code:    http.StatusUnauthorized,
+				Message: cleanError(err).Error(),
+			}})
+			if err != nil {
+				logger.ErrLog.Panic(err.Error())
+			}
 			return
 		}
 		tokenCookie := newAccessCookie(token.Id)
@@ -47,17 +67,14 @@ func loginHandlerFunc(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		_, err := getProfFromCookie(req)
 
-		referer := req.Referer()
-
 		if err == nil {
 			http.Redirect(w, req, referer, http.StatusFound)
 			return
 		}
 
-		err = tpl.ExecuteTemplate(w, "login", referer)
+		err = tpl.ExecuteTemplate(w, "login", templateData{Referrer: referer})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			logger.ErrLog.Panic(err.Error())
 		}
 	}
 }

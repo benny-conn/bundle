@@ -204,19 +204,19 @@ func connectedExecutor(s string) {
 			}
 			err := downloadAndInstall(plsToInstall, conn)
 			if err != nil {
-				logger.ErrLog.Println(err.Error())
+				logger.ErrLog.Print(err.Error())
 				return
 			}
 		} else {
 			result, err := file.GetBundleFtp(conn)
 			if err != nil {
-				logger.ErrLog.Println(err.Error())
+				logger.ErrLog.Print(err.Error())
 				return
 			}
 			buFileCache = result
 			err = downloadAndInstall(result.Plugins, conn)
 			if err != nil {
-				logger.ErrLog.Println(err.Error())
+				logger.ErrLog.Print(err.Error())
 				return
 			}
 		}
@@ -225,7 +225,7 @@ func connectedExecutor(s string) {
 
 		names, err := conn.NameList(".")
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		if internal.Contains(names, file.BuFileName) {
@@ -239,14 +239,14 @@ func connectedExecutor(s string) {
 			defer pw.Close()
 			_, err := pw.Write([]byte(file.BuFile))
 			if err != nil {
-				logger.ErrLog.Println(err.Error())
+				logger.ErrLog.Print(err.Error())
 				return
 			}
 		}()
 
 		err = conn.Stor(file.BuFileName, pr)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 
@@ -255,7 +255,7 @@ func connectedExecutor(s string) {
 	case "status":
 		bufile, err := file.GetBundleFtp(conn)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		buFileCache = bufile
@@ -267,7 +267,7 @@ func connectedExecutor(s string) {
 		}
 		bu, err := file.GetBundleFtp(conn)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		for _, v := range args[1:] {
@@ -275,7 +275,7 @@ func connectedExecutor(s string) {
 				if strings.EqualFold(v, pl) {
 					err = conn.Delete(fmt.Sprintf("plugins/%s.jar", pl))
 					if err != nil {
-						logger.ErrLog.Println(err.Error())
+						logger.ErrLog.Print(err.Error())
 						return
 					}
 					time.Sleep(2 * time.Second)
@@ -285,12 +285,12 @@ func connectedExecutor(s string) {
 		}
 		err = file.WritePluginsToBundleFtp(conn, bu.Plugins)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		new, err := file.GetBundleFtp(conn)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		buFileCache = new
@@ -301,7 +301,7 @@ func connectedExecutor(s string) {
 		}
 		bu, err := file.GetBundleFtp(conn)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		for _, v := range args[1:] {
@@ -313,19 +313,19 @@ func connectedExecutor(s string) {
 		}
 		err = file.WritePluginsToBundleFtp(conn, bu.Plugins)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		new, err := file.GetBundleFtp(conn)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		buFileCache = new
 	case "list":
 		bu, err := file.GetBundleFtp(conn)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		buFileCache = bu
@@ -341,7 +341,7 @@ func connectedExecutor(s string) {
 		}
 		bu, err := file.GetBundleFtp(conn)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		if bu.Plugins == nil {
@@ -357,12 +357,12 @@ func connectedExecutor(s string) {
 		}
 		err = file.WritePluginsToBundleFtp(conn, bu.Plugins)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		new, err := file.GetBundleFtp(conn)
 		if err != nil {
-			logger.ErrLog.Println(err.Error())
+			logger.ErrLog.Print(err.Error())
 			return
 		}
 		buFileCache = new
