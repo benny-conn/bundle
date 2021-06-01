@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -114,7 +115,11 @@ var ftpCmd = &cobra.Command{
 						return errors.New("no username specified")
 					}
 					if pass, ok := resultInMap["password"].(string); ok {
-						theFtp.Password = pass
+						dec, err := base64.StdEncoding.DecodeString(pass)
+						if err != nil {
+							return err
+						}
+						theFtp.Password = string(dec)
 					} else {
 						return errors.New("no password specified")
 					}
@@ -395,7 +400,7 @@ func newFtp() error {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	theFtp.Password = string(bytePassword)
+	theFtp.Password = base64.StdEncoding.EncodeToString(bytePassword)
 	ftps[theFtp.Name] = map[string]string{
 		"Host":     theFtp.Host,
 		"Port":     theFtp.Port,

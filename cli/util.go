@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"errors"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
@@ -101,40 +101,46 @@ func yesOrNoCompleter(d prompt.Document) []prompt.Suggest {
 }
 
 func getCurrentUser() (*api.User, error) {
-	var user *api.User
 	if viper.IsSet("credentials") {
 		creds := viper.GetStringMap("credentials")
-		user = &api.User{}
+		user := &api.User{}
 
 		if un, ok := creds["username"].(string); ok {
 			user.Username = un
 		} else {
-			term.Println("Enter your username:")
-			user.Username = prompt.Input(">> ", nilCompleter)
-			return nil, errors.New("username could not be found")
+			return newUser()
 		}
 
 		if pass, ok := creds["password"].(string); ok {
-			user.Password = pass
-		} else {
-			term.Println("Enter Your Password: ")
-			bytePassword, err := goterm.ReadPassword(syscall.Stdin)
+			res, err := base64.StdEncoding.DecodeString(pass)
 			if err != nil {
-				log.Fatal(err.Error())
+				return nil, err
 			}
-			user.Password = string(bytePassword)
+			user.Password = string(res)
+		} else {
+			return newUser()
 		}
+		return user, nil
 	} else {
-		user = credentialsPrompt()
-		creds := map[string]string{
-			"username": user.Username,
-			"password": user.Password,
-		}
-		viper.Set("Credentials", creds)
-		err := viper.WriteConfig()
-		if err != nil {
-			return nil, err
-		}
+		return newUser()
+	}
+}
+
+func newUser() (*api.User, error) {
+	user := credentialsPrompt()
+
+	// encode base64 so sneaky shoulder peekers don't catch a quick password
+
+	pass := base64.StdEncoding.EncodeToString([]byte(user.Password))
+	creds := map[string]string{
+		"username": user.Username,
+		"password": pass,
+	}
+	viper.Set("credentials", creds)
+	err := viper.WriteConfig()
+	if err != nil {
+		return nil, err
 	}
 	return user, nil
+
 }
