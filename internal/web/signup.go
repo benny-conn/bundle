@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/bennycio/bundle/api"
 	"github.com/bennycio/bundle/internal/gate"
@@ -38,7 +39,11 @@ func signupHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		tokenCookie := newAccessCookie(token.Id)
 		http.SetCookie(w, tokenCookie)
 
-		http.Redirect(w, r, r.FormValue("referer"), http.StatusFound)
+		ref := r.FormValue("referer")
+		if strings.Contains(ref, "login") || strings.Contains(ref, "signup") {
+			ref = "/"
+		}
+		http.Redirect(w, r, ref, http.StatusFound)
 		return
 	}
 

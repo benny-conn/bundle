@@ -1,14 +1,14 @@
 {{define "plugins"}}
 <!DOCTYPE html>
 <html>
-{{template "head" .}}
+{{template "head" }}
 {{template "header" .}}
 {{if .Plugin }}
 {{ template "plugin-page" .}}
 {{else}}
   {{template "plugins-home" .}}
   {{end}}
-  {{template "footer" .}}
+  {{template "footer" }}
 
 </html>
 {{ end }}
@@ -36,7 +36,7 @@
       <div class="col-sm-12 col-md-9">
         <div class="plugins-container row row-cols-1 row-cols-md-3 g-4">
           {{ $date := .Functions.Date }}
-          <!-- prettier-ignore -->
+
           {{ range .Plugins }}
           <a href="?plugin={{.Name}}" class="plugin-link col">
             <div class="card plugin-card shadow">
@@ -145,7 +145,7 @@
       </ul>
     </nav>
   </div>
-  {{template "foot" .}}
+  {{template "foot" }}
 </body>
 {{ end }}
 
@@ -154,15 +154,15 @@
 <body>
   <div class="plugin-info-page container">
     {{template "plugin-header" .}}
-    {{if .Readme}}
     <div class="readme">
+      {{if .Readme}}
       {{.Readme}}
+      {{else}}
+        <h2>No readme for this plugin...</h2>
+        {{end}}
     </div>
-    {{else}}
-
-      {{ end }}
   </div>
-  {{template "foot" .}}
+  {{template "foot" }}
 </body>
 {{ end }}
 

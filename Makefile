@@ -1,7 +1,7 @@
 
 version = 1.0
 
-all: docker-run
+all: clean docker-run
 
 docker-build: tidy sass cli
 	docker-compose build 

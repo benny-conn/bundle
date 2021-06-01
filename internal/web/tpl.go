@@ -101,7 +101,9 @@ func userToProfile(u *api.User) profile {
 	if u.Purchases != nil {
 		s := make([]string, len(u.Purchases))
 		for i, v := range u.Purchases {
-			s[i] = v.ObjectId
+			if v.Complete {
+				s[i] = v.ObjectId
+			}
 		}
 		p.PurchasedPlugins = s
 	}

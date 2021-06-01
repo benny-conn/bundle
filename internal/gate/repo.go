@@ -52,19 +52,21 @@ func repoPluginsHandlerFunc(w http.ResponseWriter, r *http.Request) {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
-				if dbUser.Purchases == nil {
-					http.Error(w, "user does not own premium plugin", http.StatusUnauthorized)
-					return
-				}
-				can := false
-				for _, v := range dbUser.Purchases {
-					if v.ObjectId == dbPl.Id && v.Complete {
-						can = true
+				if dbPl.Author.Id != dbUser.Id {
+					if dbUser.Purchases == nil {
+						http.Error(w, "user does not own premium plugin", http.StatusUnauthorized)
+						return
 					}
-				}
-				if !can {
-					http.Error(w, "user does not own premium plugin", http.StatusUnauthorized)
-					return
+					can := false
+					for _, v := range dbUser.Purchases {
+						if v.ObjectId == dbPl.Id && v.Complete {
+							can = true
+						}
+					}
+					if !can {
+						http.Error(w, "user does not own premium plugin", http.StatusUnauthorized)
+						return
+					}
 				}
 			}
 		}

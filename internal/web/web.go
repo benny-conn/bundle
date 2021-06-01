@@ -11,6 +11,7 @@ func NewWebServer() *http.Server {
 
 	mux := http.NewServeMux()
 	rootHandler := http.HandlerFunc(rootHandlerFunc)
+	aboutHandler := http.HandlerFunc(aboutHandlerFunc)
 	signupHandler := http.HandlerFunc(signupHandlerFunc)
 	loginHandler := http.HandlerFunc(loginHandlerFunc)
 	logoutHandler := http.HandlerFunc(logoutHandlerFunc)
@@ -23,6 +24,7 @@ func NewWebServer() *http.Server {
 	premiumHandler := http.HandlerFunc(premiumHandlerFunc)
 
 	mux.Handle("/", rootHandler)
+	mux.Handle("/about", aboutHandler)
 	mux.Handle("/plugins", pluginHandler)
 	mux.Handle("/plugins/", pluginHandler)
 	mux.Handle("/plugins/thumbnails", thumbnailHandler)
