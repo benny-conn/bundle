@@ -1,5 +1,7 @@
 # BundleMC
 
+# NOTE: project is a work in progress and not currently available for download
+
 ## The ultimate solution to Spigot plugin management
 
 BundleMC is a modern solution to plugin management allowing users to spend less days housekeeping and more days enjoying Minecraft with friends. BundleMC enables server owners to download, update, and manage a server's spigot plugins and enables plugin developers to effortlessly upload their products to the cloud for anyone to access. BundleMC has a variety of interfaces and is flexible to adapt to the needs of any server owner or developer
